@@ -38,24 +38,69 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Create data update coordinator
         coordinator = MitsubishiDataUpdateCoordinator(hass, controller)
         
+        # Fetch unit info for device registry enrichment
+        await coordinator.fetch_unit_info()
+        
         # Fetch initial data
         await coordinator.async_config_entry_first_refresh()
         
-        # Get device information from coordinator data
+        # Get device information from coordinator data and unit info
         device_mac = coordinator.data.get("mac", host)
         device_serial = coordinator.data.get("serial")
         capabilities = coordinator.data.get("capabilities", {})
+        unit_info = coordinator.unit_info or {}
+        
+        # Extract enriched device information from unit info
+        adaptor_info = unit_info.get("adaptor_info", {})
+        unit_type_info = unit_info.get("unit_info", {})
+        
+        # Determine device model from multiple sources
+        device_model = (
+            adaptor_info.get("model") or 
+            capabilities.get("device_model") or 
+            "MAC-577IF-2E WiFi Adapter"
+        )
+        
+        # Determine firmware version from multiple sources
+        firmware_version = (
+            adaptor_info.get("app_version") or 
+            capabilities.get("firmware_version")
+        )
+        
+        # Build comprehensive software version string
+        sw_versions = []
+        if adaptor_info.get("app_version"):
+            sw_versions.append(f"App: {adaptor_info['app_version']}")
+        if adaptor_info.get("release_version"):
+            sw_versions.append(f"Release: {adaptor_info['release_version']}")
+        if adaptor_info.get("platform_version"):
+            sw_versions.append(f"Platform: {adaptor_info['platform_version']}")
+        if unit_type_info.get("it_protocol_version"):
+            sw_versions.append(f"Protocol: {unit_type_info['it_protocol_version']}")
+        
+        sw_version_str = " | ".join(sw_versions) if sw_versions else firmware_version
+        
+        # Build hardware version from manufacturing info
+        hw_info = []
+        if adaptor_info.get("manufacturing_date"):
+            hw_info.append(f"MFG: {adaptor_info['manufacturing_date']}")
+        if adaptor_info.get("flash_version"):
+            hw_info.append(f"Flash: {adaptor_info['flash_version']}")
+        if adaptor_info.get("boot_version"):
+            hw_info.append(f"Boot: {adaptor_info['boot_version']}")
+        
+        hw_version_str = " | ".join(hw_info) if hw_info else device_mac
         
         # Register device in device registry with comprehensive info
         device_registry = dr.async_get(hass)
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
-            identifiers={(DOMAIN, device_mac)},
+            identifiers={(DOMAIN, device_mac or host)},
             manufacturer="Mitsubishi Electric",
-            model=capabilities.get("device_model", "MAC-577IF-2E WiFi Adapter"),
+            model=device_model,
             name=f"Mitsubishi AC {device_mac[-8:]}" if device_mac else f"Mitsubishi AC ({host})",
-            sw_version=capabilities.get("firmware_version"),
-            hw_version=device_mac,
+            sw_version=sw_version_str,
+            hw_version=hw_version_str,
             serial_number=device_serial,
             suggested_area="Living Room",
             configuration_url=f"http://{host}",
