@@ -1,0 +1,11 @@
+{
+  "domain": "mitsubishi",
+  "name": "Mitsubishi Air Conditioner",
+  "documentation": "https://github.com/ashleigh-hopkins/homeassistant-mitsubishi",
+  "issue_tracker": "https://github.com/ashleigh-hopkins/homeassistant-mitsubishi/issues",
+  "requirements": ["pymitsubishi>=0.1.0"],
+  "codeowners": ["@ashleigh-hopkins"],
+  "version": "1.0.0",
+  "config_flow": true,
+  "iot_class": "local_polling"
+}
