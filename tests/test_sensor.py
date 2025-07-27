@@ -10,6 +10,10 @@ from custom_components.mitsubishi.sensor import (
     MitsubishiDehumidifierLevelSensor,
     MitsubishiErrorSensor,
     MitsubishiUnitInfoSensor,
+    MitsubishiFirmwareVersionSensor,
+    MitsubishiUnitTypeSensor,
+    MitsubishiWifiInfoSensor,
+    BaseMitsubishiDiagnosticSensor,
     async_setup_entry,
 )
 from custom_components.mitsubishi.const import DOMAIN
@@ -22,12 +26,15 @@ async def test_async_setup_entry(hass, mock_coordinator, mock_config_entry):
     await async_setup_entry(hass, mock_config_entry, async_add_entities)
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
-    assert len(entities) == 5
+    assert len(entities) == 8
     assert isinstance(entities[0], MitsubishiRoomTemperatureSensor)
     assert isinstance(entities[1], MitsubishiOutdoorTemperatureSensor)
     assert isinstance(entities[2], MitsubishiErrorSensor)
     assert isinstance(entities[3], MitsubishiDehumidifierLevelSensor)
     assert isinstance(entities[4], MitsubishiUnitInfoSensor)
+    assert isinstance(entities[5], MitsubishiFirmwareVersionSensor)
+    assert isinstance(entities[6], MitsubishiUnitTypeSensor)
+    assert isinstance(entities[7], MitsubishiWifiInfoSensor)
 
 
 @pytest.mark.asyncio
@@ -121,3 +128,145 @@ async def test_dehumidifier_level_sensor_none(hass, mock_coordinator, mock_confi
     sensor = MitsubishiDehumidifierLevelSensor(mock_coordinator, mock_config_entry)
     mock_coordinator.data = {}
     assert sensor.native_value is None
+
+
+@pytest.mark.asyncio
+async def test_firmware_version_sensor(hass, mock_coordinator, mock_config_entry):
+    """Test firmware version sensor."""
+    sensor = MitsubishiFirmwareVersionSensor(mock_coordinator, mock_config_entry)
+    mock_coordinator.unit_info = {
+        "adaptor_info": {
+            "app_version": "1.2.3",
+            "release_version": "4.5.6",
+            "flash_version": "7.8.9",
+            "boot_version": "1.0.1",
+            "platform_version": "2.0.2",
+        },
+        "unit_info": {
+            "it_protocol_version": "3.0.3"
+        }
+    }
+    assert sensor.native_value == "1.2.3"
+    assert sensor.extra_state_attributes == {
+        "release_version": "4.5.6",
+        "flash_version": "7.8.9",
+        "boot_version": "1.0.1",
+        "platform_version": "2.0.2",
+        "protocol_version": "3.0.3",
+    }
+
+
+@pytest.mark.asyncio
+async def test_firmware_version_sensor_default(hass, mock_coordinator, mock_config_entry):
+    """Test firmware version sensor with default values."""
+    sensor = MitsubishiFirmwareVersionSensor(mock_coordinator, mock_config_entry)
+    mock_coordinator.unit_info = {}
+    assert sensor.native_value == "Unknown"
+    assert sensor.extra_state_attributes == {"status": "Unit info not available"}
+
+
+@pytest.mark.asyncio
+async def test_unit_type_sensor(hass, mock_coordinator, mock_config_entry):
+    """Test unit type sensor."""
+    sensor = MitsubishiUnitTypeSensor(mock_coordinator, mock_config_entry)
+    mock_coordinator.unit_info = {
+        "adaptor_info": {
+            "model": "MAC-577IF-2E",
+            "device_id": "DEV123",
+            "manufacturing_date": "2023-01-01",
+        },
+        "unit_info": {
+            "type": "Air Conditioner",
+            "it_protocol_version": "3.0.3",
+            "error_code": "0000",
+        }
+    }
+    assert sensor.native_value == "Air Conditioner"
+    assert sensor.extra_state_attributes == {
+        "model": "MAC-577IF-2E",
+        "device_id": "DEV123",
+        "manufacturing_date": "2023-01-01",
+        "protocol_version": "3.0.3",
+        "unit_error_code": "0000",
+    }
+
+
+@pytest.mark.asyncio
+async def test_unit_type_sensor_default(hass, mock_coordinator, mock_config_entry):
+    """Test unit type sensor with default values."""
+    sensor = MitsubishiUnitTypeSensor(mock_coordinator, mock_config_entry)
+    mock_coordinator.unit_info = {}
+    assert sensor.native_value == "Unknown"
+    assert sensor.extra_state_attributes == {"status": "Unit info not available"}
+
+
+@pytest.mark.asyncio
+async def test_wifi_info_sensor(hass, mock_coordinator, mock_config_entry):
+    """Test WiFi info sensor."""
+    sensor = MitsubishiWifiInfoSensor(mock_coordinator, mock_config_entry)
+    mock_coordinator.unit_info = {
+        "adaptor_info": {
+            "mac_address": "AA:BB:CC:DD:EE:FF",
+            "wifi_channel": 6,
+            "rssi_dbm": -45,
+            "it_comm_status": "OK",
+            "server_operation": "active",
+            "server_comm_status": "connected",
+        }
+    }
+    assert sensor.native_value == "-45 dBm"
+    assert sensor.extra_state_attributes == {
+        "mac_address": "AA:BB:CC:DD:EE:FF",
+        "wifi_channel": 6,
+        "rssi_dbm": -45,
+        "it_comm_status": "OK",
+        "server_operation": "active",
+        "server_comm_status": "connected",
+    }
+
+
+@pytest.mark.asyncio
+async def test_wifi_info_sensor_default(hass, mock_coordinator, mock_config_entry):
+    """Test WiFi info sensor with default values."""
+    sensor = MitsubishiWifiInfoSensor(mock_coordinator, mock_config_entry)
+    mock_coordinator.unit_info = {}
+    assert sensor.native_value == "Unknown"
+    assert sensor.extra_state_attributes == {"status": "Unit info not available"}
+
+
+@pytest.mark.asyncio
+async def test_wifi_info_sensor_no_rssi(hass, mock_coordinator, mock_config_entry):
+    """Test WiFi info sensor without RSSI data."""
+    sensor = MitsubishiWifiInfoSensor(mock_coordinator, mock_config_entry)
+    mock_coordinator.unit_info = {
+        "adaptor_info": {
+            "mac_address": "AA:BB:CC:DD:EE:FF",
+            "wifi_channel": 6,
+        }
+    }
+    assert sensor.native_value == "Unknown"
+    assert sensor.extra_state_attributes == {
+        "mac_address": "AA:BB:CC:DD:EE:FF",
+        "wifi_channel": 6,
+    }
+
+
+@pytest.mark.asyncio
+async def test_base_diagnostic_sensor_helper_methods(hass, mock_coordinator, mock_config_entry):
+    """Test the helper methods in BaseMitsubishiDiagnosticSensor."""
+    sensor = MitsubishiFirmwareVersionSensor(mock_coordinator, mock_config_entry)
+    
+    # Test _filter_none_values
+    test_dict = {"key1": "value1", "key2": None, "key3": "value3"}
+    filtered = sensor._filter_none_values(test_dict)
+    assert filtered == {"key1": "value1", "key3": "value3"}
+    
+    # Test _get_unavailable_status
+    status = sensor._get_unavailable_status()
+    assert status == {"status": "Unit info not available"}
+    
+    # Test _get_unit_info_data with no unit_info
+    mock_coordinator.unit_info = None
+    adaptor_info, unit_info = sensor._get_unit_info_data()
+    assert adaptor_info == {}
+    assert unit_info == {}

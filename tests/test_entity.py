@@ -75,3 +75,40 @@ async def test_mitsubishi_entity_availability(hass):
 
     # Check availability after failure
     assert entity.available is False
+
+
+@pytest.mark.asyncio
+async def test_mitsubishi_entity_initialization_with_none_data(hass):
+    """Test entity initialization when coordinator data is None."""
+    # Setup mock data
+    config_data = {
+        "host": "192.168.1.100"
+    }
+
+    mock_config_entry = MagicMock(spec=ConfigEntry)
+    mock_config_entry.data = config_data
+
+    mock_coordinator = MagicMock()
+    mock_coordinator.data = None  # Simulate initial state
+    mock_coordinator.last_update_success = False
+
+    # Should not raise an exception
+    entity = MitsubishiEntity(mock_coordinator, mock_config_entry, "test_key")
+
+    # Check that entity was created successfully
+    assert entity._config_entry == mock_config_entry
+    assert entity._key == "test_key"
+    
+    # Should have device info based on host fallback
+    assert entity.device_info["identifiers"] == {(DOMAIN, "192.168.1.100")}
+    assert entity.device_info["manufacturer"] == "Mitsubishi Electric"
+    assert entity.device_info["model"] == "MAC-577IF-2E WiFi Adapter"  # Default value
+    assert entity.device_info["name"] == "Mitsubishi AC 68.1.100"  # Last 8 chars of IP
+    assert entity.device_info["hw_version"] == "192.168.1.100"
+    assert entity.device_info["serial_number"] is None
+    
+    # Check unique ID
+    assert entity.unique_id == "192.168.1.100_test_key"
+    
+    # Check availability
+    assert entity.available is False

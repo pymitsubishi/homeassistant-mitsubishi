@@ -25,10 +25,15 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
         self._config_entry = config_entry
         self._key = key
         
-        # Get device information
-        device_mac = coordinator.data.get("mac", config_entry.data["host"])
-        device_serial = coordinator.data.get("serial")
-        capabilities = coordinator.data.get("capabilities", {})
+        # Get device information (handle case where coordinator.data is None)
+        if coordinator.data:
+            device_mac = coordinator.data.get("mac", config_entry.data["host"])
+            device_serial = coordinator.data.get("serial")
+            capabilities = coordinator.data.get("capabilities", {})
+        else:
+            device_mac = config_entry.data["host"]
+            device_serial = None
+            capabilities = {}
         
         # Set device info
         self._attr_device_info = DeviceInfo(
