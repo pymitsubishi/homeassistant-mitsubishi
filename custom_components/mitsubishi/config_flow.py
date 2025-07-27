@@ -29,19 +29,27 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
+    _LOGGER.debug("Starting validation for host: %s", data[CONF_HOST])
     
     encryption_key = data.get(CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY)
+    _LOGGER.debug("Using encryption key: %s", encryption_key)
+    
     api = MitsubishiAPI(device_ip=data[CONF_HOST], encryption_key=encryption_key)
     controller = MitsubishiController(api=api)
     
     try:
         # Test connection
+        _LOGGER.debug("Attempting to fetch status from device")
         success = await hass.async_add_executor_job(controller.fetch_status)
+        _LOGGER.debug("Fetch status result: %s", success)
         if not success:
+            _LOGGER.error("Failed to fetch status from device")
             raise CannotConnect
         
         # Get device info for unique_id
+        _LOGGER.debug("Getting status summary")
         summary = controller.get_status_summary()
+        _LOGGER.debug("Status summary: %s", summary)
         await hass.async_add_executor_job(api.close)
         
         return {
@@ -49,7 +57,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             "unique_id": summary.get('mac') or summary.get('serial') or data[CONF_HOST]
         }
         
-    except Exception:
+    except Exception as e:
+        _LOGGER.error("Exception during validation: %s", str(e), exc_info=True)
         await hass.async_add_executor_job(api.close)
         raise CannotConnect
 
@@ -63,24 +72,33 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
+        _LOGGER.debug("Config flow async_step_user called with input: %s", user_input)
         errors: dict[str, str] = {}
         
         if user_input is not None:
+            _LOGGER.debug("Processing user input for config flow")
             try:
+                _LOGGER.debug("Calling validate_input")
                 info = await validate_input(self.hass, user_input)
+                _LOGGER.debug("Validation successful, info: %s", info)
                 
                 # Check if already configured
                 await self.async_set_unique_id(info["unique_id"]) 
                 self._abort_if_unique_id_configured()
                 
+                _LOGGER.debug("Creating config entry")
                 return self.async_create_entry(title=info["title"], data=user_input)
                 
             except CannotConnect:
+                _LOGGER.error("Cannot connect to device")
                 errors["base"] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
+        else:
+            _LOGGER.debug("No user input provided, showing form")
 
+        _LOGGER.debug("Showing config form with errors: %s", errors)
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )

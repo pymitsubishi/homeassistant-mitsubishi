@@ -3,7 +3,7 @@
   "name": "Mitsubishi Air Conditioner",
   "documentation": "https://github.com/pymitsubishi/homeassistant-mitsubishi",
   "issue_tracker": "https://github.com/pymitsubishi/homeassistant-mitsubishi/issues",
-  "requirements": ["pymitsubishi>=0.1.3"],
+  "requirements": ["pymitsubishi>=0.1.4"],
   "codeowners": ["@ashleigh-hopkins"],
   "version": "0.0.1",
   "config_flow": true,
