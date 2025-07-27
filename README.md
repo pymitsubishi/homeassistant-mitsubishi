@@ -1,6 +1,6 @@
 # Home Assistant Mitsubishi Air Conditioner Integration
 
-[![CI](https://github.com/pymitsubishi/homeassistant-mitsubishi/workflows/CI/badge.svg)](https://github.com/pymitsubishi/homeassistant-mitsubishi/actions)
+[![CI](https://github.com/pymitsubishi/homeassistant-mitsubishi/workflows/CI/badge.svg?branch=main)](https://github.com/pymitsubishi/homeassistant-mitsubishi/actions)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub Release](https://img.shields.io/github/release/pymitsubishi/homeassistant-mitsubishi.svg)](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/pymitsubishi/homeassistant-mitsubishi)
