@@ -1,0 +1,6 @@
+# Main dependency
+pymitsubishi>=0.1.6
+
+# Development dependencies
+ruff
+mypy
