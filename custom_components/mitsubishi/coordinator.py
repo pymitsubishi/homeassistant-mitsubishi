@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the Mitsubishi Air Conditioner."""
 
-    def __init__(self, hass: HomeAssistant, controller: MitsubishiController) -> None:
+    def __init__(self, hass: HomeAssistant, controller: MitsubishiController, scan_interval: int = DEFAULT_SCAN_INTERVAL) -> None:
         """Initialize."""
         self.controller = controller
         self.unit_info = None  # Will be populated on first update or by config flow
@@ -26,7 +26,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            update_interval=timedelta(seconds=scan_interval),
         )
 
     async def fetch_unit_info(self) -> dict | None:

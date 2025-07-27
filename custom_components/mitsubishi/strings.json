@@ -7,6 +7,9 @@
         "data": {
           "host": "IP Address",
           "encryption_key": "Encryption Key (default: unregistered)",
+          "admin_username": "Admin Username (default: admin)",
+          "admin_password": "Admin Password (default: me1debug@0567)",
+          "scan_interval": "Update Interval (seconds, 10-300)",
           "enable_capability_detection": "Enable capability detection"
         }
       }

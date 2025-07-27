@@ -12,7 +12,17 @@ from homeassistant.helpers import device_registry as dr
 
 from pymitsubishi import MitsubishiAPI, MitsubishiController
 
-from .const import DOMAIN, CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY
+from .const import (
+    DOMAIN, 
+    CONF_ENCRYPTION_KEY, 
+    DEFAULT_ENCRYPTION_KEY,
+    CONF_ADMIN_USERNAME,
+    DEFAULT_ADMIN_USERNAME,
+    CONF_ADMIN_PASSWORD,
+    DEFAULT_ADMIN_PASSWORD,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL
+)
 from .coordinator import MitsubishiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,18 +35,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     host = entry.data[CONF_HOST]
     encryption_key = entry.data.get(CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY)
+    admin_username = entry.data.get(CONF_ADMIN_USERNAME, DEFAULT_ADMIN_USERNAME)
+    admin_password = entry.data.get(CONF_ADMIN_PASSWORD, DEFAULT_ADMIN_PASSWORD)
+    scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     
     try:
-        # Initialize the API and controller
-        api = MitsubishiAPI(device_ip=host, encryption_key=encryption_key)
+        # Initialize the API and controller with admin credentials
+        api = MitsubishiAPI(
+            device_ip=host, 
+            encryption_key=encryption_key,
+            admin_username=admin_username,
+            admin_password=admin_password
+        )
         controller = MitsubishiController(api=api)
         
-        # Test connection
+        # Test connection and raise ConfigEntryNotReady if it fails
         if not await hass.async_add_executor_job(controller.fetch_status):
             raise ConfigEntryNotReady(f"Unable to connect to Mitsubishi AC at {host}")
         
-        # Create data update coordinator
-        coordinator = MitsubishiDataUpdateCoordinator(hass, controller)
+        # Create data update coordinator with custom scan interval
+        coordinator = MitsubishiDataUpdateCoordinator(hass, controller, scan_interval)
         
         # Fetch unit info for device registry enrichment
         await coordinator.fetch_unit_info()

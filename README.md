@@ -1,5 +1,10 @@
 # Home Assistant Mitsubishi Air Conditioner Integration
 
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub Release](https://img.shields.io/github/release/pymitsubishi/homeassistant-mitsubishi.svg)](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases)
+[![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/pymitsubishi/homeassistant-mitsubishi)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Home Assistant custom component for controlling and monitoring Mitsubishi MAC-577IF-2E air conditioners.
 
 ## Features
@@ -56,7 +61,7 @@ The integration will automatically discover your device and create the appropria
 
 ## Requirements
 
-- Home Assistant 2023.1 or later
+- Home Assistant 2025.1 or later (requires Python 3.12+)
 - [pymitsubishi](https://pypi.org/project/pymitsubishi/) library (automatically installed)
 - Mitsubishi air conditioner with MAC-577IF-2E WiFi adapter
 

@@ -11,10 +11,22 @@ from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.data_entry_flow import AbortFlow
 
 from pymitsubishi import MitsubishiAPI, MitsubishiController
 
-from .const import DOMAIN, CONF_ENABLE_CAPABILITY_DETECTION, CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY
+from .const import (
+    DOMAIN, 
+    CONF_ENABLE_CAPABILITY_DETECTION, 
+    CONF_ENCRYPTION_KEY, 
+    DEFAULT_ENCRYPTION_KEY,
+    CONF_ADMIN_USERNAME,
+    DEFAULT_ADMIN_USERNAME,
+    CONF_ADMIN_PASSWORD,
+    DEFAULT_ADMIN_PASSWORD,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,6 +34,9 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
         vol.Optional(CONF_ENCRYPTION_KEY, default=DEFAULT_ENCRYPTION_KEY): str,
+        vol.Optional(CONF_ADMIN_USERNAME, default=DEFAULT_ADMIN_USERNAME): str,
+        vol.Optional(CONF_ADMIN_PASSWORD, default=DEFAULT_ADMIN_PASSWORD): str,
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
         vol.Optional(CONF_ENABLE_CAPABILITY_DETECTION, default=True): bool,
     }
 )
@@ -92,6 +107,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except CannotConnect:
                 _LOGGER.error("Cannot connect to device")
                 errors["base"] = "cannot_connect"
+            except AbortFlow:
+                # Re-raise AbortFlow to allow proper flow termination
+                raise
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
