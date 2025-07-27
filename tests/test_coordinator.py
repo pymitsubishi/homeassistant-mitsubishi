@@ -134,28 +134,25 @@ async def test_async_update_data_with_unit_info_fetch(hass, mock_mitsubishi_cont
 
 @pytest.mark.asyncio
 async def test_async_update_data_with_vane_data(hass, mock_mitsubishi_controller):
-    """Test data update that adds vane direction data."""
+    """Test data update with vane direction data (now included by pymitsubishi 0.1.6+)."""
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
     
-    # Setup mock state with vane data
-    mock_general = MagicMock()
-    mock_general.vertical_wind_direction_right.name = "AUTO"
-    mock_general.vertical_wind_direction_left.name = "AUTO"  
-    mock_general.horizontal_wind_direction.name = "AUTO"
-    
-    mock_state = MagicMock()
-    mock_state.general = mock_general
-    mock_mitsubishi_controller.state = mock_state
-    
-    expected_summary = {'power': 'ON'}  # Summary without vane data
+    # pymitsubishi 0.1.6+ includes vane data in the status summary
+    expected_summary = {
+        'power': 'ON',
+        'vertical_vane_right': 'AUTO',
+        'vertical_vane_left': 'AUTO', 
+        'horizontal_vane': 'AUTO'
+    }
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
     
     result = await coordinator._async_update_data()
     
-    # Should have added vane data
+    # Vane data should be present in result (included by pymitsubishi)
+    assert result == expected_summary
     assert result['vertical_vane_right'] == "AUTO"
     assert result['vertical_vane_left'] == "AUTO"
     assert result['horizontal_vane'] == "AUTO"
