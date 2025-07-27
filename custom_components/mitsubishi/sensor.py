@@ -27,7 +27,6 @@ async def async_setup_entry(
             MitsubishiRoomTemperatureSensor(coordinator, config_entry),
             MitsubishiOutdoorTemperatureSensor(coordinator, config_entry),
             MitsubishiErrorSensor(coordinator, config_entry),
-            MitsubishiPowerSavingSensor(coordinator, config_entry),
             MitsubishiDehumidifierLevelSensor(coordinator, config_entry),
         ]
     )
@@ -48,6 +47,9 @@ class MitsubishiRoomTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateCoor
         """Initialize the room temperature sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_room_temp"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
+        }
 
     @property
     def native_value(self) -> float | None:
@@ -77,6 +79,9 @@ class MitsubishiOutdoorTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateC
         """Initialize the outdoor temperature sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_outdoor_temp"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
+        }
 
     @property
     def native_value(self) -> float | None:
@@ -84,35 +89,6 @@ class MitsubishiOutdoorTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateC
         if outside_temp := self.coordinator.data.get("outside_temp"):
             return float(outside_temp)
         return None
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return entity specific state attributes."""
-        return {"source": "Mitsubishi AC"}
-
-
-class MitsubishiPowerSavingSensor(MitsubishiEntity, SensorEntity):
-    """Power saving mode sensor for Mitsubishi AC."""
-
-    _attr_name = "Power Saving Mode"
-    _attr_icon = "mdi:power-sleep"
-    _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["Enabled", "Disabled"]
-
-    def __init__(
-        self,
-        coordinator: MitsubishiDataUpdateCoordinator,
-        config_entry: ConfigEntry,
-    ) -> None:
-        """Initialize the power saving sensor."""
-        super().__init__(coordinator, config_entry, "power_saving_mode")
-
-    @property
-    def native_value(self) -> str:
-        """Return the power saving mode."""
-        if self.coordinator.data.get("power_saving_mode"):
-            return "Enabled"
-        return "Disabled"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -162,6 +138,9 @@ class MitsubishiErrorSensor(CoordinatorEntity[MitsubishiDataUpdateCoordinator], 
         """Initialize the error status sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_error_status"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
+        }
 
     @property
     def native_value(self) -> str | None:
