@@ -3,15 +3,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
+from .entity import MitsubishiEntity
 
 
 async def async_setup_entry(
@@ -26,6 +27,8 @@ async def async_setup_entry(
             MitsubishiRoomTemperatureSensor(coordinator, config_entry),
             MitsubishiOutdoorTemperatureSensor(coordinator, config_entry),
             MitsubishiErrorSensor(coordinator, config_entry),
+            MitsubishiPowerSavingSensor(coordinator, config_entry),
+            MitsubishiDehumidifierLevelSensor(coordinator, config_entry),
         ]
     )
 
@@ -80,6 +83,63 @@ class MitsubishiOutdoorTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateC
         """Return the outdoor temperature."""
         if outside_temp := self.coordinator.data.get("outside_temp"):
             return float(outside_temp)
+        return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return entity specific state attributes."""
+        return {"source": "Mitsubishi AC"}
+
+
+class MitsubishiPowerSavingSensor(MitsubishiEntity, SensorEntity):
+    """Power saving mode sensor for Mitsubishi AC."""
+
+    _attr_name = "Power Saving Mode"
+    _attr_icon = "mdi:power-sleep"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["Enabled", "Disabled"]
+
+    def __init__(
+        self,
+        coordinator: MitsubishiDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the power saving sensor."""
+        super().__init__(coordinator, config_entry, "power_saving_mode")
+
+    @property
+    def native_value(self) -> str:
+        """Return the power saving mode."""
+        if self.coordinator.data.get("power_saving_mode"):
+            return "Enabled"
+        return "Disabled"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return entity specific state attributes."""
+        return {"source": "Mitsubishi AC"}
+
+
+class MitsubishiDehumidifierLevelSensor(MitsubishiEntity, SensorEntity):
+    """Dehumidifier level sensor for Mitsubishi AC."""
+
+    _attr_name = "Dehumidifier Level"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_device_class = SensorDeviceClass.HUMIDITY
+
+    def __init__(
+        self,
+        coordinator: MitsubishiDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the dehumidifier level sensor."""
+        super().__init__(coordinator, config_entry, "dehumidifier_level")
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the current dehumidifier setting."""
+        if dehumidifier_level := self.coordinator.data.get("dehumidifier_setting"):
+            return dehumidifier_level
         return None
 
     @property

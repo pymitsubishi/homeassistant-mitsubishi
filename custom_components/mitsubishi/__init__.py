@@ -17,7 +17,7 @@ from .coordinator import MitsubishiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.CLIMATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SELECT]
+PLATFORMS = [Platform.CLIMATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SELECT, Platform.NUMBER]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -41,15 +41,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Fetch initial data
         await coordinator.async_config_entry_first_refresh()
         
-        # Register device in device registry
+        # Get device information from coordinator data
+        device_mac = coordinator.data.get("mac", host)
+        device_serial = coordinator.data.get("serial")
+        capabilities = coordinator.data.get("capabilities", {})
+        
+        # Register device in device registry with comprehensive info
         device_registry = dr.async_get(hass)
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
-            identifiers={(DOMAIN, coordinator.data.get("mac", host))},
-            manufacturer="Mitsubishi",
-            model=coordinator.data.get("capabilities", {}).get("device_model", "MAC-577IF-2E"),
-            name=f"Mitsubishi AC ({coordinator.data.get('mac', host)})",
-            sw_version=coordinator.data.get("capabilities", {}).get("firmware_version"),
+            identifiers={(DOMAIN, device_mac)},
+            manufacturer="Mitsubishi Electric",
+            model=capabilities.get("device_model", "MAC-577IF-2E WiFi Adapter"),
+            name=f"Mitsubishi AC {device_mac[-8:]}" if device_mac else f"Mitsubishi AC ({host})",
+            sw_version=capabilities.get("firmware_version"),
+            hw_version=device_mac,
+            serial_number=device_serial,
+            suggested_area="Living Room",
+            configuration_url=f"http://{host}",
         )
         
         # Store coordinator in hass data

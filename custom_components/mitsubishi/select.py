@@ -8,7 +8,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
 from pymitsubishi import (
     VerticalWindDirection,
     HorizontalWindDirection,
@@ -16,6 +15,7 @@ from pymitsubishi import (
 
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
+from .entity import MitsubishiEntity
 
 
 # Mapping for vertical wind direction
@@ -60,6 +60,7 @@ async def async_setup_entry(
         [
             MitsubishiVerticalVaneSelect(coordinator, config_entry),
             MitsubishiHorizontalVaneSelect(coordinator, config_entry),
+            MitsubishiPowerSavingSelect(coordinator, config_entry),
         ]
     )
 
@@ -148,3 +149,39 @@ class MitsubishiHorizontalVaneSelect(
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return entity specific state attributes."""
         return {"control_type": "horizontal"}
+
+
+class MitsubishiPowerSavingSelect(MitsubishiEntity, SelectEntity):
+    """Power saving mode select for Mitsubishi AC."""
+
+    _attr_name = "Power Saving Mode"
+    _attr_icon = "mdi:power-sleep"
+    _attr_options = ["Disabled", "Enabled"]
+
+    def __init__(
+        self,
+        coordinator: MitsubishiDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the power saving select."""
+        super().__init__(coordinator, config_entry, "power_saving_select")
+
+    @property
+    def current_option(self) -> str | None:
+        """Return the current power saving mode."""
+        if self.coordinator.data.get("power_saving_mode"):
+            return "Enabled"
+        return "Disabled"
+
+    async def async_select_option(self, option: str) -> None:
+        """Set the power saving mode."""
+        enabled = option == "Enabled"
+        await self.hass.async_add_executor_job(
+            self.coordinator.controller.set_power_saving, enabled
+        )
+        await self.coordinator.async_request_refresh()
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return entity specific state attributes."""
+        return {"source": "Mitsubishi AC"}
