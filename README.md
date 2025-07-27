@@ -18,7 +18,7 @@ A Home Assistant custom component for controlling and monitoring Mitsubishi MAC-
 2. Go to "Integrations"
 3. Click the three dots in the top right corner
 4. Select "Custom repositories"
-5. Add `https://github.com/ashleigh-hopkins/homeassistant-mitsubishi` as an integration
+5. Add `https://github.com/pymitsubishi/homeassistant-mitsubishi` as an integration
 6. Install the integration
 7. Restart Home Assistant
 
@@ -73,7 +73,7 @@ The integration will automatically discover your device and create the appropria
 
 ## Development
 
-This integration uses the [pymitsubishi](https://github.com/ashleigh-hopkins/pymitsubishi) library for device communication.
+This integration uses the [pymitsubishi](https://github.com/pymitsubishi/pymitsubishi) library for device communication.
 
 ### Local Development Setup
 
@@ -106,6 +106,6 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/ashleigh-hopkins/homeassistant-mitsubishi/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/ashleigh-hopkins/homeassistant-mitsubishi/discussions)
+- **Issues**: [GitHub Issues](https://github.com/pymitsubishi/homeassistant-mitsubishi/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/pymitsubishi/homeassistant-mitsubishi/discussions)
 - **Home Assistant Community**: [Community Forum](https://community.home-assistant.io/)
