@@ -32,7 +32,7 @@ async def async_setup_entry(
     )
 
 
-class MitsubishiRoomTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateCoordinator], SensorEntity):
+class MitsubishiRoomTemperatureSensor(MitsubishiEntity, SensorEntity):
     """Room temperature sensor for Mitsubishi AC."""
 
     _attr_name = "Room Temperature"
@@ -45,11 +45,7 @@ class MitsubishiRoomTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateCoor
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the room temperature sensor."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_room_temp"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
+        super().__init__(coordinator, config_entry, "room_temperature")
 
     @property
     def native_value(self) -> float | None:
@@ -64,7 +60,7 @@ class MitsubishiRoomTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateCoor
         return {"source": "Mitsubishi AC"}
 
 
-class MitsubishiOutdoorTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateCoordinator], SensorEntity):
+class MitsubishiOutdoorTemperatureSensor(MitsubishiEntity, SensorEntity):
     """Outdoor temperature sensor for Mitsubishi AC."""
 
     _attr_name = "Outdoor Temperature"
@@ -77,11 +73,7 @@ class MitsubishiOutdoorTemperatureSensor(CoordinatorEntity[MitsubishiDataUpdateC
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the outdoor temperature sensor."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_outdoor_temp"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
+        super().__init__(coordinator, config_entry, "outdoor_temperature")
 
     @property
     def native_value(self) -> float | None:
@@ -124,7 +116,7 @@ class MitsubishiDehumidifierLevelSensor(MitsubishiEntity, SensorEntity):
         return {"source": "Mitsubishi AC"}
 
 
-class MitsubishiErrorSensor(CoordinatorEntity[MitsubishiDataUpdateCoordinator], SensorEntity):
+class MitsubishiErrorSensor(MitsubishiEntity, SensorEntity):
     """Error status sensor for Mitsubishi AC."""
 
     _attr_name = "Error Status"
@@ -136,11 +128,7 @@ class MitsubishiErrorSensor(CoordinatorEntity[MitsubishiDataUpdateCoordinator], 
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the error status sensor."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_error_status"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
+        super().__init__(coordinator, config_entry, "error_status")
 
     @property
     def native_value(self) -> str | None:

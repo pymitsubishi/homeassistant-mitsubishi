@@ -91,9 +91,7 @@ async def async_setup_entry(
     )
 
 
-class MitsubishiVerticalVaneSelect(
-    CoordinatorEntity[MitsubishiDataUpdateCoordinator], SelectEntity
-):
+class MitsubishiVerticalVaneSelect(MitsubishiEntity, SelectEntity):
     """Vertical vane direction select for Mitsubishi AC."""
 
     _attr_name = "Vertical Vane Direction"
@@ -106,11 +104,7 @@ class MitsubishiVerticalVaneSelect(
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the vertical vane select."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_vertical_vane"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
+        super().__init__(coordinator, config_entry, "vertical_vane_direction")
 
     @property
     def current_option(self) -> str | None:
@@ -136,9 +130,7 @@ class MitsubishiVerticalVaneSelect(
         return {"side": "right"}
 
 
-class MitsubishiHorizontalVaneSelect(
-    CoordinatorEntity[MitsubishiDataUpdateCoordinator], SelectEntity
-):
+class MitsubishiHorizontalVaneSelect(MitsubishiEntity, SelectEntity):
     """Horizontal vane direction select for Mitsubishi AC."""
 
     _attr_name = "Horizontal Vane Direction"
@@ -151,11 +143,7 @@ class MitsubishiHorizontalVaneSelect(
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the horizontal vane select."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_horizontal_vane"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
+        super().__init__(coordinator, config_entry, "horizontal_vane_direction")
 
     @property
     def current_option(self) -> str | None:

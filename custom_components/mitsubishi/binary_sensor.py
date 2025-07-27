@@ -31,9 +31,7 @@ async def async_setup_entry(
     )
 
 
-class MitsubishiPowerSavingBinarySensor(
-    CoordinatorEntity[MitsubishiDataUpdateCoordinator], BinarySensorEntity
-):
+class MitsubishiPowerSavingBinarySensor(MitsubishiEntity, BinarySensorEntity):
     """Power saving mode binary sensor for Mitsubishi AC."""
 
     _attr_name = "Power Saving Mode"
@@ -45,11 +43,7 @@ class MitsubishiPowerSavingBinarySensor(
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the power saving binary sensor."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_power_saving"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
+        super().__init__(coordinator, config_entry, "power_saving_mode")
 
     @property
     def is_on(self) -> bool:
@@ -62,9 +56,7 @@ class MitsubishiPowerSavingBinarySensor(
         return {"source": "Mitsubishi AC"}
 
 
-class MitsubishiErrorBinarySensor(
-    CoordinatorEntity[MitsubishiDataUpdateCoordinator], BinarySensorEntity
-):
+class MitsubishiErrorBinarySensor(MitsubishiEntity, BinarySensorEntity):
     """Error state binary sensor for Mitsubishi AC."""
 
     _attr_name = "Error State"
@@ -77,11 +69,7 @@ class MitsubishiErrorBinarySensor(
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the error binary sensor."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_error_state"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
+        super().__init__(coordinator, config_entry, "error_state")
 
     @property
     def is_on(self) -> bool:
