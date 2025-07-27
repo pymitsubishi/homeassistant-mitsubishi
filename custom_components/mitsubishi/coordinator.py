@@ -6,7 +6,6 @@ from datetime import timedelta
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-
 from pymitsubishi import MitsubishiController
 
 from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
@@ -21,7 +20,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize."""
         self.controller = controller
         self.unit_info = None  # Will be populated on first update or by config flow
-        
+
         super().__init__(
             hass,
             _LOGGER,
@@ -51,23 +50,23 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
             # Fetch unit info on first update if not already done
             if self.unit_info is None:
                 await self.fetch_unit_info()
-            
+
             # Fetch status with capability detection enabled
             success = await self.hass.async_add_executor_job(
                 self.controller.fetch_status, False, True  # debug=False, detect_capabilities=True
             )
-            
+
             if not success:
                 raise UpdateFailed("Failed to communicate with Mitsubishi Air Conditioner")
-            
+
             # Get the status summary which includes capabilities
             summary = await self.hass.async_add_executor_job(
                 self.controller.get_status_summary
             )
-            
+
             # Note: Vane direction data is now properly included in status summary with pymitsubishi 0.1.6+
-            
+
             return summary
-            
+
         except Exception as ex:
             raise UpdateFailed(f"Error communicating with API: {ex}") from ex

@@ -1,23 +1,20 @@
 """Tests for the climate platform."""
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
+import pytest
 from homeassistant.components.climate import (
-    HVACAction,
-    HVACMode,
     FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
-    FAN_MEDIUM,
+    SWING_BOTH,
+    SWING_HORIZONTAL,
     SWING_OFF,
     SWING_VERTICAL,
-    SWING_HORIZONTAL,
-    SWING_BOTH,
+    HVACAction,
+    HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE
-
-from pymitsubishi import DriveMode, PowerOnOff, WindSpeed
+from pymitsubishi import WindSpeed
 
 from custom_components.mitsubishi.climate import (
     MitsubishiClimate,
@@ -43,7 +40,7 @@ async def test_climate_init(hass, mock_coordinator, mock_config_entry):
     """Test climate entity initialization."""
     mock_coordinator.data = {"mac": "00:11:22:33:44:55"}
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    
+
     assert climate._config_entry == mock_config_entry
     assert climate.unique_id == "00:11:22:33:44:55_climate"
 
@@ -52,11 +49,11 @@ async def test_climate_init(hass, mock_coordinator, mock_config_entry):
 async def test_current_temperature(hass, mock_coordinator, mock_config_entry):
     """Test current temperature property."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    
+
     # Test with temperature data
     mock_coordinator.data = {"room_temp": 22.5}
     assert climate.current_temperature == 22.5
-    
+
     # Test without temperature data
     mock_coordinator.data = {}
     assert climate.current_temperature is None
@@ -66,11 +63,11 @@ async def test_current_temperature(hass, mock_coordinator, mock_config_entry):
 async def test_target_temperature(hass, mock_coordinator, mock_config_entry):
     """Test target temperature property."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    
+
     # Test with target temperature data
     mock_coordinator.data = {"target_temp": 24.0}
     assert climate.target_temperature == 24.0
-    
+
     # Test without target temperature data
     mock_coordinator.data = {}
     assert climate.target_temperature is None
@@ -183,7 +180,7 @@ async def test_extra_state_attributes(hass, mock_coordinator, mock_config_entry)
         "abnormal_state": True,  # Changed to True so it gets added
         "capabilities": {"heating": True, "cooling": True}
     }
-    
+
     attributes = climate.extra_state_attributes
     assert attributes["outdoor_temperature"] == 18.0
     assert attributes["power_saving_mode"] is True
@@ -197,13 +194,13 @@ async def test_extra_state_attributes(hass, mock_coordinator, mock_config_entry)
 async def test_async_set_temperature(hass, mock_coordinator, mock_config_entry, mock_async_methods, create_entity_with_setup):
     """Test setting temperature directly on entity."""
     climate = create_entity_with_setup(MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass)
-    
+
     # Mock the controller method and coordinator refresh
-    with patch.object(mock_coordinator.controller, 'set_temperature') as mock_set_temp, \
+    with patch.object(mock_coordinator.controller, 'set_temperature'), \
          mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh):
-        
+
         await climate.async_set_temperature(**{ATTR_TEMPERATURE: 25.0})
-        
+
         # Verify the executor was called with the controller method
         mock_executor.assert_called_once_with(
             mock_coordinator.controller.set_temperature, 25.0
@@ -215,10 +212,10 @@ async def test_async_set_temperature(hass, mock_coordinator, mock_config_entry, 
 async def test_async_set_temperature_none(hass, mock_coordinator, mock_config_entry):
     """Test setting temperature with None value."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    
+
     with patch.object(hass, 'async_add_executor_job') as mock_executor:
         await climate.async_set_temperature()
-        
+
         mock_executor.assert_not_called()
 
 
@@ -226,10 +223,10 @@ async def test_async_set_temperature_none(hass, mock_coordinator, mock_config_en
 async def test_async_set_hvac_mode_off(hass, mock_coordinator, mock_config_entry, mock_async_methods, create_entity_with_setup):
     """Test setting HVAC mode to off."""
     climate = create_entity_with_setup(MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass)
-    
+
     with mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh):
         await climate.async_set_hvac_mode(HVACMode.OFF)
-        
+
         mock_executor.assert_called_once_with(
             mock_coordinator.controller.set_power, False
         )
@@ -242,12 +239,12 @@ async def test_async_set_hvac_mode_heat_from_off(hass, mock_coordinator, mock_co
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
     mock_coordinator.data = {"power": "OFF"}  # Currently off
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_set_hvac_mode(HVACMode.HEAT)
-        
+
         # Should call set_power(True) and then set_mode
         assert mock_executor.call_count == 2
         mock_refresh.assert_called_once()
@@ -259,12 +256,12 @@ async def test_async_set_hvac_mode_heat_from_on(hass, mock_coordinator, mock_con
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
     mock_coordinator.data = {"power": "ON", "mode": "COOLER"}  # Currently on
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_set_hvac_mode(HVACMode.HEAT)
-        
+
         # Should only call set_mode
         assert mock_executor.call_count == 1
         mock_refresh.assert_called_once()
@@ -275,12 +272,12 @@ async def test_async_set_fan_mode(hass, mock_coordinator, mock_config_entry):
     """Test setting fan mode."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_set_fan_mode(FAN_HIGH)
-        
+
         mock_executor.assert_called_once_with(
             mock_coordinator.controller.set_fan_speed, WindSpeed.LEVEL_3
         )
@@ -292,12 +289,12 @@ async def test_async_turn_on(hass, mock_coordinator, mock_config_entry):
     """Test turning on the climate entity."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_turn_on()
-        
+
         mock_executor.assert_called_once_with(
             mock_coordinator.controller.set_power, True
         )
@@ -309,12 +306,12 @@ async def test_async_turn_off(hass, mock_coordinator, mock_config_entry):
     """Test turning off the climate entity."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_turn_off()
-        
+
         mock_executor.assert_called_once_with(
             mock_coordinator.controller.set_power, False
         )
@@ -325,7 +322,7 @@ async def test_async_turn_off(hass, mock_coordinator, mock_config_entry):
 async def test_handle_coordinator_update(hass, mock_coordinator, mock_config_entry):
     """Test handling coordinator updates."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    
+
     with patch.object(climate, 'async_write_ha_state') as mock_write_state:
         climate._handle_coordinator_update()
         mock_write_state.assert_called_once()
@@ -339,7 +336,7 @@ async def test_hvac_mode_with_invalid_drive_mode(hass, mock_coordinator, mock_co
         "power": "ON",
         "mode": "INVALID_MODE",  # This will cause KeyError in DriveMode[mode_name]
     }
-    
+
     # Should return HVACMode.OFF when KeyError occurs
     assert climate.hvac_mode == HVACMode.OFF
 
@@ -352,7 +349,7 @@ async def test_hvac_mode_no_mode_data(hass, mock_coordinator, mock_config_entry)
         "power": "ON",
         # No "mode" key to trigger the default return at line 164
     }
-    
+
     # Should return HVACMode.OFF when no mode data is available
     assert climate.hvac_mode == HVACMode.OFF
 
@@ -361,7 +358,7 @@ async def test_hvac_mode_no_mode_data(hass, mock_coordinator, mock_config_entry)
 async def test_hvac_action_with_invalid_drive_mode(hass, mock_coordinator, mock_config_entry):
     """Test hvac_action property with invalid drive mode to cover exception handling."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    
+
     # Mock hvac_mode to not return OFF so we can reach the exception in hvac_action
     with patch.object(type(climate), 'hvac_mode', new_callable=PropertyMock) as mock_hvac_mode:
         mock_hvac_mode.return_value = HVACMode.HEAT
@@ -369,7 +366,7 @@ async def test_hvac_action_with_invalid_drive_mode(hass, mock_coordinator, mock_
             "power": "ON",
             "mode": "INVALID_MODE",  # This will cause KeyError in DriveMode[mode_name]
         }
-        
+
         # Should return HVACAction.IDLE when KeyError occurs in hvac_action
         assert climate.hvac_action == HVACAction.IDLE
 
@@ -379,12 +376,12 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
     """Test setting swing mode to vertical."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_set_swing_mode(SWING_VERTICAL)
-        
+
         # Verify the vertical vane method was called
         from pymitsubishi import VerticalWindDirection
         mock_executor.assert_called_once_with(
@@ -392,7 +389,7 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
             VerticalWindDirection.SWING,
             "right"
         )
-        
+
         # Verify coordinator refresh was requested
         mock_refresh.assert_called_once()
 
@@ -402,19 +399,19 @@ async def test_async_set_swing_mode_horizontal(hass, mock_coordinator, mock_conf
     """Test setting swing mode to horizontal."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_set_swing_mode(SWING_HORIZONTAL)
-        
+
         # Verify the horizontal vane method was called
         from pymitsubishi import HorizontalWindDirection
         mock_executor.assert_called_once_with(
             mock_coordinator.controller.set_horizontal_vane,
             HorizontalWindDirection.LCR_S
         )
-        
+
         # Verify coordinator refresh was requested
         mock_refresh.assert_called_once()
 
@@ -424,25 +421,25 @@ async def test_async_set_swing_mode_both(hass, mock_coordinator, mock_config_ent
     """Test setting swing mode to both vertical and horizontal."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_set_swing_mode(SWING_BOTH)
-        
+
         # Verify both vertical and horizontal vane methods were called
-        from pymitsubishi import VerticalWindDirection, HorizontalWindDirection
+        from pymitsubishi import HorizontalWindDirection, VerticalWindDirection
         call_args_list = mock_executor.call_args_list
         assert len(call_args_list) == 2
-        
+
         # Check that both calls were made (order may vary)
         vertical_call = (mock_coordinator.controller.set_vertical_vane, VerticalWindDirection.SWING, "right")
         horizontal_call = (mock_coordinator.controller.set_horizontal_vane, HorizontalWindDirection.LCR_S)
-        
+
         call_args = [args[0] for args in call_args_list]
         assert vertical_call in call_args
         assert horizontal_call in call_args
-        
+
         # Verify coordinator refresh was requested
         mock_refresh.assert_called_once()
 
@@ -452,14 +449,14 @@ async def test_async_set_swing_mode_off(hass, mock_coordinator, mock_config_entr
     """Test setting swing mode to off (no action taken in current implementation)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    
+
     with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
          patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-        
+
         await climate.async_set_swing_mode(SWING_OFF)
-        
+
         # For SWING_OFF, no controller methods should be called in current implementation
         mock_executor.assert_not_called()
-        
+
         # Only refresh should be called
         mock_refresh.assert_called_once()

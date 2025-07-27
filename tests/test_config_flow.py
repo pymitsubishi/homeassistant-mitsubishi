@@ -1,11 +1,10 @@
 """Test the Mitsubishi Air Conditioner config flow."""
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.config_entries import ConfigEntry
 
 from custom_components.mitsubishi.const import DOMAIN
 
@@ -63,7 +62,7 @@ class TestConfigFlow:
         ) as mock_api_class:
             mock_api = MagicMock()
             mock_api_class.return_value = mock_api
-            
+
             with patch(
                 "custom_components.mitsubishi.config_flow.MitsubishiController"
             ) as mock_controller_class:
@@ -90,7 +89,7 @@ class TestConfigFlow:
             "custom_components.mitsubishi.config_flow.MitsubishiAPI"
         ) as mock_api_class:
             mock_api_class.return_value = mock_api
-            
+
             with patch(
                 "custom_components.mitsubishi.config_flow.MitsubishiController"
             ) as mock_controller_class:
@@ -126,7 +125,7 @@ class TestConfigFlow:
         ) as mock_api_class:
             mock_api = MagicMock()
             mock_api_class.return_value = mock_api
-            
+
             with patch(
                 "custom_components.mitsubishi.config_flow.MitsubishiController"
             ) as mock_controller_class:
@@ -184,7 +183,7 @@ class TestConfigFlow:
             "custom_components.mitsubishi.config_flow.MitsubishiAPI"
         ) as mock_api_class:
             mock_api_class.return_value = mock_api
-            
+
             with patch(
                 "custom_components.mitsubishi.config_flow.MitsubishiController"
             ) as mock_controller_class:
@@ -229,29 +228,29 @@ class TestConfigFlow:
     @pytest.mark.asyncio
     async def test_validate_input_exception_during_validation(self, hass: HomeAssistant) -> None:
         """Test validate_input when exception occurs during validation process."""
-        from custom_components.mitsubishi.config_flow import validate_input, CannotConnect
-        
+        from custom_components.mitsubishi.config_flow import CannotConnect, validate_input
+
         test_data = {
             "host": "192.168.1.100",
             "encryption_key": "test_key",
         }
-        
+
         with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class, \
              patch("custom_components.mitsubishi.config_flow.MitsubishiController") as mock_controller_class:
-            
+
             # Set up mocks for exception during get_status_summary
             mock_api = MagicMock()
             mock_api.close = MagicMock()
             mock_api_class.return_value = mock_api
-            
+
             mock_controller = MagicMock()
             mock_controller.fetch_status = MagicMock(return_value=True)
             mock_controller.get_status_summary = MagicMock(side_effect=Exception("Summary error"))
             mock_controller_class.return_value = mock_controller
-            
+
             with pytest.raises(CannotConnect):
                 await validate_input(hass, test_data)
-            
+
             # Verify API was closed even when exception occurs
             mock_api.close.assert_called_once()
 

@@ -7,16 +7,14 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from pymitsubishi import (
-    VerticalWindDirection,
     HorizontalWindDirection,
+    VerticalWindDirection,
 )
 
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
 from .entity import MitsubishiEntity
-
 
 # Mapping for vertical wind direction
 VERTICAL_WIND_OPTIONS = {

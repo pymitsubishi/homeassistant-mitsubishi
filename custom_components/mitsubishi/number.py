@@ -58,20 +58,20 @@ class MitsubishiDehumidifierNumber(MitsubishiEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set the dehumidifier level."""
         _LOGGER.debug("Setting dehumidifier level to %s", value)
-        
+
         try:
             # Call the controller method to set dehumidifier level
             success = await self.hass.async_add_executor_job(
                 self.coordinator.controller.set_dehumidifier, int(value), False
             )
-            
+
             if success:
                 _LOGGER.debug("Successfully set dehumidifier level to %s", value)
                 # Trigger a coordinator update to refresh the state
                 await self.coordinator.async_request_refresh()
             else:
                 _LOGGER.error("Failed to set dehumidifier level to %s", value)
-                
+
         except Exception as ex:
             _LOGGER.error("Error setting dehumidifier level: %s", ex)
 

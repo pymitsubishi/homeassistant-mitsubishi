@@ -24,7 +24,7 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._key = key
-        
+
         # Get device information (handle case where coordinator.data is None)
         if coordinator.data:
             device_mac = coordinator.data.get("mac", config_entry.data["host"])
@@ -34,7 +34,7 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
             device_mac = config_entry.data["host"]
             device_serial = None
             capabilities = {}
-        
+
         # Set device info
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_mac)},
@@ -46,7 +46,7 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
             serial_number=device_serial,
             configuration_url=f"http://{config_entry.data['host']}",
         )
-        
+
         # Set unique ID
         self._attr_unique_id = f"{device_mac}_{key}"
 

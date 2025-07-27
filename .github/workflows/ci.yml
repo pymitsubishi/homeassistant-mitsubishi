@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-homeassistant-custom-component pytest-cov
+        pip install -r requirements.txt
+
+    - name: Lint with ruff (if available)
+      run: |
+        pip install ruff || true
+        ruff check . || true
+      continue-on-error: true
+
+    - name: Type check with mypy (if available)
+      run: |
+        pip install mypy || true
+        mypy custom_components/ || true
+      continue-on-error: true
+
+    - name: Run tests with pytest
+      run: |
+        python -m pytest tests/ \
+          --cov=custom_components/mitsubishi \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --cov-fail-under=100 \
+          -v
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.13'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  validate-manifest:
+    name: Validate Home Assistant manifest
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install Home Assistant
+      run: |
+        python -m pip install --upgrade pip
+        pip install homeassistant
+
+    - name: Validate manifest
+      run: |
+        python -c "
+        import json
+        import sys
+        
+        try:
+            with open('custom_components/mitsubishi/manifest.json') as f:
+                manifest = json.load(f)
+            
+            required_fields = ['domain', 'name', 'documentation', 'codeowners', 'requirements', 'version']
+            missing = [field for field in required_fields if field not in manifest]
+            
+            if missing:
+                print(f'Missing required fields: {missing}')
+                sys.exit(1)
+            
+            print('Manifest validation passed')
+            print(f'Domain: {manifest.get(\"domain\")}')
+            print(f'Version: {manifest.get(\"version\")}')
+            print(f'Requirements: {manifest.get(\"requirements\")}')
+        except Exception as e:
+            print(f'Manifest validation failed: {e}')
+            sys.exit(1)
+        "
+
+  pre-commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install pre-commit
+      run: |
+        python -m pip install --upgrade pip
+        pip install pre-commit
+
+    - name: Run pre-commit hooks
+      run: |
+        # Only run if .pre-commit-config.yaml exists
+        if [ -f .pre-commit-config.yaml ]; then
+          pre-commit run --all-files
+        else
+          echo "No pre-commit config found, skipping"
+        fi
+      continue-on-error: true

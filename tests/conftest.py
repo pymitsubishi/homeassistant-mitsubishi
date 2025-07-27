@@ -1,9 +1,23 @@
 """Shared fixtures for Mitsubishi integration tests."""
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from contextlib import contextmanager
-from homeassistant.const import CONF_HOST
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST
+
+from custom_components.mitsubishi.const import (
+    CONF_ADMIN_PASSWORD,
+    CONF_ADMIN_USERNAME,
+    CONF_ENABLE_CAPABILITY_DETECTION,
+    CONF_ENCRYPTION_KEY,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_ADMIN_PASSWORD,
+    DEFAULT_ADMIN_USERNAME,
+    DEFAULT_ENCRYPTION_KEY,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+)
 
 # Import Home Assistant test utilities
 pytest_plugins = "pytest_homeassistant_custom_component"
@@ -13,21 +27,6 @@ pytest_plugins = "pytest_homeassistant_custom_component"
 def auto_enable_custom_integrations(enable_custom_integrations):
     """Enable custom integrations defined in the test dir."""
     yield
-
-from custom_components.mitsubishi.const import (
-    DOMAIN,
-    CONF_ENCRYPTION_KEY,
-    DEFAULT_ENCRYPTION_KEY,
-    CONF_ADMIN_USERNAME,
-    DEFAULT_ADMIN_USERNAME,
-    CONF_ADMIN_PASSWORD,
-    DEFAULT_ADMIN_PASSWORD,
-    CONF_SCAN_INTERVAL,
-    DEFAULT_SCAN_INTERVAL,
-    CONF_ENABLE_CAPABILITY_DETECTION,
-)
-
-
 
 
 @pytest.fixture
@@ -243,12 +242,12 @@ def create_entity_with_setup():
     def _create_entity_with_setup(entity_class, coordinator, config_entry, hass=None, data_updates=None):
         """Create entity instance with optional hass setup and data updates."""
         entity = entity_class(coordinator, config_entry)
-        
+
         if data_updates:
             coordinator.data.update(data_updates)
-            
+
         if hass:
             entity.hass = hass
-            
+
         return entity
     return _create_entity_with_setup

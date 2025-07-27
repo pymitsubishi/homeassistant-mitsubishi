@@ -4,13 +4,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
@@ -27,14 +26,14 @@ async def async_setup_entry(
     """Set up Mitsubishi sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     _LOGGER.info("Setting up Mitsubishi sensors with coordinator data available: %s", coordinator.data is not None)
-    
+
     # Create all sensors, handling any that fail gracefully
     sensors = []
-    
+
     # Standard sensors
     sensor_classes = [
         ("room_temperature", MitsubishiRoomTemperatureSensor),
-        ("outdoor_temperature", MitsubishiOutdoorTemperatureSensor), 
+        ("outdoor_temperature", MitsubishiOutdoorTemperatureSensor),
         ("error_status", MitsubishiErrorSensor),
         ("dehumidifier_level", MitsubishiDehumidifierLevelSensor),
         ("unit_info", MitsubishiUnitInfoSensor),
@@ -42,7 +41,7 @@ async def async_setup_entry(
         ("unit_type", MitsubishiUnitTypeSensor),
         ("wifi_info", MitsubishiWifiInfoSensor),
     ]
-    
+
     for sensor_name, sensor_class in sensor_classes:
         try:
             _LOGGER.debug("Creating sensor: %s", sensor_name)
@@ -54,7 +53,7 @@ async def async_setup_entry(
                 _LOGGER.warning("Sensor %s returned None", sensor_name)
         except Exception as e:
             _LOGGER.exception("Failed to create %s sensor: %s", sensor_name, e)
-    
+
     _LOGGER.info("Created %d sensors out of %d attempted", len(sensors), len(sensor_classes))
     async_add_entities(sensors)
 
@@ -174,22 +173,22 @@ class MitsubishiErrorSensor(MitsubishiEntity, SensorEntity):
 
 class BaseMitsubishiDiagnosticSensor(MitsubishiEntity, SensorEntity):
     """Base class for diagnostic sensors that use unit_info data."""
-    
+
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    
+
     def _get_unit_info_data(self) -> tuple[dict, dict]:
         """Get adaptor_info and unit_info dictionaries, handling None coordinator.unit_info."""
         if not self.coordinator.unit_info:
             return {}, {}
-        
+
         adaptor_info = self.coordinator.unit_info.get("adaptor_info", {})
         unit_info = self.coordinator.unit_info.get("unit_info", {})
         return adaptor_info, unit_info
-    
+
     def _filter_none_values(self, attributes: dict) -> dict:
         """Remove None values from attributes dictionary."""
         return {k: v for k, v in attributes.items() if v is not None}
-    
+
     def _get_unavailable_status(self) -> dict:
         """Return status dictionary when unit info is not available."""
         return {"status": "Unit info not available"}
@@ -219,12 +218,12 @@ class MitsubishiUnitInfoSensor(BaseMitsubishiDiagnosticSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return comprehensive unit information as attributes."""
         adaptor_info, unit_info = self._get_unit_info_data()
-        
+
         if not adaptor_info and not unit_info:
             return self._get_unavailable_status()
-        
+
         attributes = {}
-        
+
         # Add adaptor information
         if adaptor_info:
             attributes.update({
@@ -245,7 +244,7 @@ class MitsubishiUnitInfoSensor(BaseMitsubishiDiagnosticSensor):
                 "hems_comm_status": adaptor_info.get("hems_comm_status"),
                 "soi_comm_status": adaptor_info.get("soi_comm_status"),
             })
-        
+
         # Add unit type information
         if unit_info:
             attributes.update({
@@ -253,7 +252,7 @@ class MitsubishiUnitInfoSensor(BaseMitsubishiDiagnosticSensor):
                 "it_protocol_version": unit_info.get("it_protocol_version"),
                 "unit_error_code": unit_info.get("error_code"),
             })
-        
+
         return self._filter_none_values(attributes)
 
 
@@ -281,10 +280,10 @@ class MitsubishiFirmwareVersionSensor(BaseMitsubishiDiagnosticSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return detailed version information as attributes."""
         adaptor_info, unit_info = self._get_unit_info_data()
-        
+
         if not adaptor_info and not unit_info:
             return self._get_unavailable_status()
-        
+
         attributes = {
             "release_version": adaptor_info.get("release_version"),
             "flash_version": adaptor_info.get("flash_version"),
@@ -293,7 +292,7 @@ class MitsubishiFirmwareVersionSensor(BaseMitsubishiDiagnosticSensor):
             "test_version": adaptor_info.get("test_version"),
             "protocol_version": unit_info.get("it_protocol_version"),
         }
-        
+
         return self._filter_none_values(attributes)
 
 
@@ -321,10 +320,10 @@ class MitsubishiUnitTypeSensor(BaseMitsubishiDiagnosticSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return unit-related information as attributes."""
         adaptor_info, unit_info = self._get_unit_info_data()
-        
+
         if not adaptor_info and not unit_info:
             return self._get_unavailable_status()
-        
+
         attributes = {
             "model": adaptor_info.get("model"),
             "device_id": adaptor_info.get("device_id"),
@@ -332,7 +331,7 @@ class MitsubishiUnitTypeSensor(BaseMitsubishiDiagnosticSensor):
             "protocol_version": unit_info.get("it_protocol_version"),
             "unit_error_code": unit_info.get("error_code"),
         }
-        
+
         return self._filter_none_values(attributes)
 
 
@@ -363,10 +362,10 @@ class MitsubishiWifiInfoSensor(BaseMitsubishiDiagnosticSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return WiFi and communication status as attributes."""
         adaptor_info, unit_info = self._get_unit_info_data()
-        
+
         if not adaptor_info and not unit_info:
             return self._get_unavailable_status()
-        
+
         attributes = {
             "mac_address": adaptor_info.get("mac_address"),
             "wifi_channel": adaptor_info.get("wifi_channel"),
@@ -377,6 +376,6 @@ class MitsubishiWifiInfoSensor(BaseMitsubishiDiagnosticSensor):
             "hems_comm_status": adaptor_info.get("hems_comm_status"),
             "soi_comm_status": adaptor_info.get("soi_comm_status"),
         }
-        
+
         return self._filter_none_values(attributes)
 

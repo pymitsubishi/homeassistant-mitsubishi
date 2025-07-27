@@ -1,11 +1,36 @@
 # Home Assistant Mitsubishi Air Conditioner Integration
 
+[![CI](https://github.com/pymitsubishi/homeassistant-mitsubishi/workflows/CI/badge.svg)](https://github.com/pymitsubishi/homeassistant-mitsubishi/actions)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub Release](https://img.shields.io/github/release/pymitsubishi/homeassistant-mitsubishi.svg)](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/pymitsubishi/homeassistant-mitsubishi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Home Assistant custom component for controlling and monitoring Mitsubishi MAC-577IF-2E air conditioners.
+
+## CI/CD
+
+This repository uses GitHub Actions for continuous integration:
+
+- **Python Versions**: 3.12, 3.13
+- **Tests**: Runs pytest with coverage and enforces a 100% code coverage threshold.
+- **Lint and Format**: Uses ruff for linting and formatting.
+- **Type Checking**: Uses mypy for static type checking.
+- **Pre-commit Hooks**: Runs a series of code quality checks on each commit.
+- **Manifest Validation**: Checks Home Assistant manifest for required fields.
+
+Check the .github/workflows/ci.yml file for more details.
+
+To run tests locally:
+
+```bash
+git clone https://github.com/pymitsubishi/homeassistant-mitsubishi
+cd homeassistant-mitsubishi
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pytest tests --cov=custom_components/mitsubishi --cov-report=term-missing -v
+```
 
 ## Features
 
@@ -58,6 +83,13 @@ The integration will automatically discover your device and create the appropria
 - **Room Temperature**: Current room temperature
 - **Outdoor Temperature**: Outside temperature (if available)
 - **Error Status**: Device error codes and abnormal states
+- **Dehumidifier Level**: Current dehumidifier setting percentage
+
+### Diagnostic Sensors
+- **Unit Information**: Complete device model and configuration details
+- **Firmware Version**: WiFi adapter firmware and version information
+- **Unit Type**: Air conditioner type and manufacturing details
+- **WiFi Information**: Signal strength and communication status
 
 ## Requirements
 

@@ -1,22 +1,21 @@
 """Tests for the sensor platform."""
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock
 
-from homeassistant.config_entries import ConfigEntry
-
+from custom_components.mitsubishi.const import DOMAIN
 from custom_components.mitsubishi.sensor import (
-    MitsubishiRoomTemperatureSensor,
-    MitsubishiOutdoorTemperatureSensor,
     MitsubishiDehumidifierLevelSensor,
     MitsubishiErrorSensor,
-    MitsubishiUnitInfoSensor,
     MitsubishiFirmwareVersionSensor,
+    MitsubishiOutdoorTemperatureSensor,
+    MitsubishiRoomTemperatureSensor,
+    MitsubishiUnitInfoSensor,
     MitsubishiUnitTypeSensor,
     MitsubishiWifiInfoSensor,
-    BaseMitsubishiDiagnosticSensor,
     async_setup_entry,
 )
-from custom_components.mitsubishi.const import DOMAIN
+
 
 @pytest.mark.asyncio
 async def test_async_setup_entry(hass, mock_coordinator, mock_config_entry):
@@ -255,18 +254,50 @@ async def test_wifi_info_sensor_no_rssi(hass, mock_coordinator, mock_config_entr
 async def test_base_diagnostic_sensor_helper_methods(hass, mock_coordinator, mock_config_entry):
     """Test the helper methods in BaseMitsubishiDiagnosticSensor."""
     sensor = MitsubishiFirmwareVersionSensor(mock_coordinator, mock_config_entry)
-    
+
     # Test _filter_none_values
     test_dict = {"key1": "value1", "key2": None, "key3": "value3"}
     filtered = sensor._filter_none_values(test_dict)
     assert filtered == {"key1": "value1", "key3": "value3"}
-    
+
     # Test _get_unavailable_status
     status = sensor._get_unavailable_status()
     assert status == {"status": "Unit info not available"}
-    
+
     # Test _get_unit_info_data with no unit_info
     mock_coordinator.unit_info = None
     adaptor_info, unit_info = sensor._get_unit_info_data()
     assert adaptor_info == {}
     assert unit_info == {}
+
+
+@pytest.mark.asyncio
+async def test_async_setup_entry_sensor_creation_none(hass, mock_coordinator, mock_config_entry):
+    """Test async_setup_entry when sensor creation returns None."""
+    hass.data[DOMAIN] = {mock_config_entry.entry_id: mock_coordinator}
+    async_add_entities = MagicMock()
+
+    # Mock one sensor class to return None
+    with patch('custom_components.mitsubishi.sensor.MitsubishiRoomTemperatureSensor', return_value=None):
+        await async_setup_entry(hass, mock_config_entry, async_add_entities)
+
+    async_add_entities.assert_called_once()
+    entities = async_add_entities.call_args[0][0]
+    # Should have 7 entities instead of 8 since one returned None
+    assert len(entities) == 7
+
+
+@pytest.mark.asyncio
+async def test_async_setup_entry_sensor_creation_exception(hass, mock_coordinator, mock_config_entry):
+    """Test async_setup_entry when sensor creation raises an exception."""
+    hass.data[DOMAIN] = {mock_config_entry.entry_id: mock_coordinator}
+    async_add_entities = MagicMock()
+
+    # Mock one sensor class to raise an exception
+    with patch('custom_components.mitsubishi.sensor.MitsubishiOutdoorTemperatureSensor', side_effect=Exception("Test exception")):
+        await async_setup_entry(hass, mock_config_entry, async_add_entities)
+
+    async_add_entities.assert_called_once()
+    entities = async_add_entities.call_args[0][0]
+    # Should have 7 entities instead of 8 since one failed to create
+    assert len(entities) == 7

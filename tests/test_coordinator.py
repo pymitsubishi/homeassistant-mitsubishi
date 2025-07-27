@@ -1,12 +1,12 @@
 """Tests for the MitsubishiDataUpdateCoordinator."""
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from custom_components.mitsubishi.coordinator import MitsubishiDataUpdateCoordinator
 from custom_components.mitsubishi.const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from custom_components.mitsubishi.coordinator import MitsubishiDataUpdateCoordinator
 
 
 @pytest.mark.asyncio
@@ -15,7 +15,7 @@ async def test_coordinator_init(hass, mock_mitsubishi_controller):
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller, DEFAULT_SCAN_INTERVAL
     )
-    
+
     assert coordinator.controller == mock_mitsubishi_controller
     assert coordinator.unit_info is None
     assert coordinator.name == DOMAIN
@@ -29,7 +29,7 @@ async def test_coordinator_init_custom_interval(hass, mock_mitsubishi_controller
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller, custom_interval
     )
-    
+
     assert coordinator.update_interval == timedelta(seconds=custom_interval)
 
 
@@ -39,15 +39,15 @@ async def test_fetch_unit_info_success(hass, mock_mitsubishi_controller):
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
-    
+
     expected_unit_info = {
         'adaptor_info': {'model': 'MAC-577IF-2E'},
         'unit_info': {'type': 'Air Conditioner'}
     }
     mock_mitsubishi_controller.get_unit_info.return_value = expected_unit_info
-    
+
     result = await coordinator.fetch_unit_info()
-    
+
     assert result == expected_unit_info
     assert coordinator.unit_info == expected_unit_info
 
@@ -58,11 +58,11 @@ async def test_fetch_unit_info_no_method(hass):
     mock_controller = MagicMock()
     # Remove get_unit_info method
     del mock_controller.get_unit_info
-    
+
     coordinator = MitsubishiDataUpdateCoordinator(hass, mock_controller)
-    
+
     result = await coordinator.fetch_unit_info()
-    
+
     assert result is None
     assert coordinator.unit_info is None
 
@@ -73,11 +73,11 @@ async def test_fetch_unit_info_exception(hass, mock_mitsubishi_controller):
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
-    
+
     mock_mitsubishi_controller.get_unit_info.side_effect = Exception("Network error")
-    
+
     result = await coordinator.fetch_unit_info()
-    
+
     assert result is None
     assert coordinator.unit_info is None
 
@@ -103,7 +103,7 @@ async def test_async_update_data_success(hass, mock_mitsubishi_controller):
         mock_executor.side_effect = [None, True, expected_summary]  # unit_info, fetch_status, get_status_summary
 
         result = await coordinator._async_update_data()
-        
+
         assert result == expected_summary
         # Verify fetch_status was called with correct parameters
         mock_executor.assert_any_call(
@@ -117,17 +117,17 @@ async def test_async_update_data_with_unit_info_fetch(hass, mock_mitsubishi_cont
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
-    
+
     # Mock unit info fetch
     expected_unit_info = {'adaptor_info': {'model': 'MAC-577IF-2E'}}
     mock_mitsubishi_controller.get_unit_info.return_value = expected_unit_info
-    
+
     expected_summary = {'power': 'ON'}
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
-    
+
     result = await coordinator._async_update_data()
-    
+
     assert result == expected_summary
     assert coordinator.unit_info == expected_unit_info
 
@@ -138,19 +138,19 @@ async def test_async_update_data_with_vane_data(hass, mock_mitsubishi_controller
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
-    
+
     # pymitsubishi 0.1.6+ includes vane data in the status summary
     expected_summary = {
         'power': 'ON',
         'vertical_vane_right': 'AUTO',
-        'vertical_vane_left': 'AUTO', 
+        'vertical_vane_left': 'AUTO',
         'horizontal_vane': 'AUTO'
     }
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
-    
+
     result = await coordinator._async_update_data()
-    
+
     # Vane data should be present in result (included by pymitsubishi)
     assert result == expected_summary
     assert result['vertical_vane_right'] == "AUTO"
@@ -164,9 +164,9 @@ async def test_async_update_data_fetch_status_fails(hass, mock_mitsubishi_contro
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
-    
+
     mock_mitsubishi_controller.fetch_status.return_value = False
-    
+
     with pytest.raises(UpdateFailed, match="Failed to communicate with Mitsubishi Air Conditioner"):
         await coordinator._async_update_data()
 
@@ -177,9 +177,9 @@ async def test_async_update_data_exception(hass, mock_mitsubishi_controller):
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
-    
+
     mock_mitsubishi_controller.fetch_status.side_effect = Exception("Network error")
-    
+
     with pytest.raises(UpdateFailed, match="Error communicating with API: Network error"):
         await coordinator._async_update_data()
 
@@ -190,16 +190,16 @@ async def test_async_update_data_skip_unit_info_if_already_set(hass, mock_mitsub
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller
     )
-    
+
     # Pre-set unit info
     coordinator.unit_info = {'existing': 'data'}
-    
+
     expected_summary = {'power': 'ON'}
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
-    
+
     result = await coordinator._async_update_data()
-    
+
     assert result == expected_summary
     # get_unit_info should not have been called
     mock_mitsubishi_controller.get_unit_info.assert_not_called()

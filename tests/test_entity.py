@@ -1,12 +1,12 @@
 """Tests for the MobileEntity class."""
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from homeassistant.config_entries import ConfigEntry
 
-from custom_components.mitsubishi.entity import MitsubishiEntity
 from custom_components.mitsubishi.const import DOMAIN
-from custom_components.mitsubishi.coordinator import MitsubishiDataUpdateCoordinator
+from custom_components.mitsubishi.entity import MitsubishiEntity
+
 
 @pytest.mark.asyncio
 async def test_mitsubishi_entity_initialization(hass):
@@ -98,7 +98,7 @@ async def test_mitsubishi_entity_initialization_with_none_data(hass):
     # Check that entity was created successfully
     assert entity._config_entry == mock_config_entry
     assert entity._key == "test_key"
-    
+
     # Should have device info based on host fallback
     assert entity.device_info["identifiers"] == {(DOMAIN, "192.168.1.100")}
     assert entity.device_info["manufacturer"] == "Mitsubishi Electric"
@@ -106,9 +106,9 @@ async def test_mitsubishi_entity_initialization_with_none_data(hass):
     assert entity.device_info["name"] == "Mitsubishi AC 68.1.100"  # Last 8 chars of IP
     assert entity.device_info["hw_version"] == "192.168.1.100"
     assert entity.device_info["serial_number"] is None
-    
+
     # Check unique ID
     assert entity.unique_id == "192.168.1.100_test_key"
-    
+
     # Check availability
     assert entity.available is False
