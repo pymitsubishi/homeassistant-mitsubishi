@@ -29,6 +29,9 @@ async def async_setup_entry(
             MitsubishiErrorSensor(coordinator, config_entry),
             MitsubishiDehumidifierLevelSensor(coordinator, config_entry),
             MitsubishiUnitInfoSensor(coordinator, config_entry),
+            MitsubishiFirmwareVersionSensor(coordinator, config_entry),
+            MitsubishiUnitTypeSensor(coordinator, config_entry),
+            MitsubishiWifiInfoSensor(coordinator, config_entry),
         ]
     )
 
@@ -207,6 +210,143 @@ class MitsubishiUnitInfoSensor(MitsubishiEntity, SensorEntity):
                 "it_protocol_version": unit_info.get("it_protocol_version"),
                 "unit_error_code": unit_info.get("error_code"),
             })
+        
+        # Remove None values
+        return {k: v for k, v in attributes.items() if v is not None}
+
+
+class MitsubishiFirmwareVersionSensor(MitsubishiEntity, SensorEntity):
+    """Firmware version diagnostic sensor for Mitsubishi AC."""
+
+    _attr_name = "Firmware Version"
+    _attr_icon = "mdi:chip"
+    _attr_entity_category = "diagnostic"
+
+    def __init__(
+        self,
+        coordinator: MitsubishiDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the firmware version sensor."""
+        super().__init__(coordinator, config_entry, "firmware_version")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the app version as the main state."""
+        if self.coordinator.unit_info:
+            adaptor_info = self.coordinator.unit_info.get("adaptor_info", {})
+            return adaptor_info.get("app_version", "Unknown")
+        return "Unknown"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return detailed version information as attributes."""
+        if not self.coordinator.unit_info:
+            return {"status": "Unit info not available"}
+        
+        adaptor_info = self.coordinator.unit_info.get("adaptor_info", {})
+        unit_info = self.coordinator.unit_info.get("unit_info", {})
+        
+        attributes = {
+            "release_version": adaptor_info.get("release_version"),
+            "flash_version": adaptor_info.get("flash_version"),
+            "boot_version": adaptor_info.get("boot_version"),
+            "platform_version": adaptor_info.get("platform_version"),
+            "test_version": adaptor_info.get("test_version"),
+            "protocol_version": unit_info.get("it_protocol_version"),
+        }
+        
+        # Remove None values
+        return {k: v for k, v in attributes.items() if v is not None}
+
+
+class MitsubishiUnitTypeSensor(MitsubishiEntity, SensorEntity):
+    """Unit type diagnostic sensor for Mitsubishi AC."""
+
+    _attr_name = "Unit Type"
+    _attr_icon = "mdi:air-conditioner"
+    _attr_entity_category = "diagnostic"
+
+    def __init__(
+        self,
+        coordinator: MitsubishiDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the unit type sensor."""
+        super().__init__(coordinator, config_entry, "unit_type")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the unit type."""
+        if self.coordinator.unit_info:
+            unit_info = self.coordinator.unit_info.get("unit_info", {})
+            return unit_info.get("type", "Unknown")
+        return "Unknown"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return unit-related information as attributes."""
+        if not self.coordinator.unit_info:
+            return {"status": "Unit info not available"}
+        
+        adaptor_info = self.coordinator.unit_info.get("adaptor_info", {})
+        unit_info = self.coordinator.unit_info.get("unit_info", {})
+        
+        attributes = {
+            "model": adaptor_info.get("model"),
+            "device_id": adaptor_info.get("device_id"),
+            "manufacturing_date": adaptor_info.get("manufacturing_date"),
+            "protocol_version": unit_info.get("it_protocol_version"),
+            "unit_error_code": unit_info.get("error_code"),
+        }
+        
+        # Remove None values
+        return {k: v for k, v in attributes.items() if v is not None}
+
+
+class MitsubishiWifiInfoSensor(MitsubishiEntity, SensorEntity):
+    """WiFi information diagnostic sensor for Mitsubishi AC."""
+
+    _attr_name = "WiFi Information"
+    _attr_icon = "mdi:wifi"
+    _attr_entity_category = "diagnostic"
+
+    def __init__(
+        self,
+        coordinator: MitsubishiDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the WiFi info sensor."""
+        super().__init__(coordinator, config_entry, "wifi_info")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the WiFi signal strength as the main state."""
+        if self.coordinator.unit_info:
+            adaptor_info = self.coordinator.unit_info.get("adaptor_info", {})
+            rssi = adaptor_info.get("rssi_dbm")
+            if rssi is not None:
+                return f"{rssi} dBm"
+        return "Unknown"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return WiFi and communication status as attributes."""
+        if not self.coordinator.unit_info:
+            return {"status": "Unit info not available"}
+        
+        adaptor_info = self.coordinator.unit_info.get("adaptor_info", {})
+        
+        attributes = {
+            "mac_address": adaptor_info.get("mac_address"),
+            "wifi_channel": adaptor_info.get("wifi_channel"),
+            "rssi_dbm": adaptor_info.get("rssi_dbm"),
+            "it_comm_status": adaptor_info.get("it_comm_status"),
+            "server_operation": adaptor_info.get("server_operation"),
+            "server_comm_status": adaptor_info.get("server_comm_status"),
+            "hems_comm_status": adaptor_info.get("hems_comm_status"),
+            "soi_comm_status": adaptor_info.get("soi_comm_status"),
+        }
         
         # Remove None values
         return {k: v for k, v in attributes.items() if v is not None}
