@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mitsubishi Air Conditioner",
+        "description": "Configure your Mitsubishi MAC-577IF-2E air conditioner",
+        "data": {
+          "host": "IP Address",
+          "encryption_key": "Encryption Key",
+          "enable_capability_detection": "Enable capability detection"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the air conditioner. Please check the IP address and ensure the device is accessible.",
+      "unknown": "Unexpected error occurred. Please try again."
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  }
+}

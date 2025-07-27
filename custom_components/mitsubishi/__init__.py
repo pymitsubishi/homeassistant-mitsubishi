@@ -8,25 +8,27 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import device_registry as dr
 
 from pymitsubishi import MitsubishiAPI, MitsubishiController
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY
 from .coordinator import MitsubishiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.CLIMATE, Platform.SENSOR]
+PLATFORMS = [Platform.CLIMATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SELECT]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Mitsubishi Air Conditioner from a config entry."""
     
     host = entry.data[CONF_HOST]
+    encryption_key = entry.data.get(CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY)
     
     try:
         # Initialize the API and controller
-        api = MitsubishiAPI(device_ip=host)
+        api = MitsubishiAPI(device_ip=host, encryption_key=encryption_key)
         controller = MitsubishiController(api=api)
         
         # Test connection
@@ -38,6 +40,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         
         # Fetch initial data
         await coordinator.async_config_entry_first_refresh()
+        
+        # Register device in device registry
+        device_registry = dr.async_get(hass)
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, coordinator.data.get("mac", host))},
+            manufacturer="Mitsubishi",
+            model=coordinator.data.get("capabilities", {}).get("device_model", "MAC-577IF-2E"),
+            name=f"Mitsubishi AC ({coordinator.data.get('mac', host)})",
+            sw_version=coordinator.data.get("capabilities", {}).get("firmware_version"),
+        )
         
         # Store coordinator in hass data
         hass.data.setdefault(DOMAIN, {})

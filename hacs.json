@@ -1,0 +1,8 @@
+{
+  "name": "Mitsubishi Air Conditioner",
+  "content_in_root": false,
+  "zip_release": false,
+  "filename": "mitsubishi.zip",
+  "country": ["AU", "NZ", "JP", "US", "CA", "GB", "EU"],
+  "homeassistant": "2025.1.0"
+}

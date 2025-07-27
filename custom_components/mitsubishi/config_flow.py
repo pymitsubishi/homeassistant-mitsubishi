@@ -14,13 +14,14 @@ from homeassistant.exceptions import HomeAssistantError
 
 from pymitsubishi import MitsubishiAPI, MitsubishiController
 
-from .const import DOMAIN, CONF_ENABLE_CAPABILITY_DETECTION
+from .const import DOMAIN, CONF_ENABLE_CAPABILITY_DETECTION, CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
+        vol.Optional(CONF_ENCRYPTION_KEY, default=DEFAULT_ENCRYPTION_KEY): str,
         vol.Optional(CONF_ENABLE_CAPABILITY_DETECTION, default=True): bool,
     }
 )
@@ -29,7 +30,8 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
     
-    api = MitsubishiAPI(device_ip=data[CONF_HOST])
+    encryption_key = data.get(CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY)
+    api = MitsubishiAPI(device_ip=data[CONF_HOST], encryption_key=encryption_key)
     controller = MitsubishiController(api=api)
     
     try:

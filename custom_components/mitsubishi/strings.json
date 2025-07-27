@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mitsubishi Air Conditioner",
+        "description": "Configure your Mitsubishi MAC-577IF-2E air conditioner. The encryption key defaults to 'unregistered' which works for most devices. Only change this if your device uses a custom key.",
+        "data": {
+          "host": "IP Address",
+          "encryption_key": "Encryption Key (default: unregistered)",
+          "enable_capability_detection": "Enable capability detection"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the air conditioner. Please check the IP address, encryption key, and ensure the device is accessible on your network.",
+      "unknown": "Unexpected error occurred. Please try again."
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  }
+}
