@@ -31,6 +31,17 @@ VERTICAL_WIND_OPTIONS = {
 
 VERTICAL_WIND_REVERSE = {v: k for k, v in VERTICAL_WIND_OPTIONS.items()}
 
+# Mapping for vertical wind direction names to display options
+VERTICAL_WIND_NAME_TO_OPTION = {
+    "AUTO": "auto",
+    "V1": "position_1",
+    "V2": "position_2",
+    "V3": "position_3",
+    "V4": "position_4",
+    "V5": "position_5",
+    "SWING": "swing",
+}
+
 # Mapping for horizontal wind direction
 HORIZONTAL_WIND_OPTIONS = {
     "auto": HorizontalWindDirection.AUTO,
@@ -47,6 +58,21 @@ HORIZONTAL_WIND_OPTIONS = {
 }
 
 HORIZONTAL_WIND_REVERSE = {v: k for k, v in HORIZONTAL_WIND_OPTIONS.items()}
+
+# Mapping for horizontal wind direction names to display options
+HORIZONTAL_WIND_NAME_TO_OPTION = {
+    "AUTO": "auto",
+    "L": "left",
+    "LS": "left_center",
+    "C": "center",
+    "RS": "right_center",
+    "R": "right",
+    "LC": "left_center_swing",
+    "CR": "center_right_swing",
+    "LR": "left_right_swing",
+    "LCR": "all_positions",
+    "LCR_S": "swing",
+}
 
 
 async def async_setup_entry(
@@ -89,8 +115,10 @@ class MitsubishiVerticalVaneSelect(
     @property
     def current_option(self) -> str | None:
         """Return the current vertical vane direction."""
-        # This would need to be implemented based on the actual state data
-        # For now, return a default
+        # Get the right vane direction from coordinator data
+        vane_direction = self.coordinator.data.get("vertical_vane_right")
+        if vane_direction:
+            return VERTICAL_WIND_NAME_TO_OPTION.get(vane_direction, "auto")
         return "auto"
 
     async def async_select_option(self, option: str) -> None:
@@ -132,8 +160,10 @@ class MitsubishiHorizontalVaneSelect(
     @property
     def current_option(self) -> str | None:
         """Return the current horizontal vane direction."""
-        # This would need to be implemented based on the actual state data
-        # For now, return a default
+        # Get the horizontal vane direction from coordinator data
+        vane_direction = self.coordinator.data.get("horizontal_vane")
+        if vane_direction:
+            return HORIZONTAL_WIND_NAME_TO_OPTION.get(vane_direction, "auto")
         return "auto"
 
     async def async_select_option(self, option: str) -> None:

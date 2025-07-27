@@ -40,9 +40,18 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
                 raise UpdateFailed("Failed to communicate with Mitsubishi Air Conditioner")
             
             # Get the status summary which includes capabilities
-            return await self.hass.async_add_executor_job(
+            summary = await self.hass.async_add_executor_job(
                 self.controller.get_status_summary
             )
+            
+            # Temporarily add vane direction data until pymitsubishi 0.1.5 is available
+            # TODO: Remove this when 0.1.5 is published and requirement is updated
+            if 'vertical_vane_right' not in summary and hasattr(self.controller.state, 'general') and self.controller.state.general:
+                summary['vertical_vane_right'] = self.controller.state.general.vertical_wind_direction_right.name
+                summary['vertical_vane_left'] = self.controller.state.general.vertical_wind_direction_left.name
+                summary['horizontal_vane'] = self.controller.state.general.horizontal_wind_direction.name
+            
+            return summary
             
         except Exception as ex:
             raise UpdateFailed(f"Error communicating with API: {ex}") from ex
