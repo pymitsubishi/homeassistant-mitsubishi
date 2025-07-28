@@ -84,6 +84,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    @staticmethod
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Create the options flow."""
+        return OptionsFlowHandler(config_entry)
+
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the initial step."""
         _LOGGER.debug("Config flow async_step_user called with input: %s", user_input)
@@ -118,6 +125,90 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.debug("Showing config form with errors: %s", errors)
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options flow for the Mitsubishi integration."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        super().__init__()
+        self._config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            _LOGGER.debug("Processing options user input: %s", user_input)
+            try:
+                # Validate the new configuration
+                _LOGGER.debug("Validating new configuration")
+                await validate_input(self.hass, user_input)
+                _LOGGER.debug("Validation successful for options")
+
+                # Update the config entry with new data
+                self.hass.config_entries.async_update_entry(
+                    self._config_entry, data=user_input
+                )
+
+                # Trigger reload of the integration to apply changes
+                await self.hass.config_entries.async_reload(self._config_entry.entry_id)
+
+                return self.async_create_entry(title="", data={})
+
+            except CannotConnect:
+                _LOGGER.error("Cannot connect to device with new settings")
+                errors["base"] = "cannot_connect"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception in options flow")
+                errors["base"] = "unknown"
+
+        # Create options schema with current values as defaults
+        current_host = self._config_entry.data.get(CONF_HOST, "")
+        current_encryption_key = self._config_entry.data.get(
+            CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY
+        )
+        current_admin_username = self._config_entry.data.get(
+            CONF_ADMIN_USERNAME, DEFAULT_ADMIN_USERNAME
+        )
+        current_admin_password = self._config_entry.data.get(
+            CONF_ADMIN_PASSWORD, DEFAULT_ADMIN_PASSWORD
+        )
+        current_scan_interval = self._config_entry.data.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+        )
+        current_capability_detection = self._config_entry.data.get(
+            CONF_ENABLE_CAPABILITY_DETECTION, True
+        )
+
+        options_schema = vol.Schema(
+            {
+                vol.Required(CONF_HOST, default=current_host): str,
+                vol.Optional(
+                    CONF_ENCRYPTION_KEY, default=current_encryption_key
+                ): str,
+                vol.Optional(
+                    CONF_ADMIN_USERNAME, default=current_admin_username
+                ): str,
+                vol.Optional(
+                    CONF_ADMIN_PASSWORD, default=current_admin_password
+                ): str,
+                vol.Optional(
+                    CONF_SCAN_INTERVAL, default=current_scan_interval
+                ): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
+                vol.Optional(
+                    CONF_ENABLE_CAPABILITY_DETECTION,
+                    default=current_capability_detection,
+                ): bool,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="init", data_schema=options_schema, errors=errors
         )
 
 
