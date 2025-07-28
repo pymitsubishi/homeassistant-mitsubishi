@@ -25,7 +25,7 @@ async def test_async_setup_entry(hass, mock_coordinator, mock_config_entry):
     await async_setup_entry(hass, mock_config_entry, async_add_entities)
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
-    assert len(entities) == 8
+    assert len(entities) == 18  # 8 original + 4 SwiCago + 6 energy sensors
     assert isinstance(entities[0], MitsubishiRoomTemperatureSensor)
     assert isinstance(entities[1], MitsubishiOutdoorTemperatureSensor)
     assert isinstance(entities[2], MitsubishiErrorSensor)
@@ -34,6 +34,7 @@ async def test_async_setup_entry(hass, mock_coordinator, mock_config_entry):
     assert isinstance(entities[5], MitsubishiFirmwareVersionSensor)
     assert isinstance(entities[6], MitsubishiUnitTypeSensor)
     assert isinstance(entities[7], MitsubishiWifiInfoSensor)
+    # Additional sensors include SwiCago-inspired and energy monitoring sensors
 
 
 @pytest.mark.asyncio
@@ -283,8 +284,8 @@ async def test_async_setup_entry_sensor_creation_none(hass, mock_coordinator, mo
 
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
-    # Should have 7 entities instead of 8 since one returned None
-    assert len(entities) == 7
+    # Should have 17 entities instead of 18 since one returned None
+    assert len(entities) == 17
 
 
 @pytest.mark.asyncio
@@ -299,5 +300,5 @@ async def test_async_setup_entry_sensor_creation_exception(hass, mock_coordinato
 
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
-    # Should have 7 entities instead of 8 since one failed to create
-    assert len(entities) == 7
+    # Should have 17 entities instead of 18 since one failed to create
+    assert len(entities) == 17

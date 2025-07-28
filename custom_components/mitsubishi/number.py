@@ -1,4 +1,5 @@
 """Number platform for Mitsubishi Air Conditioner integration."""
+
 from __future__ import annotations
 
 import logging
@@ -24,9 +25,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up Mitsubishi number entities."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    async_add_entities([
-        MitsubishiDehumidifierNumber(coordinator, config_entry),
-    ])
+    async_add_entities(
+        [
+            MitsubishiDehumidifierNumber(coordinator, config_entry),
+        ]
+    )
 
 
 class MitsubishiDehumidifierNumber(MitsubishiEntity, NumberEntity):

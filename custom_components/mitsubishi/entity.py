@@ -1,4 +1,5 @@
 """Base entity class for Mitsubishi Air Conditioner integration."""
+
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
@@ -40,7 +41,9 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
             identifiers={(DOMAIN, device_mac)},
             manufacturer="Mitsubishi Electric",
             model=capabilities.get("device_model", "MAC-577IF-2E WiFi Adapter"),
-            name=f"Mitsubishi AC {device_mac[-8:]}" if device_mac else f"Mitsubishi AC ({config_entry.data['host']})",
+            name=f"Mitsubishi AC {device_mac[-8:]}"
+            if device_mac
+            else f"Mitsubishi AC ({config_entry.data['host']})",
             sw_version=capabilities.get("firmware_version"),
             hw_version=device_mac,
             serial_number=device_serial,

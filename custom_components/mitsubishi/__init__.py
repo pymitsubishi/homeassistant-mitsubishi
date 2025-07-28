@@ -1,4 +1,5 @@
 """The Mitsubishi Air Conditioner integration."""
+
 from __future__ import annotations
 
 import logging
@@ -26,7 +27,13 @@ from .coordinator import MitsubishiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.CLIMATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SELECT, Platform.NUMBER]
+PLATFORMS = [
+    Platform.CLIMATE,
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.SELECT,
+    Platform.NUMBER,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -44,7 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             device_ip=host,
             encryption_key=encryption_key,
             admin_username=admin_username,
-            admin_password=admin_password
+            admin_password=admin_password,
         )
         controller = MitsubishiController(api=api)
 
@@ -73,16 +80,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # Determine device model from multiple sources
         device_model = (
-            adaptor_info.get("model") or
-            capabilities.get("device_model") or
-            "MAC-577IF-2E WiFi Adapter"
+            adaptor_info.get("model")
+            or capabilities.get("device_model")
+            or "MAC-577IF-2E WiFi Adapter"
         )
 
         # Determine firmware version from multiple sources
-        firmware_version = (
-            adaptor_info.get("app_version") or
-            capabilities.get("firmware_version")
-        )
+        firmware_version = adaptor_info.get("app_version") or capabilities.get("firmware_version")
 
         # Build comprehensive software version string
         sw_versions = []

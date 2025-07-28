@@ -24,9 +24,10 @@ async def test_async_setup_entry(hass, mock_coordinator, mock_config_entry):
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
 
-    assert len(entities) == 2
+    assert len(entities) == 5
     assert isinstance(entities[0], MitsubishiPowerSavingBinarySensor)
     assert isinstance(entities[1], MitsubishiErrorBinarySensor)
+    # Additional SwiCago-inspired sensors are also created
 
 
 @pytest.mark.asyncio

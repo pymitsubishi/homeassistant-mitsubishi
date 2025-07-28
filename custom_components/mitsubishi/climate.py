@@ -1,4 +1,5 @@
 """Climate platform for Mitsubishi Air Conditioner integration."""
+
 from __future__ import annotations
 
 import logging
@@ -105,7 +106,14 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
     _attr_target_temperature_step = 0.5
     _attr_min_temp = 16.0
     _attr_max_temp = 32.0
-    _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL, HVACMode.AUTO, HVACMode.DRY, HVACMode.FAN_ONLY]
+    _attr_hvac_modes = [
+        HVACMode.OFF,
+        HVACMode.HEAT,
+        HVACMode.COOL,
+        HVACMode.AUTO,
+        HVACMode.DRY,
+        HVACMode.FAN_ONLY,
+    ]
     _attr_fan_modes = [FAN_AUTO, FAN_LOW, FAN_MEDIUM, FAN_HIGH, "full"]
     _attr_swing_modes = [SWING_OFF, SWING_VERTICAL, SWING_HORIZONTAL, SWING_BOTH]
 
@@ -241,15 +249,11 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         if hvac_mode == HVACMode.OFF:
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_power, False
-            )
+            await self.hass.async_add_executor_job(self.coordinator.controller.set_power, False)
         else:
             # Turn on if currently off
             if self.hvac_mode == HVACMode.OFF:
-                await self.hass.async_add_executor_job(
-                    self.coordinator.controller.set_power, True
-                )
+                await self.hass.async_add_executor_job(self.coordinator.controller.set_power, True)
 
             # Set the mode
             if hvac_mode in HVAC_MODE_MAP:
@@ -276,24 +280,18 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
         # Real implementation would need to handle vertical and horizontal vanes separately
         if swing_mode == SWING_VERTICAL:
             await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_vertical_vane,
-                VerticalWindDirection.SWING,
-                "right"
+                self.coordinator.controller.set_vertical_vane, VerticalWindDirection.SWING, "right"
             )
         elif swing_mode == SWING_HORIZONTAL:
             await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_horizontal_vane,
-                HorizontalWindDirection.LCR_S
+                self.coordinator.controller.set_horizontal_vane, HorizontalWindDirection.LCR_S
             )
         elif swing_mode == SWING_BOTH:
             await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_vertical_vane,
-                VerticalWindDirection.SWING,
-                "right"
+                self.coordinator.controller.set_vertical_vane, VerticalWindDirection.SWING, "right"
             )
             await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_horizontal_vane,
-                HorizontalWindDirection.LCR_S
+                self.coordinator.controller.set_horizontal_vane, HorizontalWindDirection.LCR_S
             )
         # SWING_OFF would set them to AUTO or a fixed position
 
@@ -301,16 +299,12 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
-        await self.hass.async_add_executor_job(
-            self.coordinator.controller.set_power, True
-        )
+        await self.hass.async_add_executor_job(self.coordinator.controller.set_power, True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
-        await self.hass.async_add_executor_job(
-            self.coordinator.controller.set_power, False
-        )
+        await self.hass.async_add_executor_job(self.coordinator.controller.set_power, False)
         await self.coordinator.async_request_refresh()
 
     @callback

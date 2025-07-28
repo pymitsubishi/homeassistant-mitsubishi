@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-addopts = "-v --strict-markers --cov=custom_components.mitsubishi --cov-report=term-missing --cov-report=xml"
+addopts = "-v --strict-markers --cov=custom_components.mitsubishi --cov-report=term-missing --cov-report=xml --cov-fail-under=100"
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::pytest.PytestUnraisableExceptionWarning"
@@ -13,4 +13,22 @@ markers = [
     "asyncio: marks tests as async",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests"
+]
+
+[tool.coverage.run]
+source = ["custom_components/mitsubishi"]
+
+[tool.coverage.report]
+fail_under = 100
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
 ]

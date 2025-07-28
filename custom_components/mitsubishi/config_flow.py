@@ -1,4 +1,5 @@
 """Config flow for Mitsubishi Air Conditioner integration."""
+
 from __future__ import annotations
 
 import logging
@@ -34,7 +35,9 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_ENCRYPTION_KEY, default=DEFAULT_ENCRYPTION_KEY): str,
         vol.Optional(CONF_ADMIN_USERNAME, default=DEFAULT_ADMIN_USERNAME): str,
         vol.Optional(CONF_ADMIN_PASSWORD, default=DEFAULT_ADMIN_PASSWORD): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
+            vol.Coerce(int), vol.Range(min=10, max=300)
+        ),
         vol.Optional(CONF_ENABLE_CAPABILITY_DETECTION, default=True): bool,
     }
 )
@@ -67,7 +70,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
         return {
             "title": f"Mitsubishi AC ({summary.get('mac', data[CONF_HOST])})",
-            "unique_id": summary.get('mac') or summary.get('serial') or data[CONF_HOST]
+            "unique_id": summary.get("mac") or summary.get("serial") or data[CONF_HOST],
         }
 
     except Exception as e:
@@ -81,9 +84,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the initial step."""
         _LOGGER.debug("Config flow async_step_user called with input: %s", user_input)
         errors: dict[str, str] = {}
