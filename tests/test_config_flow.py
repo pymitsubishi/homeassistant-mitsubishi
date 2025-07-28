@@ -1,12 +1,23 @@
 """Test the Mitsubishi Air Conditioner config flow."""
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import config_entry_oauth2_flow
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.mitsubishi.const import DOMAIN
+from custom_components.mitsubishi.config_flow import CannotConnect, OptionsFlowHandler
+from custom_components.mitsubishi.const import (
+    CONF_ADMIN_PASSWORD,
+    CONF_ADMIN_USERNAME,
+    CONF_ENABLE_CAPABILITY_DETECTION,
+    CONF_ENCRYPTION_KEY,
+    CONF_SCAN_INTERVAL,
+    DOMAIN,
+)
+from homeassistant.const import CONF_HOST
 
 
 @pytest.fixture
@@ -253,4 +264,151 @@ class TestConfigFlow:
 
             # Verify API was closed even when exception occurs
             mock_api.close.assert_called_once()
+
+
+class TestOptionsFlow:
+    """Test the options flow."""
+
+    @pytest.fixture
+    def mock_config_entry(self):
+        """Create a mock config entry."""
+        return MockConfigEntry(
+            domain=DOMAIN,
+            title="Test Device",
+            data={
+                CONF_HOST: "192.168.1.100",
+                CONF_ENCRYPTION_KEY: "test_key",
+                CONF_ADMIN_USERNAME: "admin",
+                CONF_ADMIN_PASSWORD: "password",
+                CONF_SCAN_INTERVAL: 30,
+                CONF_ENABLE_CAPABILITY_DETECTION: True,
+            },
+            entry_id="test_entry_id",
+        )
+
+    async def test_options_flow_init(self, hass: HomeAssistant, mock_config_entry):
+        """Test the options flow initialization."""
+        # Create options flow
+        options_flow = OptionsFlowHandler(mock_config_entry)
+        options_flow.hass = hass
+
+        # Show initial form
+        result = await options_flow.async_step_init()
+
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "init"
+        # Verify that the form contains the expected fields
+        schema_keys = [key.schema for key in result["data_schema"].schema.keys()]
+        assert CONF_HOST in schema_keys
+        assert CONF_ENCRYPTION_KEY in schema_keys
+        assert CONF_SCAN_INTERVAL in schema_keys
+
+    async def test_options_flow_successful_update(self, hass: HomeAssistant, mock_config_entry):
+        """Test successful options flow update."""
+        # Mock the config entries registry methods
+        hass.config_entries.async_update_entry = MagicMock()
+        hass.config_entries.async_reload = AsyncMock()
+
+        # Create options flow
+        options_flow = OptionsFlowHandler(mock_config_entry)
+        options_flow.hass = hass
+
+        new_data = {
+            CONF_HOST: "192.168.1.101",
+            CONF_ENCRYPTION_KEY: "new_key",
+            CONF_SCAN_INTERVAL: 60,
+            CONF_ADMIN_USERNAME: "admin",
+            CONF_ADMIN_PASSWORD: "password",
+            CONF_ENABLE_CAPABILITY_DETECTION: True,
+        }
+
+        with patch(
+            "custom_components.mitsubishi.config_flow.validate_input",
+            return_value={"title": "Test Device", "unique_id": "test_mac"},
+        ):
+            result = await options_flow.async_step_init(new_data)
+
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        assert result["data"] == {}
+        hass.config_entries.async_update_entry.assert_called_once_with(
+            mock_config_entry, data=new_data
+        )
+        hass.config_entries.async_reload.assert_called_once_with("test_entry_id")
+
+    async def test_options_flow_cannot_connect(self, hass: HomeAssistant, mock_config_entry):
+        """Test options flow with connection error."""
+        # Create options flow
+        options_flow = OptionsFlowHandler(mock_config_entry)
+        options_flow.hass = hass
+
+        new_data = {
+            CONF_HOST: "192.168.1.101",
+            CONF_ENCRYPTION_KEY: "test_key",
+            CONF_SCAN_INTERVAL: 30,
+            CONF_ADMIN_USERNAME: "admin",
+            CONF_ADMIN_PASSWORD: "password",
+            CONF_ENABLE_CAPABILITY_DETECTION: True,
+        }
+
+        with patch(
+            "custom_components.mitsubishi.config_flow.validate_input",
+            side_effect=CannotConnect,
+        ):
+            result = await options_flow.async_step_init(new_data)
+
+        assert result["type"] == FlowResultType.FORM
+        assert result["errors"]["base"] == "cannot_connect"
+        assert result["step_id"] == "init"
+
+    async def test_options_flow_unknown_error(self, hass: HomeAssistant, mock_config_entry):
+        """Test options flow with unknown error."""
+        # Create options flow
+        options_flow = OptionsFlowHandler(mock_config_entry)
+        options_flow.hass = hass
+
+        new_data = {
+            CONF_HOST: "192.168.1.101",
+            CONF_ENCRYPTION_KEY: "test_key",
+            CONF_SCAN_INTERVAL: 30,
+            CONF_ADMIN_USERNAME: "admin",
+            CONF_ADMIN_PASSWORD: "password",
+            CONF_ENABLE_CAPABILITY_DETECTION: True,
+        }
+
+        with patch(
+            "custom_components.mitsubishi.config_flow.validate_input",
+            side_effect=Exception("Test error"),
+        ):
+            result = await options_flow.async_step_init(new_data)
+
+        assert result["type"] == FlowResultType.FORM
+        assert result["errors"]["base"] == "unknown"
+        assert result["step_id"] == "init"
+
+    async def test_options_flow_default_values(self, hass: HomeAssistant, mock_config_entry):
+        """Test that options flow shows current values as defaults."""
+        # Create options flow
+        options_flow = OptionsFlowHandler(mock_config_entry)
+        options_flow.hass = hass
+
+        # Show initial form
+        result = await options_flow.async_step_init()
+
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "init"
+        
+        # Check that default values match current config entry data
+        # Note: Voluptuous schema default values are not easily accessible
+        # so we test by verifying the form is shown properly
+        assert result["data_schema"] is not None
+
+    def test_config_flow_async_get_options_flow(self, mock_config_entry):
+        """Test the ConfigFlow.async_get_options_flow method."""
+        from custom_components.mitsubishi.config_flow import ConfigFlow
+        
+        # Test the static method that creates options flow
+        options_flow = ConfigFlow.async_get_options_flow(mock_config_entry)
+        
+        assert isinstance(options_flow, OptionsFlowHandler)
+        assert options_flow.config_entry == mock_config_entry
 

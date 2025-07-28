@@ -21,5 +21,15 @@
     "abort": {
       "already_configured": "Device is already configured"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Reconfigure Mitsubishi Air Conditioner",
+        "description": "Update the configuration settings for your Mitsubishi AC. Changes will be applied after validation and the integration will be reloaded.",
+        "data": "@.config.step.user.data"
+      }
+    },
+    "error": "@.config.error"
   }
 }
