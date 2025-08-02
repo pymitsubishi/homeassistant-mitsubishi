@@ -57,11 +57,12 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
             if self.unit_info is None:
                 await self.fetch_unit_info()
 
-            # Fetch status with capability detection enabled
+            # Fetch status with capability detection enabled and debug logging
+            _LOGGER.info("Coordinator fetching device status with debug enabled")
             success = await self.hass.async_add_executor_job(
                 self.controller.fetch_status,
-                False,
-                True,  # debug=False, detect_capabilities=True
+                True,  # debug=True for detailed communication logs
+                True,  # detect_capabilities=True
             )
 
             if not success:
@@ -69,6 +70,8 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
 
             # Get the status summary which includes capabilities
             summary = await self.hass.async_add_executor_job(self.controller.get_status_summary)
+            
+            _LOGGER.info(f"Coordinator fetch completed, target temp: {summary.get('target_temp')}°C, power: {summary.get('power')}")
 
             # Also add energy states and other enhanced data if available (requires pymitsubishi >= 0.1.7)
             if (

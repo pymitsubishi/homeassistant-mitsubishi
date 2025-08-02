@@ -37,6 +37,9 @@ from .coordinator import MitsubishiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+# Enable debug logging for pymitsubishi to see raw HTTP communication
+logging.getLogger('pymitsubishi').setLevel(logging.DEBUG)
+
 # Mapping from HA HVAC modes to Mitsubishi modes
 HVAC_MODE_MAP = {
     HVACMode.OFF: PowerOnOff.OFF,
@@ -241,71 +244,178 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
         if temperature is None:
             return
 
-        await self.hass.async_add_executor_job(
-            self.coordinator.controller.set_temperature, temperature
+        await self._execute_command_with_refresh(
+            f"set temperature to {temperature}°C",
+            self.coordinator.controller.set_temperature,
+            temperature
         )
-        await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         if hvac_mode == HVACMode.OFF:
-            await self.hass.async_add_executor_job(self.coordinator.controller.set_power, False)
+            await self._execute_command_with_refresh(
+                f"set HVAC mode to {hvac_mode}",
+                self.coordinator.controller.set_power,
+                False
+            )
         else:
             # Turn on if currently off
             if self.hvac_mode == HVACMode.OFF:
-                await self.hass.async_add_executor_job(self.coordinator.controller.set_power, True)
+                power_success = await self._execute_command_with_refresh(
+                    "turn on device before setting mode",
+                    self.coordinator.controller.set_power,
+                    True
+                )
+                if not power_success:
+                    return
 
             # Set the mode
             if hvac_mode in HVAC_MODE_MAP:
                 drive_mode = HVAC_MODE_MAP[hvac_mode]
                 if isinstance(drive_mode, DriveMode):
-                    await self.hass.async_add_executor_job(
-                        self.coordinator.controller.set_mode, drive_mode
+                    await self._execute_command_with_refresh(
+                        f"set HVAC mode to {hvac_mode}",
+                        self.coordinator.controller.set_mode,
+                        drive_mode
                     )
-
-        await self.coordinator.async_request_refresh()
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan mode."""
         if fan_mode in FAN_SPEED_MAP:
             wind_speed = FAN_SPEED_MAP[fan_mode]
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_fan_speed, wind_speed
+            await self._execute_command_with_refresh(
+                f"set fan mode to {fan_mode}",
+                self.coordinator.controller.set_fan_speed,
+                wind_speed
             )
-            await self.coordinator.async_request_refresh()
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
         """Set new target swing operation."""
         # This is a placeholder implementation
         # Real implementation would need to handle vertical and horizontal vanes separately
         if swing_mode == SWING_VERTICAL:
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_vertical_vane, VerticalWindDirection.SWING, "right"
+            await self._execute_command_with_refresh(
+                f"set swing mode to {swing_mode} (vertical)",
+                self.coordinator.controller.set_vertical_vane,
+                VerticalWindDirection.SWING, "right"
             )
         elif swing_mode == SWING_HORIZONTAL:
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_horizontal_vane, HorizontalWindDirection.LCR_S
+            await self._execute_command_with_refresh(
+                f"set swing mode to {swing_mode} (horizontal)",
+                self.coordinator.controller.set_horizontal_vane,
+                HorizontalWindDirection.LCR_S
             )
         elif swing_mode == SWING_BOTH:
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_vertical_vane, VerticalWindDirection.SWING, "right"
+            # For SWING_BOTH, we need to set both directions
+            # Note: This will cause two separate refreshes, but it's simpler than custom logic
+            await self._execute_command_with_refresh(
+                f"set swing mode to {swing_mode} (vertical)",
+                self.coordinator.controller.set_vertical_vane,
+                VerticalWindDirection.SWING, "right"
             )
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_horizontal_vane, HorizontalWindDirection.LCR_S
+            await self._execute_command_with_refresh(
+                f"set swing mode to {swing_mode} (horizontal)",
+                self.coordinator.controller.set_horizontal_vane,
+                HorizontalWindDirection.LCR_S
             )
         # SWING_OFF would set them to AUTO or a fixed position
 
-        await self.coordinator.async_request_refresh()
-
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
-        await self.hass.async_add_executor_job(self.coordinator.controller.set_power, True)
-        await self.coordinator.async_request_refresh()
+        await self._execute_command_with_refresh(
+            "turn on device",
+            self.coordinator.controller.set_power,
+            True
+        )
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
-        await self.hass.async_add_executor_job(self.coordinator.controller.set_power, False)
-        await self.coordinator.async_request_refresh()
+        await self._execute_command_with_refresh(
+            "turn off device",
+            self.coordinator.controller.set_power,
+            False
+        )
+
+    async def _execute_command_with_refresh(self, command_name: str, command_func, *args, **kwargs) -> bool:
+        """Execute a device command and refresh coordinator data on success.
+        
+        Args:
+            command_name: Human-readable name of the command for logging
+            command_func: The controller method to execute
+            *args, **kwargs: Arguments to pass to the command function
+            
+        Returns:
+            bool: True if command was successful, False otherwise
+        """
+        import asyncio
+        
+        try:
+            # Always enable debug for controller calls to see detailed communication
+            _LOGGER.info(f"🔧 Executing command: {command_name}")
+            
+            # Add debug=True for controller methods that support it
+            success = await self.hass.async_add_executor_job(
+                lambda: command_func(*args, debug=True, **kwargs)
+            )
+            
+            if success:
+                _LOGGER.info(f"✅ Command '{command_name}' sent successfully")
+                
+                # The pymitsubishi controller automatically parses the response and updates 
+                # its internal state when a command succeeds. We need to trust this updated 
+                # state rather than immediately fetching fresh data, which can cause a race condition.
+                
+                # Update coordinator data with the controller's current state
+                # This avoids the race condition where we fetch status before the device 
+                # has fully processed the command
+                await self._update_coordinator_from_controller_state()
+                
+                # For temperature commands, validate that the change was accepted
+                if "temperature" in command_name.lower() and len(args) > 0:
+                    expected_temp = float(args[0])
+                    actual_temp = self.target_temperature
+                    if actual_temp is not None:
+                        temp_diff = abs(expected_temp - actual_temp)
+                        if temp_diff > 0.1:  # Allow small floating point differences
+                            _LOGGER.warning(
+                                f"🚨 Device rejected temperature change! "
+                                f"Expected: {expected_temp}°C, Actual: {actual_temp}°C, "
+                                f"Difference: {temp_diff}°C. Will retry with fresh data."
+                            )
+                            # If the command was rejected, wait a bit and fetch fresh data
+                            await asyncio.sleep(1.0)
+                            await self.coordinator.async_request_refresh()
+                            _LOGGER.info(f"📊 Refreshed after rejected command: {command_name}")
+                        else:
+                            _LOGGER.info(f"✅ Temperature command verified: {actual_temp}°C")
+                
+                return True
+            else:
+                _LOGGER.warning(f"❌ Failed to execute {command_name}")
+                return False
+                
+        except Exception as e:
+            _LOGGER.error(f"💥 Error executing {command_name}: {e}")
+            return False
+    
+    async def _update_coordinator_from_controller_state(self) -> None:
+        """Update coordinator data from controller's current state without fetching from device."""
+        try:
+            # Get the current state summary from the controller (which was updated by the command)
+            summary = await self.hass.async_add_executor_job(self.coordinator.controller.get_status_summary)
+            
+            # Update the coordinator's data directly
+            self.coordinator.data = summary
+            
+            # Trigger state update for all entities
+            self.coordinator.async_update_listeners()
+            
+            _LOGGER.info(f"📊 Updated coordinator from controller state: target_temp={summary.get('target_temp')}°C")
+            
+        except Exception as e:
+            _LOGGER.error(f"💥 Error updating coordinator from controller state: {e}")
+            # Fall back to regular refresh if there's an error
+            await self.coordinator.async_request_refresh()
 
     @callback
     def _handle_coordinator_update(self) -> None:
