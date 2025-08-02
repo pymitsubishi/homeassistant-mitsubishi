@@ -179,6 +179,17 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
 
+        # Check if we have energy state data to determine if compressor is running
+        energy_states = self.coordinator.data.get("energy_states")
+        if energy_states and "operating" in energy_states:
+            is_operating = energy_states["operating"]
+            
+            # If compressor is not running, device is idle regardless of mode
+            if not is_operating:
+                return HVACAction.IDLE
+        
+        # If compressor is running or we don't have operating data, 
+        # determine action based on mode
         mode_name = self.coordinator.data.get("mode")
         if mode_name:
             try:
@@ -231,6 +242,16 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
 
         if abnormal_state := self.coordinator.data.get("abnormal_state"):
             attributes["abnormal_state"] = abnormal_state
+
+        # Add energy states if available
+        energy_states = self.coordinator.data.get("energy_states")
+        if energy_states:
+            if "compressor_frequency" in energy_states:
+                attributes["compressor_frequency"] = energy_states["compressor_frequency"]
+            if "operating" in energy_states:
+                attributes["compressor_operating"] = energy_states["operating"]
+            if "estimated_power_watts" in energy_states:
+                attributes["estimated_power_watts"] = energy_states["estimated_power_watts"]
 
         # Add device capabilities
         if capabilities := self.coordinator.data.get("capabilities"):
