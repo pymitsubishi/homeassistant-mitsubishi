@@ -118,10 +118,12 @@ class MitsubishiVerticalVaneSelect(MitsubishiEntity, SelectEntity):
         """Set the vertical vane direction."""
         if option in VERTICAL_WIND_OPTIONS:
             direction = VERTICAL_WIND_OPTIONS[option]
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_vertical_vane, direction, "right"
+            await self._execute_command_with_refresh(
+                f"set vertical vane to {option}",
+                self.coordinator.controller.set_vertical_vane,
+                direction,
+                "right"
             )
-            await self.coordinator.async_request_refresh()
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -157,10 +159,11 @@ class MitsubishiHorizontalVaneSelect(MitsubishiEntity, SelectEntity):
         """Set the horizontal vane direction."""
         if option in HORIZONTAL_WIND_OPTIONS:
             direction = HORIZONTAL_WIND_OPTIONS[option]
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_horizontal_vane, direction
+            await self._execute_command_with_refresh(
+                f"set horizontal vane to {option}",
+                self.coordinator.controller.set_horizontal_vane,
+                direction
             )
-            await self.coordinator.async_request_refresh()
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -193,10 +196,11 @@ class MitsubishiPowerSavingSelect(MitsubishiEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Set the power saving mode."""
         enabled = option == "Enabled"
-        await self.hass.async_add_executor_job(
-            self.coordinator.controller.set_power_saving, enabled
+        await self._execute_command_with_refresh(
+            f"set power saving mode to {option}",
+            self.coordinator.controller.set_power_saving,
+            enabled
         )
-        await self.coordinator.async_request_refresh()
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

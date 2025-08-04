@@ -23,7 +23,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from pymitsubishi import (
     DriveMode,
     HorizontalWindDirection,
@@ -34,6 +33,7 @@ from pymitsubishi import (
 
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
+from .entity import MitsubishiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ async def async_setup_entry(
     async_add_entities([MitsubishiClimate(coordinator, config_entry)])
 
 
-class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], ClimateEntity):
+class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
     """Representation of a Mitsubishi air conditioner."""
 
     _attr_has_entity_name = True
@@ -134,12 +134,8 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize the climate entity."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, config_entry, "climate")
         self._config_entry = config_entry
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.data.get("mac", config_entry.data["host"]))},
-        }
-        self._attr_unique_id = f"{coordinator.data.get('mac', config_entry.data['host'])}_climate"
 
     @property
     def current_temperature(self) -> float | None:
@@ -357,67 +353,6 @@ class MitsubishiClimate(CoordinatorEntity[MitsubishiDataUpdateCoordinator], Clim
             False
         )
 
-    async def _execute_command_with_refresh(self, command_name: str, command_func, *args, **kwargs) -> bool:
-        """Execute a device command and refresh coordinator data on success.
-        
-        Args:
-            command_name: Human-readable name of the command for logging
-            command_func: The controller method to execute
-            *args, **kwargs: Arguments to pass to the command function
-            
-        Returns:
-            bool: True if command was successful, False otherwise
-        """
-        import asyncio
-        
-        try:
-            # Always enable debug for controller calls to see detailed communication
-            _LOGGER.info(f"🔧 Executing command: {command_name}")
-            
-            # Add debug=True for controller methods that support it
-            success = await self.hass.async_add_executor_job(
-                lambda: command_func(*args, debug=True, **kwargs)
-            )
-            
-            if success:
-                _LOGGER.info(f"✅ Command '{command_name}' sent successfully")
-                
-                # The pymitsubishi controller automatically parses the response and updates 
-                # its internal state when a command succeeds. We need to trust this updated 
-                # state rather than immediately fetching fresh data, which can cause a race condition.
-                
-                # Update coordinator data with the controller's current state
-                # This avoids the race condition where we fetch status before the device 
-                # has fully processed the command
-                await self._update_coordinator_from_controller_state()
-                
-                # For temperature commands, validate that the change was accepted
-                if "temperature" in command_name.lower() and len(args) > 0:
-                    expected_temp = float(args[0])
-                    actual_temp = self.target_temperature
-                    if actual_temp is not None:
-                        temp_diff = abs(expected_temp - actual_temp)
-                        if temp_diff > 0.1:  # Allow small floating point differences
-                            _LOGGER.warning(
-                                f"🚨 Device rejected temperature change! "
-                                f"Expected: {expected_temp}°C, Actual: {actual_temp}°C, "
-                                f"Difference: {temp_diff}°C. Will retry with fresh data."
-                            )
-                            # If the command was rejected, wait a bit and fetch fresh data
-                            await asyncio.sleep(1.0)
-                            await self.coordinator.async_request_refresh()
-                            _LOGGER.info(f"📊 Refreshed after rejected command: {command_name}")
-                        else:
-                            _LOGGER.info(f"✅ Temperature command verified: {actual_temp}°C")
-                
-                return True
-            else:
-                _LOGGER.warning(f"❌ Failed to execute {command_name}")
-                return False
-                
-        except Exception as e:
-            _LOGGER.error(f"💥 Error executing {command_name}: {e}")
-            return False
     
     async def _update_coordinator_from_controller_state(self) -> None:
         """Update coordinator data from controller's current state without fetching from device."""
