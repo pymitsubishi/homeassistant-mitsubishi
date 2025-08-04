@@ -122,7 +122,7 @@ class MitsubishiVerticalVaneSelect(MitsubishiEntity, SelectEntity):
                 f"set vertical vane to {option}",
                 self.coordinator.controller.set_vertical_vane,
                 direction,
-                "right"
+                "right",
             )
 
     @property
@@ -162,7 +162,7 @@ class MitsubishiHorizontalVaneSelect(MitsubishiEntity, SelectEntity):
             await self._execute_command_with_refresh(
                 f"set horizontal vane to {option}",
                 self.coordinator.controller.set_horizontal_vane,
-                direction
+                direction,
             )
 
     @property
@@ -199,7 +199,7 @@ class MitsubishiPowerSavingSelect(MitsubishiEntity, SelectEntity):
         await self._execute_command_with_refresh(
             f"set power saving mode to {option}",
             self.coordinator.controller.set_power_saving,
-            enabled
+            enabled,
         )
 
     @property

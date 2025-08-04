@@ -63,7 +63,7 @@ class MitsubishiDehumidifierNumber(MitsubishiEntity, NumberEntity):
         await self._execute_command_with_refresh(
             f"set dehumidifier level to {value}%",
             self.coordinator.controller.set_dehumidifier,
-            int(value)
+            int(value),
         )
 
     @property

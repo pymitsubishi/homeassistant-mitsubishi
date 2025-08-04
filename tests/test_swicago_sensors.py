@@ -40,7 +40,9 @@ async def test_compressor_frequency_sensor_native_value(hass, mock_coordinator, 
 
 
 @pytest.mark.asyncio
-async def test_compressor_frequency_sensor_native_value_none(hass, mock_coordinator, mock_config_entry):
+async def test_compressor_frequency_sensor_native_value_none(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test compressor frequency sensor with None value."""
     mock_coordinator.data = {}
 
@@ -51,7 +53,9 @@ async def test_compressor_frequency_sensor_native_value_none(hass, mock_coordina
 
 
 @pytest.mark.asyncio
-async def test_compressor_frequency_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_compressor_frequency_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test compressor frequency sensor extra state attributes."""
     # Test with full energy state
     mock_controller = MagicMock()
@@ -100,7 +104,9 @@ async def test_estimated_power_sensor_native_value_none(hass, mock_coordinator, 
 
 
 @pytest.mark.asyncio
-async def test_estimated_power_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_estimated_power_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test estimated power sensor extra state attributes."""
     # Test with full energy state
     mock_controller = MagicMock()
@@ -153,7 +159,9 @@ async def test_mode_raw_value_sensor_native_value_none(hass, mock_coordinator, m
 
 
 @pytest.mark.asyncio
-async def test_mode_raw_value_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_mode_raw_value_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test mode raw value sensor extra state attributes."""
     # Test with full general state
     mock_controller = MagicMock()
@@ -212,7 +220,9 @@ async def test_temperature_mode_sensor_native_value_none(hass, mock_coordinator,
 
 
 @pytest.mark.asyncio
-async def test_temperature_mode_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_temperature_mode_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test temperature mode sensor extra state attributes."""
     # Test with full general state
     mock_controller = MagicMock()
@@ -225,7 +235,10 @@ async def test_temperature_mode_sensor_extra_state_attributes(hass, mock_coordin
 
     attributes = sensor.extra_state_attributes
     assert attributes["source"] == "SwiCago enhancement"
-    assert attributes["description"] == "Direct mode uses precise temperature values, Segment mode uses predefined steps"
+    assert (
+        attributes["description"]
+        == "Direct mode uses precise temperature values, Segment mode uses predefined steps"
+    )
     assert attributes["current_temperature_celsius"] == 22.5
 
     # Test with None temperature
@@ -275,7 +288,9 @@ async def test_energy_total_sensor_native_value_none(hass, mock_coordinator, moc
 
 
 @pytest.mark.asyncio
-async def test_energy_total_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_energy_total_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test energy total sensor extra state attributes."""
     # Test with full energy state
     mock_controller = MagicMock()

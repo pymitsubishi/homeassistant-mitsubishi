@@ -72,7 +72,9 @@ async def test_i_see_active_binary_sensor_availability(hass, mock_coordinator, m
 
 
 @pytest.mark.asyncio
-async def test_i_see_active_binary_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_i_see_active_binary_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test i-See active binary sensor extra state attributes."""
     # Test with full controller state
     mock_controller = MagicMock()
@@ -159,7 +161,9 @@ async def test_operating_binary_sensor_availability(hass, mock_coordinator, mock
 
 
 @pytest.mark.asyncio
-async def test_operating_binary_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_operating_binary_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test operating binary sensor extra state attributes."""
     # Test with full energy state
     mock_controller = MagicMock()
@@ -188,7 +192,9 @@ async def test_wide_vane_adjustment_binary_sensor_init(hass, mock_coordinator, m
 
 
 @pytest.mark.asyncio
-async def test_wide_vane_adjustment_binary_sensor_is_on_true(hass, mock_coordinator, mock_config_entry):
+async def test_wide_vane_adjustment_binary_sensor_is_on_true(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test wide vane adjustment binary sensor when active."""
     mock_coordinator.data = {"wide_vane_adjustment": True}
 
@@ -198,7 +204,9 @@ async def test_wide_vane_adjustment_binary_sensor_is_on_true(hass, mock_coordina
 
 
 @pytest.mark.asyncio
-async def test_wide_vane_adjustment_binary_sensor_is_on_false(hass, mock_coordinator, mock_config_entry):
+async def test_wide_vane_adjustment_binary_sensor_is_on_false(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test wide vane adjustment binary sensor when inactive."""
     mock_coordinator.data = {"wide_vane_adjustment": False}
 
@@ -208,7 +216,9 @@ async def test_wide_vane_adjustment_binary_sensor_is_on_false(hass, mock_coordin
 
 
 @pytest.mark.asyncio
-async def test_wide_vane_adjustment_binary_sensor_is_on_missing(hass, mock_coordinator, mock_config_entry):
+async def test_wide_vane_adjustment_binary_sensor_is_on_missing(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test wide vane adjustment binary sensor when data is missing."""
     mock_coordinator.data = {}
 
@@ -218,7 +228,9 @@ async def test_wide_vane_adjustment_binary_sensor_is_on_missing(hass, mock_coord
 
 
 @pytest.mark.asyncio
-async def test_wide_vane_adjustment_binary_sensor_availability(hass, mock_coordinator, mock_config_entry):
+async def test_wide_vane_adjustment_binary_sensor_availability(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test wide vane adjustment binary sensor availability."""
     # Test with controller state available
     mock_controller = MagicMock()
@@ -235,7 +247,9 @@ async def test_wide_vane_adjustment_binary_sensor_availability(hass, mock_coordi
 
 
 @pytest.mark.asyncio
-async def test_wide_vane_adjustment_binary_sensor_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_wide_vane_adjustment_binary_sensor_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test wide vane adjustment binary sensor extra state attributes."""
     # Test with full general state
     mock_controller = MagicMock()

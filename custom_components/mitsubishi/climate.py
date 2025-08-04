@@ -38,7 +38,7 @@ from .entity import MitsubishiEntity
 _LOGGER = logging.getLogger(__name__)
 
 # Enable debug logging for pymitsubishi to see raw HTTP communication
-logging.getLogger('pymitsubishi').setLevel(logging.DEBUG)
+logging.getLogger("pymitsubishi").setLevel(logging.DEBUG)
 
 # Mapping from HA HVAC modes to Mitsubishi modes
 HVAC_MODE_MAP = {
@@ -179,12 +179,12 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         energy_states = self.coordinator.data.get("energy_states")
         if energy_states and "operating" in energy_states:
             is_operating = energy_states["operating"]
-            
+
             # If compressor is not running, device is idle regardless of mode
             if not is_operating:
                 return HVACAction.IDLE
-        
-        # If compressor is running or we don't have operating data, 
+
+        # If compressor is running or we don't have operating data,
         # determine action based on mode
         mode_name = self.coordinator.data.get("mode")
         if mode_name:
@@ -264,16 +264,14 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         await self._execute_command_with_refresh(
             f"set temperature to {temperature}°C",
             self.coordinator.controller.set_temperature,
-            temperature
+            temperature,
         )
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         if hvac_mode == HVACMode.OFF:
             await self._execute_command_with_refresh(
-                f"set HVAC mode to {hvac_mode}",
-                self.coordinator.controller.set_power,
-                False
+                f"set HVAC mode to {hvac_mode}", self.coordinator.controller.set_power, False
             )
         else:
             # Turn on if currently off
@@ -281,7 +279,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
                 power_success = await self._execute_command_with_refresh(
                     "turn on device before setting mode",
                     self.coordinator.controller.set_power,
-                    True
+                    True,
                 )
                 if not power_success:
                     return
@@ -293,7 +291,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
                     await self._execute_command_with_refresh(
                         f"set HVAC mode to {hvac_mode}",
                         self.coordinator.controller.set_mode,
-                        drive_mode
+                        drive_mode,
                     )
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
@@ -301,9 +299,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         if fan_mode in FAN_SPEED_MAP:
             wind_speed = FAN_SPEED_MAP[fan_mode]
             await self._execute_command_with_refresh(
-                f"set fan mode to {fan_mode}",
-                self.coordinator.controller.set_fan_speed,
-                wind_speed
+                f"set fan mode to {fan_mode}", self.coordinator.controller.set_fan_speed, wind_speed
             )
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
@@ -314,13 +310,14 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
             await self._execute_command_with_refresh(
                 f"set swing mode to {swing_mode} (vertical)",
                 self.coordinator.controller.set_vertical_vane,
-                VerticalWindDirection.SWING, "right"
+                VerticalWindDirection.SWING,
+                "right",
             )
         elif swing_mode == SWING_HORIZONTAL:
             await self._execute_command_with_refresh(
                 f"set swing mode to {swing_mode} (horizontal)",
                 self.coordinator.controller.set_horizontal_vane,
-                HorizontalWindDirection.LCR_S
+                HorizontalWindDirection.LCR_S,
             )
         elif swing_mode == SWING_BOTH:
             # For SWING_BOTH, we need to set both directions
@@ -328,46 +325,46 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
             await self._execute_command_with_refresh(
                 f"set swing mode to {swing_mode} (vertical)",
                 self.coordinator.controller.set_vertical_vane,
-                VerticalWindDirection.SWING, "right"
+                VerticalWindDirection.SWING,
+                "right",
             )
             await self._execute_command_with_refresh(
                 f"set swing mode to {swing_mode} (horizontal)",
                 self.coordinator.controller.set_horizontal_vane,
-                HorizontalWindDirection.LCR_S
+                HorizontalWindDirection.LCR_S,
             )
         # SWING_OFF would set them to AUTO or a fixed position
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
         await self._execute_command_with_refresh(
-            "turn on device",
-            self.coordinator.controller.set_power,
-            True
+            "turn on device", self.coordinator.controller.set_power, True
         )
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
         await self._execute_command_with_refresh(
-            "turn off device",
-            self.coordinator.controller.set_power,
-            False
+            "turn off device", self.coordinator.controller.set_power, False
         )
 
-    
     async def _update_coordinator_from_controller_state(self) -> None:
         """Update coordinator data from controller's current state without fetching from device."""
         try:
             # Get the current state summary from the controller (which was updated by the command)
-            summary = await self.hass.async_add_executor_job(self.coordinator.controller.get_status_summary)
-            
+            summary = await self.hass.async_add_executor_job(
+                self.coordinator.controller.get_status_summary
+            )
+
             # Update the coordinator's data directly
             self.coordinator.data = summary
-            
+
             # Trigger state update for all entities
             self.coordinator.async_update_listeners()
-            
-            _LOGGER.info(f"📊 Updated coordinator from controller state: target_temp={summary.get('target_temp')}°C")
-            
+
+            _LOGGER.info(
+                f"📊 Updated coordinator from controller state: target_temp={summary.get('target_temp')}°C"
+            )
+
         except Exception as e:
             _LOGGER.error(f"💥 Error updating coordinator from controller state: {e}")
             # Fall back to regular refresh if there's an error

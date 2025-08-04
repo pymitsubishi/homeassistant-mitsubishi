@@ -9,12 +9,14 @@ from custom_components.mitsubishi import async_setup_entry, async_unload_entry
 @pytest.mark.asyncio
 async def test_async_setup_entry(hass, mock_config_entry, mock_coordinator):
     """Test setting up Mitsubishi integration via config entry."""
-    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, \
-         patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class, \
-         patch("custom_components.mitsubishi.MitsubishiDataUpdateCoordinator", return_value=mock_coordinator), \
-         patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, \
-         patch.object(hass.config_entries, 'async_forward_entry_setups', return_value=None):
-
+    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, patch(
+        "custom_components.mitsubishi.MitsubishiController"
+    ) as mock_controller_class, patch(
+        "custom_components.mitsubishi.MitsubishiDataUpdateCoordinator",
+        return_value=mock_coordinator,
+    ), patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, patch.object(
+        hass.config_entries, "async_forward_entry_setups", return_value=None
+    ):
         # Mock the API and Controller to prevent real network calls
         mock_api = MagicMock()
         mock_api.close = AsyncMock()
@@ -45,7 +47,9 @@ async def test_async_unload_entry(hass, mock_config_entry, mock_coordinator):
     hass.data = {"mitsubishi": {mock_config_entry.entry_id: mock_coordinator}}
 
     # Mock the async_unload_platforms method to return True
-    with patch.object(hass.config_entries, 'async_unload_platforms', return_value=True) as mock_unload:
+    with patch.object(
+        hass.config_entries, "async_unload_platforms", return_value=True
+    ) as mock_unload:
         result = await async_unload_entry(hass, mock_config_entry)
 
         assert result is True
@@ -55,7 +59,9 @@ async def test_async_unload_entry(hass, mock_config_entry, mock_coordinator):
 
 
 @pytest.mark.asyncio
-async def test_async_setup_entry_with_comprehensive_unit_info(hass, mock_config_entry, mock_coordinator):
+async def test_async_setup_entry_with_comprehensive_unit_info(
+    hass, mock_config_entry, mock_coordinator
+):
     """Test setup with comprehensive unit info to cover sw_versions and hw_info branches."""
     # Mock comprehensive unit info to trigger all conditional branches
     mock_coordinator.unit_info = {
@@ -68,23 +74,19 @@ async def test_async_setup_entry_with_comprehensive_unit_info(hass, mock_config_
             "flash_version": "2.1.0",
             "boot_version": "1.5.0",
         },
-        "unit_info": {
-            "it_protocol_version": "2.1"
-        }
+        "unit_info": {"it_protocol_version": "2.1"},
     }
 
-    mock_coordinator.data = {
-        "mac": "00:11:22:33:44:55",
-        "serial": "TEST123456",
-        "capabilities": {}
-    }
+    mock_coordinator.data = {"mac": "00:11:22:33:44:55", "serial": "TEST123456", "capabilities": {}}
 
-    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, \
-         patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class, \
-         patch("custom_components.mitsubishi.MitsubishiDataUpdateCoordinator", return_value=mock_coordinator), \
-         patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, \
-         patch.object(hass.config_entries, 'async_forward_entry_setups', return_value=None):
-
+    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, patch(
+        "custom_components.mitsubishi.MitsubishiController"
+    ) as mock_controller_class, patch(
+        "custom_components.mitsubishi.MitsubishiDataUpdateCoordinator",
+        return_value=mock_coordinator,
+    ), patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, patch.object(
+        hass.config_entries, "async_forward_entry_setups", return_value=None
+    ):
         # Mock the API and Controller to prevent real network calls
         mock_api = MagicMock()
         mock_api.close = AsyncMock()
@@ -131,21 +133,19 @@ async def test_async_setup_entry_with_minimal_unit_info(hass, mock_config_entry,
         },
         "unit_info": {
             # No protocol version
-        }
+        },
     }
 
-    mock_coordinator.data = {
-        "mac": "00:11:22:33:44:55",
-        "serial": "TEST123456",
-        "capabilities": {}
-    }
+    mock_coordinator.data = {"mac": "00:11:22:33:44:55", "serial": "TEST123456", "capabilities": {}}
 
-    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, \
-         patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class, \
-         patch("custom_components.mitsubishi.MitsubishiDataUpdateCoordinator", return_value=mock_coordinator), \
-         patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, \
-         patch.object(hass.config_entries, 'async_forward_entry_setups', return_value=None):
-
+    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, patch(
+        "custom_components.mitsubishi.MitsubishiController"
+    ) as mock_controller_class, patch(
+        "custom_components.mitsubishi.MitsubishiDataUpdateCoordinator",
+        return_value=mock_coordinator,
+    ), patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, patch.object(
+        hass.config_entries, "async_forward_entry_setups", return_value=None
+    ):
         # Mock the API and Controller to prevent real network calls
         mock_api = MagicMock()
         mock_api.close = AsyncMock()
@@ -185,23 +185,19 @@ async def test_async_setup_entry_partial_unit_info(hass, mock_config_entry, mock
             "manufacturing_date": "2023-05-20",
             # Missing other version info
         },
-        "unit_info": {
-            "it_protocol_version": "1.5"
-        }
+        "unit_info": {"it_protocol_version": "1.5"},
     }
 
-    mock_coordinator.data = {
-        "mac": "00:11:22:33:44:55",
-        "serial": "TEST123456",
-        "capabilities": {}
-    }
+    mock_coordinator.data = {"mac": "00:11:22:33:44:55", "serial": "TEST123456", "capabilities": {}}
 
-    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, \
-         patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class, \
-         patch("custom_components.mitsubishi.MitsubishiDataUpdateCoordinator", return_value=mock_coordinator), \
-         patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, \
-         patch.object(hass.config_entries, 'async_forward_entry_setups', return_value=None):
-
+    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, patch(
+        "custom_components.mitsubishi.MitsubishiController"
+    ) as mock_controller_class, patch(
+        "custom_components.mitsubishi.MitsubishiDataUpdateCoordinator",
+        return_value=mock_coordinator,
+    ), patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry, patch.object(
+        hass.config_entries, "async_forward_entry_setups", return_value=None
+    ):
         # Mock the API and Controller to prevent real network calls
         mock_api = MagicMock()
         mock_api.close = AsyncMock()
@@ -242,9 +238,9 @@ async def test_async_setup_entry_connection_failure(hass, mock_config_entry):
     """Test setup when connection to device fails."""
     from homeassistant.exceptions import ConfigEntryNotReady
 
-    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, \
-         patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class:
-
+    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class, patch(
+        "custom_components.mitsubishi.MitsubishiController"
+    ) as mock_controller_class:
         # Mock the API and Controller
         mock_api = MagicMock()
         mock_api.close = AsyncMock()
@@ -255,5 +251,7 @@ async def test_async_setup_entry_connection_failure(hass, mock_config_entry):
         mock_controller_class.return_value = mock_controller
 
         # Should raise ConfigEntryNotReady when connection fails
-        with pytest.raises(ConfigEntryNotReady, match="Unable to connect to Mitsubishi AC at 192.168.1.100"):
+        with pytest.raises(
+            ConfigEntryNotReady, match="Unable to connect to Mitsubishi AC at 192.168.1.100"
+        ):
             await async_setup_entry(hass, mock_config_entry)

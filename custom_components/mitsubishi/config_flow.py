@@ -79,10 +79,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         raise CannotConnect from e
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for Mitsubishi Air Conditioner."""
 
     VERSION = 1
+    DOMAIN = DOMAIN
 
     @staticmethod
     def async_get_options_flow(
@@ -136,9 +137,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         super().__init__()
         self._config_entry = config_entry
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
         errors: dict[str, str] = {}
 
@@ -151,9 +150,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 _LOGGER.debug("Validation successful for options")
 
                 # Update the config entry with new data
-                self.hass.config_entries.async_update_entry(
-                    self._config_entry, data=user_input
-                )
+                self.hass.config_entries.async_update_entry(self._config_entry, data=user_input)
 
                 # Trigger reload of the integration to apply changes
                 await self.hass.config_entries.async_reload(self._config_entry.entry_id)
@@ -188,18 +185,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         options_schema = vol.Schema(
             {
                 vol.Required(CONF_HOST, default=current_host): str,
-                vol.Optional(
-                    CONF_ENCRYPTION_KEY, default=current_encryption_key
-                ): str,
-                vol.Optional(
-                    CONF_ADMIN_USERNAME, default=current_admin_username
-                ): str,
-                vol.Optional(
-                    CONF_ADMIN_PASSWORD, default=current_admin_password
-                ): str,
-                vol.Optional(
-                    CONF_SCAN_INTERVAL, default=current_scan_interval
-                ): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
+                vol.Optional(CONF_ENCRYPTION_KEY, default=current_encryption_key): str,
+                vol.Optional(CONF_ADMIN_USERNAME, default=current_admin_username): str,
+                vol.Optional(CONF_ADMIN_PASSWORD, default=current_admin_password): str,
+                vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(
+                    vol.Coerce(int), vol.Range(min=10, max=300)
+                ),
                 vol.Optional(
                     CONF_ENABLE_CAPABILITY_DETECTION,
                     default=current_capability_detection,
@@ -207,9 +198,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             }
         )
 
-        return self.async_show_form(
-            step_id="init", data_schema=options_schema, errors=errors
-        )
+        return self.async_show_form(step_id="init", data_schema=options_schema, errors=errors)
 
 
 class CannotConnect(HomeAssistantError):

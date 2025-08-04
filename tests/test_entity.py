@@ -12,9 +12,7 @@ from custom_components.mitsubishi.entity import MitsubishiEntity
 async def test_mitsubishi_entity_initialization(hass):
     """Test the initialization of MitsubishiEntity."""
     # Setup mock data
-    config_data = {
-        "host": "192.168.1.100"
-    }
+    config_data = {"host": "192.168.1.100"}
 
     mock_config_entry = MagicMock(spec=ConfigEntry)
     mock_config_entry.data = config_data
@@ -23,10 +21,7 @@ async def test_mitsubishi_entity_initialization(hass):
     mock_coordinator.data = {
         "mac": "00:11:22:33:44:55",
         "serial": "TEST123456",
-        "capabilities": {
-            "device_model": "MAC-577IF-2E",
-            "firmware_version": "1.0.0"
-        }
+        "capabilities": {"device_model": "MAC-577IF-2E", "firmware_version": "1.0.0"},
     }
 
     # Create the entity
@@ -53,9 +48,7 @@ async def test_mitsubishi_entity_initialization(hass):
 async def test_mitsubishi_entity_availability(hass):
     """Test the availability of MitsubishiEntity."""
     # Setup mock data
-    config_data = {
-        "host": "192.168.1.100"
-    }
+    config_data = {"host": "192.168.1.100"}
 
     mock_config_entry = MagicMock(spec=ConfigEntry)
     mock_config_entry.data = config_data
@@ -81,9 +74,7 @@ async def test_mitsubishi_entity_availability(hass):
 async def test_mitsubishi_entity_initialization_with_none_data(hass):
     """Test entity initialization when coordinator data is None."""
     # Setup mock data
-    config_data = {
-        "host": "192.168.1.100"
-    }
+    config_data = {"host": "192.168.1.100"}
 
     mock_config_entry = MagicMock(spec=ConfigEntry)
     mock_config_entry.data = config_data

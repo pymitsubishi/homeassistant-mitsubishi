@@ -70,9 +70,11 @@ async def test_async_set_native_value_success(hass, mock_coordinator, mock_confi
     number.hass = hass  # Set hass attribute
 
     # Mock successful controller call
-    with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-         patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+    with patch.object(
+        mock_coordinator, "async_request_refresh", new=AsyncMock()
+    ) as mock_refresh, patch.object(
+        hass, "async_add_executor_job", new=AsyncMock()
+    ) as mock_executor:
         await number.async_set_native_value(65.0)
 
         mock_executor.assert_called_once_with(
@@ -88,13 +90,14 @@ async def test_async_set_native_value_failure(hass, mock_coordinator, mock_confi
     number.hass = hass  # Set hass attribute
 
     # Mock failed controller call and capture the error logging
-    with patch.object(hass, 'async_add_executor_job', new=AsyncMock(return_value=False)) as mock_executor, \
-         patch('custom_components.mitsubishi.number._LOGGER.error') as mock_logger_error:
+    with patch.object(
+        hass, "async_add_executor_job", new=AsyncMock(return_value=False)
+    ) as mock_executor, patch(
+        "custom_components.mitsubishi.number._LOGGER.error"
+    ) as mock_logger_error:
         await number.async_set_native_value(40.0)
 
-        mock_executor.assert_called_with(
-            mock_coordinator.controller.set_dehumidifier, 40, False
-        )
+        mock_executor.assert_called_with(mock_coordinator.controller.set_dehumidifier, 40, False)
         # Should not call refresh on failure
         mock_coordinator.async_request_refresh.assert_not_called()
 
@@ -109,18 +112,20 @@ async def test_async_set_native_value_exception(hass, mock_coordinator, mock_con
     number.hass = hass  # Set hass attribute
 
     # Mock exception during controller call
-    with patch.object(hass, 'async_add_executor_job', side_effect=Exception("Network error")) as mock_executor:
+    with patch.object(
+        hass, "async_add_executor_job", side_effect=Exception("Network error")
+    ) as mock_executor:
         # Should not raise exception, just log it
         await number.async_set_native_value(30.0)
 
-        mock_executor.assert_called_with(
-            mock_coordinator.controller.set_dehumidifier, 30, False
-        )
+        mock_executor.assert_called_with(mock_coordinator.controller.set_dehumidifier, 30, False)
         mock_coordinator.async_request_refresh.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_dehumidifier_number_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_dehumidifier_number_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test dehumidifier number extra state attributes."""
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
 
@@ -135,12 +140,16 @@ async def test_async_set_native_value_float_conversion(hass, mock_coordinator, m
     number.hass = hass  # Set hass attribute
 
     # Test that 85.7 gets converted to 85 (int)
-    with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-         patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+    with patch.object(
+        mock_coordinator, "async_request_refresh", new=AsyncMock()
+    ) as mock_refresh, patch.object(
+        hass, "async_add_executor_job", new=AsyncMock()
+    ) as mock_executor:
         await number.async_set_native_value(85.7)
 
         mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_dehumidifier, 85, False  # Note: int(85.7) = 85
+            mock_coordinator.controller.set_dehumidifier,
+            85,
+            False,  # Note: int(85.7) = 85
         )
         mock_refresh.assert_called_once()

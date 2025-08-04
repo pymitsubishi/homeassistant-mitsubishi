@@ -26,9 +26,7 @@ async def test_coordinator_init(hass, mock_mitsubishi_controller):
 async def test_coordinator_init_custom_interval(hass, mock_mitsubishi_controller):
     """Test coordinator initialization with custom scan interval."""
     custom_interval = 60
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller, custom_interval
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller, custom_interval)
 
     assert coordinator.update_interval == timedelta(seconds=custom_interval)
 
@@ -36,13 +34,11 @@ async def test_coordinator_init_custom_interval(hass, mock_mitsubishi_controller
 @pytest.mark.asyncio
 async def test_fetch_unit_info_success(hass, mock_mitsubishi_controller):
     """Test successful unit info fetching."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     expected_unit_info = {
-        'adaptor_info': {'model': 'MAC-577IF-2E'},
-        'unit_info': {'type': 'Air Conditioner'}
+        "adaptor_info": {"model": "MAC-577IF-2E"},
+        "unit_info": {"type": "Air Conditioner"},
     }
     mock_mitsubishi_controller.get_unit_info.return_value = expected_unit_info
 
@@ -70,9 +66,7 @@ async def test_fetch_unit_info_no_method(hass):
 @pytest.mark.asyncio
 async def test_fetch_unit_info_exception(hass, mock_mitsubishi_controller):
     """Test unit info fetching when an exception occurs."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     mock_mitsubishi_controller.get_unit_info.side_effect = Exception("Network error")
 
@@ -85,44 +79,42 @@ async def test_fetch_unit_info_exception(hass, mock_mitsubishi_controller):
 @pytest.mark.asyncio
 async def test_async_update_data_success(hass, mock_mitsubishi_controller):
     """Test successful data update."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     expected_summary = {
-        'power': 'ON',
-        'mode': 'COOLER',
-        'target_temp': 24.0,
-        'room_temp': 22.5,
+        "power": "ON",
+        "mode": "COOLER",
+        "target_temp": 24.0,
+        "room_temp": 22.5,
     }
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
 
-    with patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
+    with patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor:
         # Mock the three calls: fetch_unit_info (if needed), fetch_status, get_status_summary
-        mock_executor.side_effect = [None, True, expected_summary]  # unit_info, fetch_status, get_status_summary
+        mock_executor.side_effect = [
+            None,
+            True,
+            expected_summary,
+        ]  # unit_info, fetch_status, get_status_summary
 
         result = await coordinator._async_update_data()
 
         assert result == expected_summary
         # Verify fetch_status was called with correct parameters (debug=True, detect_capabilities=True)
-        mock_executor.assert_any_call(
-            mock_mitsubishi_controller.fetch_status, True, True
-        )
+        mock_executor.assert_any_call(mock_mitsubishi_controller.fetch_status, True, True)
 
 
 @pytest.mark.asyncio
 async def test_async_update_data_with_unit_info_fetch(hass, mock_mitsubishi_controller):
     """Test data update that also fetches unit info on first run."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     # Mock unit info fetch
-    expected_unit_info = {'adaptor_info': {'model': 'MAC-577IF-2E'}}
+    expected_unit_info = {"adaptor_info": {"model": "MAC-577IF-2E"}}
     mock_mitsubishi_controller.get_unit_info.return_value = expected_unit_info
 
-    expected_summary = {'power': 'ON'}
+    expected_summary = {"power": "ON"}
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
 
@@ -135,16 +127,14 @@ async def test_async_update_data_with_unit_info_fetch(hass, mock_mitsubishi_cont
 @pytest.mark.asyncio
 async def test_async_update_data_with_vane_data(hass, mock_mitsubishi_controller):
     """Test data update with vane direction data (now included by pymitsubishi 0.1.6+)."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     # pymitsubishi 0.1.6+ includes vane data in the status summary
     expected_summary = {
-        'power': 'ON',
-        'vertical_vane_right': 'AUTO',
-        'vertical_vane_left': 'AUTO',
-        'horizontal_vane': 'AUTO'
+        "power": "ON",
+        "vertical_vane_right": "AUTO",
+        "vertical_vane_left": "AUTO",
+        "horizontal_vane": "AUTO",
     }
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
@@ -153,17 +143,15 @@ async def test_async_update_data_with_vane_data(hass, mock_mitsubishi_controller
 
     # Vane data should be present in result (included by pymitsubishi)
     assert result == expected_summary
-    assert result['vertical_vane_right'] == "AUTO"
-    assert result['vertical_vane_left'] == "AUTO"
-    assert result['horizontal_vane'] == "AUTO"
+    assert result["vertical_vane_right"] == "AUTO"
+    assert result["vertical_vane_left"] == "AUTO"
+    assert result["horizontal_vane"] == "AUTO"
 
 
 @pytest.mark.asyncio
 async def test_async_update_data_fetch_status_fails(hass, mock_mitsubishi_controller):
     """Test data update when fetch_status fails."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     mock_mitsubishi_controller.fetch_status.return_value = False
 
@@ -174,9 +162,7 @@ async def test_async_update_data_fetch_status_fails(hass, mock_mitsubishi_contro
 @pytest.mark.asyncio
 async def test_async_update_data_exception(hass, mock_mitsubishi_controller):
     """Test data update when an exception occurs."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     mock_mitsubishi_controller.fetch_status.side_effect = Exception("Network error")
 
@@ -187,14 +173,12 @@ async def test_async_update_data_exception(hass, mock_mitsubishi_controller):
 @pytest.mark.asyncio
 async def test_async_update_data_skip_unit_info_if_already_set(hass, mock_mitsubishi_controller):
     """Test that unit info is not fetched again if already set."""
-    coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller
-    )
+    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     # Pre-set unit info
-    coordinator.unit_info = {'existing': 'data'}
+    coordinator.unit_info = {"existing": "data"}
 
-    expected_summary = {'power': 'ON'}
+    expected_summary = {"power": "ON"}
     mock_mitsubishi_controller.fetch_status.return_value = True
     mock_mitsubishi_controller.get_status_summary.return_value = expected_summary
 

@@ -53,9 +53,13 @@ def mock_config_entry():
 @pytest.fixture
 def mock_config_entry_minimal():
     """Return a minimal mock config entry with only required fields."""
-    return MagicMock(spec=ConfigEntry, data={
-        CONF_HOST: "192.168.1.100",
-    }, entry_id="test_entry_id")
+    return MagicMock(
+        spec=ConfigEntry,
+        data={
+            CONF_HOST: "192.168.1.100",
+        },
+        entry_id="test_entry_id",
+    )
 
 
 @pytest.fixture
@@ -64,18 +68,20 @@ def mock_mitsubishi_api():
     with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class:
         mock_api = MagicMock()
         mock_api.close = MagicMock()
-        mock_api.get_unit_info = MagicMock(return_value={
-            'adaptor_info': {
-                'model': 'MAC-577IF-2E',
-                'app_version': '1.0.0',
-                'mac_address': '00:11:22:33:44:55',
-                'manufacturing_date': '2023-01-01',
-            },
-            'unit_info': {
-                'type': 'Air Conditioner',
-                'it_protocol_version': '1.0',
+        mock_api.get_unit_info = MagicMock(
+            return_value={
+                "adaptor_info": {
+                    "model": "MAC-577IF-2E",
+                    "app_version": "1.0.0",
+                    "mac_address": "00:11:22:33:44:55",
+                    "manufacturing_date": "2023-01-01",
+                },
+                "unit_info": {
+                    "type": "Air Conditioner",
+                    "it_protocol_version": "1.0",
+                },
             }
-        })
+        )
         mock_api_class.return_value = mock_api
         yield mock_api
 
@@ -86,24 +92,28 @@ def mock_mitsubishi_controller():
     with patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class:
         mock_controller = MagicMock()
         mock_controller.fetch_status = MagicMock(return_value=True)
-        mock_controller.get_status_summary = MagicMock(return_value={
-            'mac': '00:11:22:33:44:55',
-            'serial': 'TEST123456',
-            'power': 'ON',
-            'mode': 'COOLER',
-            'target_temp': 24.0,
-            'room_temp': 22.5,
-        })
-        mock_controller.get_unit_info = MagicMock(return_value={
-            'adaptor_info': {
-                'model': 'MAC-577IF-2E',
-                'app_version': '1.0.0',
-                'mac_address': '00:11:22:33:44:55',
-            },
-            'unit_info': {
-                'type': 'Air Conditioner',
+        mock_controller.get_status_summary = MagicMock(
+            return_value={
+                "mac": "00:11:22:33:44:55",
+                "serial": "TEST123456",
+                "power": "ON",
+                "mode": "COOLER",
+                "target_temp": 24.0,
+                "room_temp": 22.5,
             }
-        })
+        )
+        mock_controller.get_unit_info = MagicMock(
+            return_value={
+                "adaptor_info": {
+                    "model": "MAC-577IF-2E",
+                    "app_version": "1.0.0",
+                    "mac_address": "00:11:22:33:44:55",
+                },
+                "unit_info": {
+                    "type": "Air Conditioner",
+                },
+            }
+        )
         mock_controller.api = MagicMock()
         mock_controller.api.close = MagicMock()
         mock_controller_class.return_value = mock_controller
@@ -113,20 +123,22 @@ def mock_mitsubishi_controller():
 @pytest.fixture
 def mock_coordinator():
     """Return a mock data update coordinator."""
-    with patch("custom_components.mitsubishi.coordinator.MitsubishiDataUpdateCoordinator") as mock_coord_class:
+    with patch(
+        "custom_components.mitsubishi.coordinator.MitsubishiDataUpdateCoordinator"
+    ) as mock_coord_class:
         mock_coord = MagicMock()
         mock_coord.data = {
-            'mac': '00:11:22:33:44:55',
-            'serial': 'TEST123456',
-            'power': 'ON',
-            'capabilities': {},
+            "mac": "00:11:22:33:44:55",
+            "serial": "TEST123456",
+            "power": "ON",
+            "capabilities": {},
         }
         mock_coord.unit_info = {
-            'adaptor_info': {
-                'model': 'MAC-577IF-2E',
-                'app_version': '1.0.0',
+            "adaptor_info": {
+                "model": "MAC-577IF-2E",
+                "app_version": "1.0.0",
             },
-            'unit_info': {}
+            "unit_info": {},
         }
         mock_coord.async_config_entry_first_refresh = AsyncMock()
         mock_coord.fetch_unit_info = AsyncMock()
@@ -151,32 +163,32 @@ def mock_device_registry():
 def sample_unit_info():
     """Return sample unit info data."""
     return {
-        'adaptor_info': {
-            'model': 'MAC-577IF-2E',
-            'app_version': '1.2.3',
-            'release_version': '1.2.3-release',
-            'flash_version': '1.0.0',
-            'boot_version': '1.0.0',
-            'platform_version': '1.0.0',
-            'mac_address': '00:11:22:33:44:55',
-            'device_id': 12345,
-            'manufacturing_date': '2023-01-15',
-            'current_time': '2024-01-01 12:00:00',
-            'wifi_channel': 6,
-            'rssi_dbm': -45,
-            'rssi_raw': '-45dBm',
-            'it_comm_status': 'OK',
-            'server_operation': True,
-            'server_comm_status': 'Connected',
-            'hems_comm_status': 'Disabled',
-            'soi_comm_status': 'OK',
-            'thermal_timestamp': None,
+        "adaptor_info": {
+            "model": "MAC-577IF-2E",
+            "app_version": "1.2.3",
+            "release_version": "1.2.3-release",
+            "flash_version": "1.0.0",
+            "boot_version": "1.0.0",
+            "platform_version": "1.0.0",
+            "mac_address": "00:11:22:33:44:55",
+            "device_id": 12345,
+            "manufacturing_date": "2023-01-15",
+            "current_time": "2024-01-01 12:00:00",
+            "wifi_channel": 6,
+            "rssi_dbm": -45,
+            "rssi_raw": "-45dBm",
+            "it_comm_status": "OK",
+            "server_operation": True,
+            "server_comm_status": "Connected",
+            "hems_comm_status": "Disabled",
+            "soi_comm_status": "OK",
+            "thermal_timestamp": None,
         },
-        'unit_info': {
-            'type': 'Air Conditioner',
-            'it_protocol_version': '2.1',
-            'error_code': 'None',
-        }
+        "unit_info": {
+            "type": "Air Conditioner",
+            "it_protocol_version": "2.1",
+            "error_code": "None",
+        },
     }
 
 
@@ -184,62 +196,75 @@ def sample_unit_info():
 def sample_status_summary():
     """Return sample status summary data."""
     return {
-        'mac': '00:11:22:33:44:55',
-        'serial': 'TEST123456',
-        'power': 'ON',
-        'mode': 'COOLER',
-        'target_temp': 24.0,
-        'fan_speed': 'AUTO',
-        'dehumidifier_setting': 50,
-        'power_saving_mode': False,
-        'vertical_vane_right': 'AUTO',
-        'vertical_vane_left': 'AUTO',
-        'horizontal_vane': 'AUTO',
-        'room_temp': 22.5,
-        'outside_temp': 18.0,
-        'error_code': None,
-        'abnormal_state': False,
-        'capabilities': {}
+        "mac": "00:11:22:33:44:55",
+        "serial": "TEST123456",
+        "power": "ON",
+        "mode": "COOLER",
+        "target_temp": 24.0,
+        "fan_speed": "AUTO",
+        "dehumidifier_setting": 50,
+        "power_saving_mode": False,
+        "vertical_vane_right": "AUTO",
+        "vertical_vane_left": "AUTO",
+        "horizontal_vane": "AUTO",
+        "room_temp": 22.5,
+        "outside_temp": 18.0,
+        "error_code": None,
+        "abnormal_state": False,
+        "capabilities": {},
     }
 
 
 # Common test utility fixtures and helpers
 
+
 @pytest.fixture
 def mock_async_methods():
     """Context manager that patches common async methods used in entity tests."""
+
     @contextmanager
     def _patch_async_methods(hass, coordinator):
-        with patch.object(coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-             patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
+        with patch.object(
+            coordinator, "async_request_refresh", new=AsyncMock()
+        ) as mock_refresh, patch.object(
+            hass, "async_add_executor_job", new=AsyncMock()
+        ) as mock_executor:
             yield mock_executor, mock_refresh
+
     return _patch_async_methods
 
 
 @pytest.fixture
 def setup_entity_with_hass():
     """Helper to set up entity with hass instance."""
+
     def _setup_entity_with_hass(entity, hass):
         """Set hass attribute on entity for testing."""
         entity.hass = hass
         return entity
+
     return _setup_entity_with_hass
 
 
 @pytest.fixture
 def update_coordinator_data():
     """Helper to update coordinator data in tests."""
+
     def _update_coordinator_data(coordinator, data_updates):
         """Update coordinator data with new values."""
         coordinator.data.update(data_updates)
         return coordinator
+
     return _update_coordinator_data
 
 
 @pytest.fixture
 def create_entity_with_setup():
     """Helper to create and setup entity with common test patterns."""
-    def _create_entity_with_setup(entity_class, coordinator, config_entry, hass=None, data_updates=None):
+
+    def _create_entity_with_setup(
+        entity_class, coordinator, config_entry, hass=None, data_updates=None
+    ):
         """Create entity instance with optional hass setup and data updates."""
         entity = entity_class(coordinator, config_entry)
 
@@ -250,4 +275,5 @@ def create_entity_with_setup():
             entity.hass = hass
 
         return entity
+
     return _create_entity_with_setup

@@ -3,9 +3,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant import config_entries
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import config_entry_oauth2_flow
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.mitsubishi.config_flow import CannotConnect, OptionsFlowHandler
@@ -17,7 +17,6 @@ from custom_components.mitsubishi.const import (
     CONF_SCAN_INTERVAL,
     DOMAIN,
 )
-from homeassistant.const import CONF_HOST
 
 
 @pytest.fixture
@@ -44,8 +43,8 @@ def mock_controller():
         "device_info": {
             "model": "MAC-577IF-2E",
             "firmware": "1.0.0",
-            "mac_address": "AA:BB:CC:DD:EE:FF"
-        }
+            "mac_address": "AA:BB:CC:DD:EE:FF",
+        },
     }
     return controller
 
@@ -68,9 +67,7 @@ class TestConfigFlow:
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
 
-        with patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiAPI"
-        ) as mock_api_class:
+        with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class:
             mock_api = MagicMock()
             mock_api_class.return_value = mock_api
 
@@ -96,9 +93,7 @@ class TestConfigFlow:
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
 
-        with patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiAPI"
-        ) as mock_api_class:
+        with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class:
             mock_api_class.return_value = mock_api
 
             with patch(
@@ -131,9 +126,7 @@ class TestConfigFlow:
     async def test_form_already_configured(self, hass: HomeAssistant) -> None:
         """Test we handle already configured."""
         # Mock the entry creation first, but don't add it yet
-        with patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiAPI"
-        ) as mock_api_class:
+        with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class:
             mock_api = MagicMock()
             mock_api_class.return_value = mock_api
 
@@ -153,8 +146,8 @@ class TestConfigFlow:
                     "device_info": {
                         "model": "MAC-577IF-2E",
                         "firmware": "1.0.0",
-                        "mac_address": "AA:BB:CC:DD:EE:FF"
-                    }
+                        "mac_address": "AA:BB:CC:DD:EE:FF",
+                    },
                 }
                 mock_controller.get_status_summary.return_value = status_summary
                 mock_controller_class.return_value = mock_controller
@@ -190,9 +183,7 @@ class TestConfigFlow:
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
 
-        with patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiAPI"
-        ) as mock_api_class:
+        with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class:
             mock_api_class.return_value = mock_api
 
             with patch(
@@ -223,9 +214,7 @@ class TestConfigFlow:
         )
 
         # Simulate exception in validate_input that's not CannotConnect or AbortFlow
-        with patch(
-            "custom_components.mitsubishi.config_flow.validate_input"
-        ) as mock_validate:
+        with patch("custom_components.mitsubishi.config_flow.validate_input") as mock_validate:
             mock_validate.side_effect = ValueError("Unexpected error")
 
             result2 = await hass.config_entries.flow.async_configure(
@@ -246,9 +235,11 @@ class TestConfigFlow:
             "encryption_key": "test_key",
         }
 
-        with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class, \
-             patch("custom_components.mitsubishi.config_flow.MitsubishiController") as mock_controller_class:
-
+        with patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiAPI"
+        ) as mock_api_class, patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiController"
+        ) as mock_controller_class:
             # Set up mocks for exception during get_status_summary
             mock_api = MagicMock()
             mock_api.close = MagicMock()
@@ -396,7 +387,7 @@ class TestOptionsFlow:
 
         assert result["type"] == FlowResultType.FORM
         assert result["step_id"] == "init"
-        
+
         # Check that default values match current config entry data
         # Note: Voluptuous schema default values are not easily accessible
         # so we test by verifying the form is shown properly
@@ -405,10 +396,9 @@ class TestOptionsFlow:
     def test_config_flow_async_get_options_flow(self, mock_config_entry):
         """Test the ConfigFlow.async_get_options_flow method."""
         from custom_components.mitsubishi.config_flow import ConfigFlow
-        
+
         # Test the static method that creates options flow
         options_flow = ConfigFlow.async_get_options_flow(mock_config_entry)
-        
+
         assert isinstance(options_flow, OptionsFlowHandler)
         assert options_flow.config_entry == mock_config_entry
-

@@ -88,13 +88,10 @@ async def test_unit_info_sensor(hass, mock_coordinator, mock_config_entry):
     sensor = MitsubishiUnitInfoSensor(mock_coordinator, mock_config_entry)
     mock_coordinator.unit_info = {
         "adaptor_info": {"model": "MAC-577IF-2E", "app_version": "1.0.0"},
-        "unit_info": {"type": "Air Conditioner"}
+        "unit_info": {"type": "Air Conditioner"},
     }
     assert sensor.native_value == "MAC-577IF-2E"
-    assert sensor.extra_state_attributes == {
-        "app_version": "1.0.0",
-        "unit_type": "Air Conditioner"
-    }
+    assert sensor.extra_state_attributes == {"app_version": "1.0.0", "unit_type": "Air Conditioner"}
 
 
 @pytest.mark.asyncio
@@ -142,9 +139,7 @@ async def test_firmware_version_sensor(hass, mock_coordinator, mock_config_entry
             "boot_version": "1.0.1",
             "platform_version": "2.0.2",
         },
-        "unit_info": {
-            "it_protocol_version": "3.0.3"
-        }
+        "unit_info": {"it_protocol_version": "3.0.3"},
     }
     assert sensor.native_value == "1.2.3"
     assert sensor.extra_state_attributes == {
@@ -179,7 +174,7 @@ async def test_unit_type_sensor(hass, mock_coordinator, mock_config_entry):
             "type": "Air Conditioner",
             "it_protocol_version": "3.0.3",
             "error_code": "0000",
-        }
+        },
     }
     assert sensor.native_value == "Air Conditioner"
     assert sensor.extra_state_attributes == {
@@ -279,7 +274,9 @@ async def test_async_setup_entry_sensor_creation_none(hass, mock_coordinator, mo
     async_add_entities = MagicMock()
 
     # Mock one sensor class to return None
-    with patch('custom_components.mitsubishi.sensor.MitsubishiRoomTemperatureSensor', return_value=None):
+    with patch(
+        "custom_components.mitsubishi.sensor.MitsubishiRoomTemperatureSensor", return_value=None
+    ):
         await async_setup_entry(hass, mock_config_entry, async_add_entities)
 
     async_add_entities.assert_called_once()
@@ -289,13 +286,18 @@ async def test_async_setup_entry_sensor_creation_none(hass, mock_coordinator, mo
 
 
 @pytest.mark.asyncio
-async def test_async_setup_entry_sensor_creation_exception(hass, mock_coordinator, mock_config_entry):
+async def test_async_setup_entry_sensor_creation_exception(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test async_setup_entry when sensor creation raises an exception."""
     hass.data[DOMAIN] = {mock_config_entry.entry_id: mock_coordinator}
     async_add_entities = MagicMock()
 
     # Mock one sensor class to raise an exception
-    with patch('custom_components.mitsubishi.sensor.MitsubishiOutdoorTemperatureSensor', side_effect=Exception("Test exception")):
+    with patch(
+        "custom_components.mitsubishi.sensor.MitsubishiOutdoorTemperatureSensor",
+        side_effect=Exception("Test exception"),
+    ):
         await async_setup_entry(hass, mock_config_entry, async_add_entities)
 
     async_add_entities.assert_called_once()

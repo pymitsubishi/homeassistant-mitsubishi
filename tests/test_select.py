@@ -59,7 +59,9 @@ async def test_vertical_vane_select_current_option(hass, mock_coordinator, mock_
 
 
 @pytest.mark.asyncio
-async def test_vertical_vane_select_current_option_all_mappings(hass, mock_coordinator, mock_config_entry):
+async def test_vertical_vane_select_current_option_all_mappings(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test vertical vane select current option with all possible mappings."""
     select = MitsubishiVerticalVaneSelect(mock_coordinator, mock_config_entry)
 
@@ -84,26 +86,28 @@ async def test_vertical_vane_select_async_select_option(hass, mock_coordinator, 
     select = MitsubishiVerticalVaneSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-         patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+    with patch.object(
+        mock_coordinator, "async_request_refresh", new=AsyncMock()
+    ) as mock_refresh, patch.object(
+        hass, "async_add_executor_job", new=AsyncMock()
+    ) as mock_executor:
         await select.async_select_option("swing")
 
         mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_vertical_vane,
-            VerticalWindDirection.SWING,
-            "right"
+            mock_coordinator.controller.set_vertical_vane, VerticalWindDirection.SWING, "right"
         )
         mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_vertical_vane_select_async_select_invalid_option(hass, mock_coordinator, mock_config_entry):
+async def test_vertical_vane_select_async_select_invalid_option(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test vertical vane select with invalid option."""
     select = MitsubishiVerticalVaneSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(hass, 'async_add_executor_job') as mock_executor:
+    with patch.object(hass, "async_add_executor_job") as mock_executor:
         await select.async_select_option("invalid_option")
 
         # Should not call controller for invalid option
@@ -112,7 +116,9 @@ async def test_vertical_vane_select_async_select_invalid_option(hass, mock_coord
 
 
 @pytest.mark.asyncio
-async def test_vertical_vane_select_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_vertical_vane_select_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test vertical vane select extra state attributes."""
     select = MitsubishiVerticalVaneSelect(mock_coordinator, mock_config_entry)
 
@@ -150,7 +156,9 @@ async def test_horizontal_vane_select_current_option(hass, mock_coordinator, moc
 
 
 @pytest.mark.asyncio
-async def test_horizontal_vane_select_current_option_all_mappings(hass, mock_coordinator, mock_config_entry):
+async def test_horizontal_vane_select_current_option_all_mappings(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test horizontal vane select current option with all possible mappings."""
     select = MitsubishiHorizontalVaneSelect(mock_coordinator, mock_config_entry)
 
@@ -174,30 +182,35 @@ async def test_horizontal_vane_select_current_option_all_mappings(hass, mock_coo
 
 
 @pytest.mark.asyncio
-async def test_horizontal_vane_select_async_select_option(hass, mock_coordinator, mock_config_entry):
+async def test_horizontal_vane_select_async_select_option(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test horizontal vane select option selection."""
     select = MitsubishiHorizontalVaneSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-         patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+    with patch.object(
+        mock_coordinator, "async_request_refresh", new=AsyncMock()
+    ) as mock_refresh, patch.object(
+        hass, "async_add_executor_job", new=AsyncMock()
+    ) as mock_executor:
         await select.async_select_option("center")
 
         mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_horizontal_vane,
-            HorizontalWindDirection.C
+            mock_coordinator.controller.set_horizontal_vane, HorizontalWindDirection.C
         )
         mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_horizontal_vane_select_async_select_invalid_option(hass, mock_coordinator, mock_config_entry):
+async def test_horizontal_vane_select_async_select_invalid_option(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test horizontal vane select with invalid option."""
     select = MitsubishiHorizontalVaneSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(hass, 'async_add_executor_job') as mock_executor:
+    with patch.object(hass, "async_add_executor_job") as mock_executor:
         await select.async_select_option("invalid_option")
 
         # Should not call controller for invalid option
@@ -206,7 +219,9 @@ async def test_horizontal_vane_select_async_select_invalid_option(hass, mock_coo
 
 
 @pytest.mark.asyncio
-async def test_horizontal_vane_select_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_horizontal_vane_select_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test horizontal vane select extra state attributes."""
     select = MitsubishiHorizontalVaneSelect(mock_coordinator, mock_config_entry)
 
@@ -226,7 +241,9 @@ async def test_power_saving_select_init(hass, mock_coordinator, mock_config_entr
 
 
 @pytest.mark.asyncio
-async def test_power_saving_select_current_option_enabled(hass, mock_coordinator, mock_config_entry):
+async def test_power_saving_select_current_option_enabled(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test power saving select current option when enabled."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
 
@@ -235,7 +252,9 @@ async def test_power_saving_select_current_option_enabled(hass, mock_coordinator
 
 
 @pytest.mark.asyncio
-async def test_power_saving_select_current_option_disabled(hass, mock_coordinator, mock_config_entry):
+async def test_power_saving_select_current_option_disabled(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test power saving select current option when disabled."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
 
@@ -248,41 +267,47 @@ async def test_power_saving_select_current_option_disabled(hass, mock_coordinato
 
 
 @pytest.mark.asyncio
-async def test_power_saving_select_async_select_option_enabled(hass, mock_coordinator, mock_config_entry):
+async def test_power_saving_select_async_select_option_enabled(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test power saving select option selection to enabled."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-         patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+    with patch.object(
+        mock_coordinator, "async_request_refresh", new=AsyncMock()
+    ) as mock_refresh, patch.object(
+        hass, "async_add_executor_job", new=AsyncMock()
+    ) as mock_executor:
         await select.async_select_option("Enabled")
 
-        mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_power_saving, True
-        )
+        mock_executor.assert_called_once_with(mock_coordinator.controller.set_power_saving, True)
         mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_power_saving_select_async_select_option_disabled(hass, mock_coordinator, mock_config_entry):
+async def test_power_saving_select_async_select_option_disabled(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test power saving select option selection to disabled."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-         patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+    with patch.object(
+        mock_coordinator, "async_request_refresh", new=AsyncMock()
+    ) as mock_refresh, patch.object(
+        hass, "async_add_executor_job", new=AsyncMock()
+    ) as mock_executor:
         await select.async_select_option("Disabled")
 
-        mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_power_saving, False
-        )
+        mock_executor.assert_called_once_with(mock_coordinator.controller.set_power_saving, False)
         mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_power_saving_select_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
+async def test_power_saving_select_extra_state_attributes(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test power saving select extra state attributes."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
 
@@ -307,15 +332,15 @@ async def test_vertical_vane_select_all_options(hass, mock_coordinator, mock_con
     ]
 
     for option, expected_direction in test_cases:
-        with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-             patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+        with patch.object(
+            mock_coordinator, "async_request_refresh", new=AsyncMock()
+        ) as mock_refresh, patch.object(
+            hass, "async_add_executor_job", new=AsyncMock()
+        ) as mock_executor:
             await select.async_select_option(option)
 
             mock_executor.assert_called_once_with(
-                mock_coordinator.controller.set_vertical_vane,
-                expected_direction,
-                "right"
+                mock_coordinator.controller.set_vertical_vane, expected_direction, "right"
             )
             mock_refresh.assert_called_once()
 
@@ -341,13 +366,14 @@ async def test_horizontal_vane_select_all_options(hass, mock_coordinator, mock_c
     ]
 
     for option, expected_direction in test_cases:
-        with patch.object(mock_coordinator, 'async_request_refresh', new=AsyncMock()) as mock_refresh, \
-             patch.object(hass, 'async_add_executor_job', new=AsyncMock()) as mock_executor:
-
+        with patch.object(
+            mock_coordinator, "async_request_refresh", new=AsyncMock()
+        ) as mock_refresh, patch.object(
+            hass, "async_add_executor_job", new=AsyncMock()
+        ) as mock_executor:
             await select.async_select_option(option)
 
             mock_executor.assert_called_once_with(
-                mock_coordinator.controller.set_horizontal_vane,
-                expected_direction
+                mock_coordinator.controller.set_horizontal_vane, expected_direction
             )
             mock_refresh.assert_called_once()
