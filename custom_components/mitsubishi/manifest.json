@@ -9,7 +9,7 @@
   "config_flow": true,
   "iot_class": "local_polling",
   "integration_type": "device",
-  "homeassistant": "2025.1.0",
+  "homeassistant": "2024.4.3",
   "loggers": ["pymitsubishi"],
   "integration_logo": "icon.svg"
 }
