@@ -134,4 +134,3 @@ jobs:
         else
           echo "No pre-commit config found, skipping"
         fi
-      continue-on-error: true

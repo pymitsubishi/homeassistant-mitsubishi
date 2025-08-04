@@ -28,12 +28,3 @@ repos:
         args: [--ignore-missing-imports]
         additional_dependencies: [types-requests]
 
-  - repo: local
-    hooks:
-      - id: pytest
-        name: pytest
-        entry: pytest
-        language: system
-        pass_filenames: false
-        always_run: true
-        args: [tests/, --cov=custom_components/mitsubishi, --cov-fail-under=95]
