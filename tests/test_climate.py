@@ -204,13 +204,13 @@ async def test_async_set_temperature(
     # Mock the controller method and coordinator refresh
     with patch.object(mock_coordinator.controller, "set_temperature"), mock_async_methods(
         hass, mock_coordinator
-    ) as (mock_executor, mock_refresh):
+    ) as (mock_executor, mock_refresh), patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
         await climate.async_set_temperature(**{ATTR_TEMPERATURE: 25.0})
 
-        # Verify the executor was called twice: once for set_temperature, once for get_status_summary
-        assert mock_executor.call_count == 2
-        # async_request_refresh should NOT be called for successful temperature commands
-        mock_refresh.assert_not_called()
+        # Verify the executor was called once (centralized approach)
+        assert mock_executor.call_count == 1
+        # async_request_refresh should be called once for successful temperature commands
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -233,13 +233,13 @@ async def test_async_set_hvac_mode_off(
         MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
     )
 
-    with mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh):
+    with mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh), patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_hvac_mode(HVACMode.OFF)
 
-        # Verify the executor was called twice: once for set_power, once for get_status_summary
-        assert mock_executor.call_count == 2
-        # async_request_refresh should NOT be called for successful non-temperature commands
-        mock_refresh.assert_not_called()
+        # Verify the executor was called once (centralized approach)
+        assert mock_executor.call_count == 1
+        # async_request_refresh should be called once
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -256,10 +256,10 @@ async def test_async_set_hvac_mode_heat_from_off(hass, mock_coordinator, mock_co
     ) as mock_executor:
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
-        # Should call: set_power, get_status_summary, set_mode, get_status_summary (4 total)
-        assert mock_executor.call_count == 4
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # Should call: set_power and set_mode (2 total, centralized approach)
+        assert mock_executor.call_count == 2
+        # async_request_refresh should be called twice
+        assert mock_refresh.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -276,10 +276,10 @@ async def test_async_set_hvac_mode_heat_from_on(hass, mock_coordinator, mock_con
     ) as mock_executor:
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
-        # Should call set_mode and get_status_summary (2 total)
-        assert mock_executor.call_count == 2
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # Should call set_mode once (centralized approach)
+        assert mock_executor.call_count == 1
+        # async_request_refresh should be called once
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -295,10 +295,10 @@ async def test_async_set_fan_mode(hass, mock_coordinator, mock_config_entry):
     ) as mock_executor:
         await climate.async_set_fan_mode(FAN_HIGH)
 
-        # Should call set_fan_speed and get_status_summary (2 total)
-        assert mock_executor.call_count == 2
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # Should call set_fan_speed once (centralized approach)
+        assert mock_executor.call_count == 1
+        # async_request_refresh should be called once for successful commands
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -314,10 +314,10 @@ async def test_async_turn_on(hass, mock_coordinator, mock_config_entry):
     ) as mock_executor:
         await climate.async_turn_on()
 
-        # Should call set_power and get_status_summary (2 total)
-        assert mock_executor.call_count == 2
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # Should call set_power once (centralized approach)
+        assert mock_executor.call_count == 1
+        # async_request_refresh should be called once for successful commands
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -333,10 +333,10 @@ async def test_async_turn_off(hass, mock_coordinator, mock_config_entry):
     ) as mock_executor:
         await climate.async_turn_off()
 
-        # Should call set_power and get_status_summary (2 total)
-        assert mock_executor.call_count == 2
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # Should call set_power once (centralized approach)
+        assert mock_executor.call_count == 1
+        # async_request_refresh should be called once for successful commands
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -405,11 +405,11 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
     ) as mock_executor:
         await climate.async_set_swing_mode(SWING_VERTICAL)
 
-        # Should call set_vertical_vane and get_status_summary (2 total)
-        assert mock_executor.call_count == 2
+        # Should call set_vertical_vane once (centralized approach)
+        assert mock_executor.call_count == 1
 
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # async_request_refresh should be called once for successful commands
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -425,11 +425,11 @@ async def test_async_set_swing_mode_horizontal(hass, mock_coordinator, mock_conf
     ) as mock_executor:
         await climate.async_set_swing_mode(SWING_HORIZONTAL)
 
-        # Should call set_horizontal_vane and get_status_summary (2 total)
-        assert mock_executor.call_count == 2
+        # Should call set_horizontal_vane once (centralized approach)
+        assert mock_executor.call_count == 1
 
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # async_request_refresh should be called once for successful commands
+        mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -445,12 +445,11 @@ async def test_async_set_swing_mode_both(hass, mock_coordinator, mock_config_ent
     ) as mock_executor:
         await climate.async_set_swing_mode(SWING_BOTH)
 
-        # Should call both vane methods and get_status_summary twice (4 total)
-        # set_vertical_vane, get_status_summary, set_horizontal_vane, get_status_summary
-        assert mock_executor.call_count == 4
+        # Should call both vane methods twice (centralized approach, two commands)
+        assert mock_executor.call_count == 2
 
-        # async_request_refresh should NOT be called for successful commands
-        mock_refresh.assert_not_called()
+        # async_request_refresh should be called twice for two successful commands
+        assert mock_refresh.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -551,8 +550,32 @@ async def test_async_set_hvac_mode_power_command_fails(hass, mock_coordinator, m
         )
 
 
+
 @pytest.mark.asyncio
-async def test_temperature_command_validation_failure(hass, mock_coordinator, mock_config_entry):
+async def test_update_coordinator_from_controller_state_success(hass, mock_coordinator, mock_config_entry):
+    """Test successful update of coordinator from controller state."""
+    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
+    climate.hass = hass
+
+    summary = {"target_temp": 22.0}  # Mocked status summary
+
+    with patch.object(
+        hass, "async_add_executor_job", new=AsyncMock(return_value=summary)
+    ) as mock_executor, patch.object(
+        mock_coordinator, "async_update_listeners", new=AsyncMock()
+    ) as mock_update_listeners:
+
+        await climate._update_coordinator_from_controller_state()
+
+        # Assert that the data was set correctly
+        assert climate.coordinator.data == summary
+
+        # Ensure that the update listeners function was called
+        mock_update_listeners.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_temperature_command_validation_success(hass, mock_coordinator, mock_config_entry):
     """Test temperature command when validation fails (device rejects temperature)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
@@ -579,8 +602,10 @@ async def test_temperature_command_validation_failure(hass, mock_coordinator, mo
         # Command should still return True but trigger validation failure path
         assert result is True
 
-        # Should have called sleep and refresh due to validation failure
-        mock_sleep.assert_called_once_with(1.0)
+        # Should have called sleep with 2.0 seconds and refresh due to validation failure
+        assert mock_sleep.call_count == 1
+        # First call is the standard 2.0 second wait
+        mock_sleep.assert_called_with(2.0)
         mock_refresh.assert_called_once()
 
 
@@ -667,6 +692,6 @@ async def test_temperature_command_validation_success(hass, mock_coordinator, mo
         # Command should return True
         assert result is True
 
-        # Should NOT have called sleep or refresh since validation succeeded
-        mock_sleep.assert_not_called()
-        mock_refresh.assert_not_called()
+        # Should have called sleep with 2.0 seconds (standard wait) and refresh
+        mock_sleep.assert_called_once_with(2.0)
+        mock_refresh.assert_called_once()

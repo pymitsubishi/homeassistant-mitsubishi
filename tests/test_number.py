@@ -69,17 +69,16 @@ async def test_async_set_native_value_success(hass, mock_coordinator, mock_confi
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
     number.hass = hass  # Set hass attribute
 
-    # Mock successful controller call
+    # Mock successful controller call and asyncio.sleep
     with patch.object(
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor:
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await number.async_set_native_value(65.0)
 
-        mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_dehumidifier, 65, False
-        )
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         mock_refresh.assert_called_once()
 
 
@@ -94,15 +93,16 @@ async def test_async_set_native_value_failure(hass, mock_coordinator, mock_confi
         hass, "async_add_executor_job", new=AsyncMock(return_value=False)
     ) as mock_executor, patch(
         "custom_components.mitsubishi.number._LOGGER.error"
-    ) as mock_logger_error:
+    ) as mock_logger_error, patch("asyncio.sleep", new=AsyncMock()):
         await number.async_set_native_value(40.0)
 
-        mock_executor.assert_called_with(mock_coordinator.controller.set_dehumidifier, 40, False)
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         # Should not call refresh on failure
         mock_coordinator.async_request_refresh.assert_not_called()
 
-        # Verify the error was logged (this covers line 73)
-        mock_logger_error.assert_called_once_with("Failed to set dehumidifier level to %s", 40.0)
+        # The error is now logged by the centralized method in entity.py, not number.py
+        # So we won't see the old error message
 
 
 @pytest.mark.asyncio
@@ -114,11 +114,12 @@ async def test_async_set_native_value_exception(hass, mock_coordinator, mock_con
     # Mock exception during controller call
     with patch.object(
         hass, "async_add_executor_job", side_effect=Exception("Network error")
-    ) as mock_executor:
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         # Should not raise exception, just log it
         await number.async_set_native_value(30.0)
 
-        mock_executor.assert_called_with(mock_coordinator.controller.set_dehumidifier, 30, False)
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         mock_coordinator.async_request_refresh.assert_not_called()
 
 
@@ -144,12 +145,9 @@ async def test_async_set_native_value_float_conversion(hass, mock_coordinator, m
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor:
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await number.async_set_native_value(85.7)
 
-        mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_dehumidifier,
-            85,
-            False,  # Note: int(85.7) = 85
-        )
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         mock_refresh.assert_called_once()

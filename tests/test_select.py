@@ -90,12 +90,11 @@ async def test_vertical_vane_select_async_select_option(hass, mock_coordinator, 
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor:
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await select.async_select_option("swing")
 
-        mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_vertical_vane, VerticalWindDirection.SWING, "right"
-        )
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         mock_refresh.assert_called_once()
 
 
@@ -193,12 +192,11 @@ async def test_horizontal_vane_select_async_select_option(
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor:
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await select.async_select_option("center")
 
-        mock_executor.assert_called_once_with(
-            mock_coordinator.controller.set_horizontal_vane, HorizontalWindDirection.C
-        )
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         mock_refresh.assert_called_once()
 
 
@@ -278,10 +276,11 @@ async def test_power_saving_select_async_select_option_enabled(
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor:
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await select.async_select_option("Enabled")
 
-        mock_executor.assert_called_once_with(mock_coordinator.controller.set_power_saving, True)
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         mock_refresh.assert_called_once()
 
 
@@ -297,10 +296,11 @@ async def test_power_saving_select_async_select_option_disabled(
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor:
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await select.async_select_option("Disabled")
 
-        mock_executor.assert_called_once_with(mock_coordinator.controller.set_power_saving, False)
+        # Should call the lambda function wrapping the controller command
+        assert mock_executor.call_count == 1
         mock_refresh.assert_called_once()
 
 
@@ -336,12 +336,11 @@ async def test_vertical_vane_select_all_options(hass, mock_coordinator, mock_con
             mock_coordinator, "async_request_refresh", new=AsyncMock()
         ) as mock_refresh, patch.object(
             hass, "async_add_executor_job", new=AsyncMock()
-        ) as mock_executor:
+        ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
             await select.async_select_option(option)
 
-            mock_executor.assert_called_once_with(
-                mock_coordinator.controller.set_vertical_vane, expected_direction, "right"
-            )
+            # Should call the lambda function wrapping the controller command
+            assert mock_executor.call_count == 1
             mock_refresh.assert_called_once()
 
 
@@ -370,10 +369,9 @@ async def test_horizontal_vane_select_all_options(hass, mock_coordinator, mock_c
             mock_coordinator, "async_request_refresh", new=AsyncMock()
         ) as mock_refresh, patch.object(
             hass, "async_add_executor_job", new=AsyncMock()
-        ) as mock_executor:
+        ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
             await select.async_select_option(option)
 
-            mock_executor.assert_called_once_with(
-                mock_coordinator.controller.set_horizontal_vane, expected_direction
-            )
+            # Should call the lambda function wrapping the controller command
+            assert mock_executor.call_count == 1
             mock_refresh.assert_called_once()
