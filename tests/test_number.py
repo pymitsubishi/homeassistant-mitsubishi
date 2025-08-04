@@ -88,12 +88,10 @@ async def test_async_set_native_value_failure(hass, mock_coordinator, mock_confi
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
     number.hass = hass  # Set hass attribute
 
-    # Mock failed controller call and capture the error logging
+    # Mock failed controller call
     with patch.object(
         hass, "async_add_executor_job", new=AsyncMock(return_value=False)
-    ) as mock_executor, patch(
-        "custom_components.mitsubishi.number._LOGGER.error"
-    ) as mock_logger_error, patch("asyncio.sleep", new=AsyncMock()):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await number.async_set_native_value(40.0)
 
         # Should call the lambda function wrapping the controller command

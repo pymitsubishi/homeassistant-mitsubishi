@@ -79,10 +79,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         raise CannotConnect from e
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for Mitsubishi Air Conditioner."""
 
     VERSION = 1
+    DOMAIN = DOMAIN
 
     @staticmethod
     def async_get_options_flow(

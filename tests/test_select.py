@@ -331,7 +331,7 @@ async def test_vertical_vane_select_all_options(hass, mock_coordinator, mock_con
         ("swing", VerticalWindDirection.SWING),
     ]
 
-    for option, expected_direction in test_cases:
+    for option, _ in test_cases:
         with patch.object(
             mock_coordinator, "async_request_refresh", new=AsyncMock()
         ) as mock_refresh, patch.object(
@@ -364,7 +364,7 @@ async def test_horizontal_vane_select_all_options(hass, mock_coordinator, mock_c
         ("swing", HorizontalWindDirection.LCR_S),
     ]
 
-    for option, expected_direction in test_cases:
+    for option, _ in test_cases:
         with patch.object(
             mock_coordinator, "async_request_refresh", new=AsyncMock()
         ) as mock_refresh, patch.object(

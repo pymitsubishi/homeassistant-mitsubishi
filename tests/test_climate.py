@@ -204,7 +204,7 @@ async def test_async_set_temperature(
     # Mock the controller method and coordinator refresh
     with patch.object(mock_coordinator.controller, "set_temperature"), mock_async_methods(
         hass, mock_coordinator
-    ) as (mock_executor, mock_refresh), patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
+    ) as (mock_executor, mock_refresh), patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_temperature(**{ATTR_TEMPERATURE: 25.0})
 
         # Verify the executor was called once (centralized approach)
@@ -233,7 +233,9 @@ async def test_async_set_hvac_mode_off(
         MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
     )
 
-    with mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh), patch("asyncio.sleep", new=AsyncMock()):
+    with mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh), patch(
+        "asyncio.sleep", new=AsyncMock()
+    ):
         await climate.async_set_hvac_mode(HVACMode.OFF)
 
         # Verify the executor was called once (centralized approach)
@@ -550,9 +552,10 @@ async def test_async_set_hvac_mode_power_command_fails(hass, mock_coordinator, m
         )
 
 
-
 @pytest.mark.asyncio
-async def test_update_coordinator_from_controller_state_success(hass, mock_coordinator, mock_config_entry):
+async def test_update_coordinator_from_controller_state_success(
+    hass, mock_coordinator, mock_config_entry
+):
     """Test successful update of coordinator from controller state."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
@@ -561,10 +564,9 @@ async def test_update_coordinator_from_controller_state_success(hass, mock_coord
 
     with patch.object(
         hass, "async_add_executor_job", new=AsyncMock(return_value=summary)
-    ) as mock_executor, patch.object(
+    ), patch.object(
         mock_coordinator, "async_update_listeners", new=AsyncMock()
     ) as mock_update_listeners:
-
         await climate._update_coordinator_from_controller_state()
 
         # Assert that the data was set correctly
@@ -575,7 +577,7 @@ async def test_update_coordinator_from_controller_state_success(hass, mock_coord
 
 
 @pytest.mark.asyncio
-async def test_temperature_command_validation_success(hass, mock_coordinator, mock_config_entry):
+async def test_temperature_command_validation_failure(hass, mock_coordinator, mock_config_entry):
     """Test temperature command when validation fails (device rejects temperature)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
