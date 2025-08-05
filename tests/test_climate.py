@@ -255,9 +255,7 @@ async def test_async_set_hvac_mode_heat_from_off(hass, mock_coordinator, mock_co
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
         # Should call: set_power and set_mode (2 total, centralized approach)
@@ -277,9 +275,7 @@ async def test_async_set_hvac_mode_heat_from_on(hass, mock_coordinator, mock_con
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
         # Should call set_mode once (centralized approach)
@@ -298,9 +294,7 @@ async def test_async_set_fan_mode(hass, mock_coordinator, mock_config_entry):
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_fan_mode(FAN_HIGH)
 
         # Should call set_fan_speed once (centralized approach)
@@ -319,9 +313,7 @@ async def test_async_turn_on(hass, mock_coordinator, mock_config_entry):
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_turn_on()
 
         # Should call set_power once (centralized approach)
@@ -340,9 +332,7 @@ async def test_async_turn_off(hass, mock_coordinator, mock_config_entry):
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_turn_off()
 
         # Should call set_power once (centralized approach)
@@ -414,9 +404,7 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_swing_mode(SWING_VERTICAL)
 
         # Should call set_vertical_vane once (centralized approach)
@@ -436,9 +424,7 @@ async def test_async_set_swing_mode_horizontal(hass, mock_coordinator, mock_conf
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_swing_mode(SWING_HORIZONTAL)
 
         # Should call set_horizontal_vane once (centralized approach)
@@ -458,9 +444,7 @@ async def test_async_set_swing_mode_both(hass, mock_coordinator, mock_config_ent
         mock_coordinator, "async_request_refresh", new=AsyncMock()
     ) as mock_refresh, patch.object(
         hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch(
-        "asyncio.sleep", new=AsyncMock()
-    ):
+    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
         await climate.async_set_swing_mode(SWING_BOTH)
 
         # Should call both vane methods twice (centralized approach, two commands)

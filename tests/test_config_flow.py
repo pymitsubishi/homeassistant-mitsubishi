@@ -18,6 +18,97 @@ from custom_components.mitsubishi.const import (
     DOMAIN,
 )
 
+from . import TEST_SYSTEM_DATA, USER_INPUT
+
+
+async def test_form(hass: HomeAssistant) -> None:
+    """Test that form shows up."""
+
+    result1 = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    assert result1["type"] is FlowResultType.FORM
+    assert result1["step_id"] == "user"
+    assert result1["errors"] == {}
+
+    with (
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiController.fetch_status",
+            return_value=True,
+        ) as mock_fetch,
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiController.get_status_summary",
+            return_value=TEST_SYSTEM_DATA,
+        ),
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiAPI.close",
+        ),
+        patch(
+            "custom_components.mitsubishi.async_setup_entry",
+            return_value=True,
+        ) as mock_setup_entry,
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result1["flow_id"],
+            USER_INPUT,
+        )
+        await hass.async_block_till_done()
+        mock_setup_entry.assert_called_once()
+        mock_fetch.assert_called_once()
+
+    assert result2["type"] is FlowResultType.CREATE_ENTRY
+    assert result2["title"] == "Mitsubishi AC (00:11:22:33:44:55)"
+    assert result2["data"] == USER_INPUT
+
+    # Test Duplicate Config Flow
+    result3 = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    with (
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiController.fetch_status",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiController.get_status_summary",
+            return_value=TEST_SYSTEM_DATA,
+        ),
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiAPI.close",
+        ),
+    ):
+        result4 = await hass.config_entries.flow.async_configure(
+            result3["flow_id"],
+            USER_INPUT,
+        )
+    assert result4["type"] is FlowResultType.ABORT
+
+
+async def test_form_cannot_connect(hass: HomeAssistant) -> None:
+    """Test we handle cannot connect error."""
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    with (
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiController.fetch_status",
+            return_value=False,
+        ) as mock_fetch,
+        patch(
+            "custom_components.mitsubishi.config_flow.MitsubishiAPI.close",
+        ),
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            USER_INPUT,
+        )
+        mock_fetch.assert_called_once()
+
+    assert result2["type"] is FlowResultType.FORM
+    assert result2["step_id"] == "user"
+    assert result2["errors"] == {"base": "cannot_connect"}
+
 
 @pytest.fixture
 def mock_api():

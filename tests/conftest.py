@@ -1,23 +1,10 @@
-"""Shared fixtures for Mitsubishi integration tests."""
-from contextlib import contextmanager
-from unittest.mock import AsyncMock, MagicMock, patch
+"""Fixtures for mitsubishi."""
+
+from __future__ import annotations
 
 import pytest
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST
 
-from custom_components.mitsubishi.const import (
-    CONF_ADMIN_PASSWORD,
-    CONF_ADMIN_USERNAME,
-    CONF_ENABLE_CAPABILITY_DETECTION,
-    CONF_ENCRYPTION_KEY,
-    CONF_SCAN_INTERVAL,
-    DEFAULT_ADMIN_PASSWORD,
-    DEFAULT_ADMIN_USERNAME,
-    DEFAULT_ENCRYPTION_KEY,
-    DEFAULT_SCAN_INTERVAL,
-    DOMAIN,
-)
+from . import patch_api_close, patch_controller, patch_get_status_summary
 
 # Import Home Assistant test utilities
 pytest_plugins = "pytest_homeassistant_custom_component"
@@ -30,197 +17,115 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 
 @pytest.fixture
-def mock_config_entry():
-    """Return a mock config entry."""
-    mock_entry = MagicMock(spec=ConfigEntry)
-    mock_entry.data = {
-        CONF_HOST: "192.168.1.100",
-        CONF_ENCRYPTION_KEY: DEFAULT_ENCRYPTION_KEY,
-        CONF_ADMIN_USERNAME: DEFAULT_ADMIN_USERNAME,
-        CONF_ADMIN_PASSWORD: DEFAULT_ADMIN_PASSWORD,
-        CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
-        CONF_ENABLE_CAPABILITY_DETECTION: True,
-    }
-    mock_entry.entry_id = "test_entry_id"
-    mock_entry.title = "Mitsubishi AC (192.168.1.100)"
-    mock_entry.domain = DOMAIN
-    # Add a mock setup_lock for async_forward_entry_setups
-    mock_entry.setup_lock = MagicMock()
-    mock_entry.setup_lock.locked.return_value = False
-    return mock_entry
+def mock_controller():
+    """Fixture to patch the Mitsubishi Controller methods."""
+    with patch_controller() as mock_controller:
+        yield mock_controller
 
 
 @pytest.fixture
-def mock_config_entry_minimal():
-    """Return a minimal mock config entry with only required fields."""
-    return MagicMock(
-        spec=ConfigEntry,
+def mock_get_status_summary():
+    """Fixture to patch the Mitsubishi Controller status summary method."""
+    with patch_get_status_summary() as mock_get_status_summary:
+        yield mock_get_status_summary
+
+
+@pytest.fixture
+def mock_api_close():
+    """Fixture to patch the Mitsubishi API close method."""
+    with patch_api_close() as mock_api_close:
+        yield mock_api_close
+
+
+@pytest.fixture
+def mock_coordinator():
+    """Create a mock coordinator."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from custom_components.mitsubishi.const import DOMAIN
+
+    from . import TEST_SYSTEM_DATA
+
+    coordinator = MagicMock()
+    coordinator.data = TEST_SYSTEM_DATA
+    coordinator.domain = DOMAIN
+    coordinator.update_interval = 30
+    coordinator.fetch_unit_info = AsyncMock()
+    coordinator.async_config_entry_first_refresh = AsyncMock()
+    coordinator.async_request_refresh = AsyncMock()
+    coordinator.async_update_listeners = MagicMock()
+
+    # Add controller with API mock
+    coordinator.controller = MagicMock()
+    coordinator.controller.api = MagicMock()
+    coordinator.controller.api.close = MagicMock()
+
+    return coordinator
+
+
+@pytest.fixture
+def mock_config_entry():
+    """Create a mock config entry."""
+    from homeassistant.const import CONF_HOST
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.mitsubishi.const import DOMAIN
+
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title="Test Mitsubishi AC",
+        unique_id="00:11:22:33:44:55",
         data={
             CONF_HOST: "192.168.1.100",
+            "encryption_key": "unregistered",
+            "admin_username": "admin",
+            "admin_password": "password",
+            "scan_interval": 30,
+            "enable_capability_detection": True,
         },
         entry_id="test_entry_id",
     )
 
 
 @pytest.fixture
-def mock_mitsubishi_api():
-    """Return a mock MitsubishiAPI instance."""
-    with patch("custom_components.mitsubishi.MitsubishiAPI") as mock_api_class:
-        mock_api = MagicMock()
-        mock_api.close = MagicMock()
-        mock_api.get_unit_info = MagicMock(
-            return_value={
-                "adaptor_info": {
-                    "model": "MAC-577IF-2E",
-                    "app_version": "1.0.0",
-                    "mac_address": "00:11:22:33:44:55",
-                    "manufacturing_date": "2023-01-01",
-                },
-                "unit_info": {
-                    "type": "Air Conditioner",
-                    "it_protocol_version": "1.0",
-                },
-            }
-        )
-        mock_api_class.return_value = mock_api
-        yield mock_api
-
-
-@pytest.fixture
 def mock_mitsubishi_controller():
     """Return a mock MitsubishiController instance."""
-    with patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class:
-        mock_controller = MagicMock()
-        mock_controller.fetch_status = MagicMock(return_value=True)
-        mock_controller.get_status_summary = MagicMock(
-            return_value={
-                "mac": "00:11:22:33:44:55",
-                "serial": "TEST123456",
-                "power": "ON",
-                "mode": "COOLER",
-                "target_temp": 24.0,
-                "room_temp": 22.5,
-            }
-        )
-        mock_controller.get_unit_info = MagicMock(
-            return_value={
-                "adaptor_info": {
-                    "model": "MAC-577IF-2E",
-                    "app_version": "1.0.0",
-                    "mac_address": "00:11:22:33:44:55",
-                },
-                "unit_info": {
-                    "type": "Air Conditioner",
-                },
-            }
-        )
-        mock_controller.api = MagicMock()
-        mock_controller.api.close = MagicMock()
-        mock_controller_class.return_value = mock_controller
-        yield mock_controller
+    from unittest.mock import MagicMock
 
-
-@pytest.fixture
-def mock_coordinator():
-    """Return a mock data update coordinator."""
-    with patch(
-        "custom_components.mitsubishi.coordinator.MitsubishiDataUpdateCoordinator"
-    ) as mock_coord_class:
-        mock_coord = MagicMock()
-        mock_coord.data = {
+    mock_controller = MagicMock()
+    mock_controller.fetch_status = MagicMock(return_value=True)
+    mock_controller.get_status_summary = MagicMock(
+        return_value={
             "mac": "00:11:22:33:44:55",
             "serial": "TEST123456",
             "power": "ON",
-            "capabilities": {},
+            "mode": "COOLER",
+            "target_temp": 24.0,
+            "room_temp": 22.5,
         }
-        mock_coord.unit_info = {
+    )
+    mock_controller.get_unit_info = MagicMock(
+        return_value={
             "adaptor_info": {
                 "model": "MAC-577IF-2E",
                 "app_version": "1.0.0",
+                "mac_address": "00:11:22:33:44:55",
             },
-            "unit_info": {},
+            "unit_info": {
+                "type": "Air Conditioner",
+            },
         }
-        mock_coord.async_config_entry_first_refresh = AsyncMock()
-        mock_coord.fetch_unit_info = AsyncMock()
-        mock_coord.controller = MagicMock()
-        mock_coord.controller.api = MagicMock()
-        mock_coord.controller.api.close = MagicMock()
-        mock_coord_class.return_value = mock_coord
-        yield mock_coord
-
-
-@pytest.fixture
-def mock_device_registry():
-    """Return a mock device registry."""
-    with patch("custom_components.mitsubishi.dr.async_get") as mock_dr_get:
-        mock_registry = MagicMock()
-        mock_registry.async_get_or_create = MagicMock(return_value=MagicMock())
-        mock_dr_get.return_value = mock_registry
-        yield mock_registry
-
-
-@pytest.fixture
-def sample_unit_info():
-    """Return sample unit info data."""
-    return {
-        "adaptor_info": {
-            "model": "MAC-577IF-2E",
-            "app_version": "1.2.3",
-            "release_version": "1.2.3-release",
-            "flash_version": "1.0.0",
-            "boot_version": "1.0.0",
-            "platform_version": "1.0.0",
-            "mac_address": "00:11:22:33:44:55",
-            "device_id": 12345,
-            "manufacturing_date": "2023-01-15",
-            "current_time": "2024-01-01 12:00:00",
-            "wifi_channel": 6,
-            "rssi_dbm": -45,
-            "rssi_raw": "-45dBm",
-            "it_comm_status": "OK",
-            "server_operation": True,
-            "server_comm_status": "Connected",
-            "hems_comm_status": "Disabled",
-            "soi_comm_status": "OK",
-            "thermal_timestamp": None,
-        },
-        "unit_info": {
-            "type": "Air Conditioner",
-            "it_protocol_version": "2.1",
-            "error_code": "None",
-        },
-    }
-
-
-@pytest.fixture
-def sample_status_summary():
-    """Return sample status summary data."""
-    return {
-        "mac": "00:11:22:33:44:55",
-        "serial": "TEST123456",
-        "power": "ON",
-        "mode": "COOLER",
-        "target_temp": 24.0,
-        "fan_speed": "AUTO",
-        "dehumidifier_setting": 50,
-        "power_saving_mode": False,
-        "vertical_vane_right": "AUTO",
-        "vertical_vane_left": "AUTO",
-        "horizontal_vane": "AUTO",
-        "room_temp": 22.5,
-        "outside_temp": 18.0,
-        "error_code": None,
-        "abnormal_state": False,
-        "capabilities": {},
-    }
-
-
-# Common test utility fixtures and helpers
+    )
+    mock_controller.api = MagicMock()
+    mock_controller.api.close = MagicMock()
+    return mock_controller
 
 
 @pytest.fixture
 def mock_async_methods():
     """Context manager that patches common async methods used in entity tests."""
+    from contextlib import contextmanager
+    from unittest.mock import AsyncMock, patch
 
     @contextmanager
     def _patch_async_methods(hass, coordinator):
