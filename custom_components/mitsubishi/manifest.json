@@ -10,6 +10,5 @@
   "iot_class": "local_polling",
   "integration_type": "device",
   "homeassistant": "2025.1.0",
-  "loggers": ["pymitsubishi"],
-  "integration_logo": "icon.svg"
+  "loggers": ["pymitsubishi"]
 }

@@ -57,11 +57,10 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
             if self.unit_info is None:
                 await self.fetch_unit_info()
 
-            # Fetch status with capability detection enabled and debug logging
-            _LOGGER.info("Coordinator fetching device status with debug enabled")
+            # Fetch status with capability detection enabled
+            _LOGGER.info("Coordinator fetching device status")
             success = await self.hass.async_add_executor_job(
                 self.controller.fetch_status,
-                True,  # debug=True for detailed communication logs
                 True,  # detect_capabilities=True
             )
 

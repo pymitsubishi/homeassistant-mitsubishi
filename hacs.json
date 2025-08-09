@@ -3,6 +3,6 @@
   "content_in_root": false,
   "zip_release": false,
   "filename": "mitsubishi.zip",
-  "country": ["AU", "NZ", "JP", "US", "CA", "GB", "EU"],
+  "country": ["AU", "NZ", "JP", "US", "CA", "GB", "DE", "FR", "IT", "ES", "NL", "BE", "SE", "NO", "DK", "FI"],
   "homeassistant": "2025.1.0"
 }

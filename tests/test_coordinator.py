@@ -101,8 +101,8 @@ async def test_async_update_data_success(hass, mock_mitsubishi_controller):
         result = await coordinator._async_update_data()
 
         assert result == expected_summary
-        # Verify fetch_status was called with correct parameters (debug=True, detect_capabilities=True)
-        mock_executor.assert_any_call(mock_mitsubishi_controller.fetch_status, True, True)
+        # Verify fetch_status was called with correct parameter (detect_capabilities=True)
+        mock_executor.assert_any_call(mock_mitsubishi_controller.fetch_status, True)
 
 
 @pytest.mark.asyncio
