@@ -361,12 +361,12 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
             # Trigger state update for all entities
             self.coordinator.async_update_listeners()
 
-            _LOGGER.info(
-                f"📊 Updated coordinator from controller state: target_temp={summary.get('target_temp')}°C"
+            _LOGGER.debug(
+                f"Updated coordinator from controller state: target_temp={summary.get('target_temp')}°C"
             )
 
         except Exception as e:
-            _LOGGER.error(f"💥 Error updating coordinator from controller state: {e}")
+            _LOGGER.error(f"Error updating coordinator from controller state: {e}")
             # Fall back to regular refresh if there's an error
             await self.coordinator.async_request_refresh()
 

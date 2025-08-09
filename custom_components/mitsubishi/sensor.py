@@ -30,7 +30,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Mitsubishi sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    _LOGGER.info(
+    _LOGGER.debug(
         "Setting up Mitsubishi sensors with coordinator data available: %s",
         coordinator.data is not None,
     )
@@ -74,7 +74,7 @@ async def async_setup_entry(
         except Exception as e:
             _LOGGER.exception("Failed to create %s sensor: %s", sensor_name, e)
 
-    _LOGGER.info("Created %d sensors out of %d attempted", len(sensors), len(sensor_classes))
+    _LOGGER.debug("Created %d sensors out of %d attempted", len(sensors), len(sensor_classes))
     async_add_entities(sensors)
 
 
