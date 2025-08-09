@@ -111,38 +111,38 @@ fi
 # Prepare the integration based on mode
 if [ "$MODE" = "dev" ]; then
     # Development mode: Bundle local pymitsubishi
-    
+
     # Step 1: Bundle the local pymitsubishi library
     echo -e "${YELLOW}[1/3] Bundling local pymitsubishi library...${NC}"
-    
+
     # Remove old pymitsubishi directory if it exists
     if [ -d "$COMPONENT_PATH/pymitsubishi" ]; then
         echo "  Removing old bundled library..."
         rm -rf "$COMPONENT_PATH/pymitsubishi"
     fi
-    
+
     # Create the pymitsubishi directory in the component
     mkdir -p "$COMPONENT_PATH/pymitsubishi"
-    
+
     # Copy only the Python files from the pymitsubishi package
     echo "  Copying pymitsubishi Python files from $PYMITSUBISHI_PATH..."
     cp "$PYMITSUBISHI_PATH"/*.py "$COMPONENT_PATH/pymitsubishi/"
-    
+
     echo "  Copied $(ls -1 $COMPONENT_PATH/pymitsubishi/*.py | wc -l) Python files"
     echo -e "${GREEN}✓ Library bundled${NC}"
-    
+
     # Step 2: Modify manifest.json for dev mode
     echo -e "${YELLOW}[2/3] Modifying manifest.json for development mode...${NC}"
-    
+
     MANIFEST_FILE="$COMPONENT_PATH/manifest.json"
     MANIFEST_BACKUP="$COMPONENT_PATH/manifest.json.backup"
-    
+
     # Create backup if it doesn't exist
     if [ ! -f "$MANIFEST_BACKUP" ]; then
         cp "$MANIFEST_FILE" "$MANIFEST_BACKUP"
         echo "  Created backup: manifest.json.backup"
     fi
-    
+
     # Remove pymitsubishi requirement for dev mode
     python3 << EOF
 import json
@@ -153,33 +153,33 @@ manifest_file = "$MANIFEST_FILE"
 try:
     with open(manifest_file, 'r') as f:
         manifest = json.load(f)
-    
+
     # Remove pymitsubishi from requirements
     original_reqs = manifest.get('requirements', [])
     manifest['requirements'] = [req for req in original_reqs if 'pymitsubishi' not in req.lower()]
-    
+
     # Add a comment field to indicate dev mode
     manifest['_dev_mode'] = "Using bundled pymitsubishi library"
-    
+
     with open(manifest_file, 'w') as f:
         json.dump(manifest, f, indent=2)
-    
+
     print(f"  Modified manifest.json (removed {len(original_reqs) - len(manifest['requirements'])} pymitsubishi requirement(s))")
 except Exception as e:
     print(f"Error modifying manifest.json: {e}", file=sys.stderr)
     sys.exit(1)
 EOF
-    
+
     if [ $? -ne 0 ]; then
         echo -e "${RED}✗ Failed to modify manifest.json${NC}"
         exit 1
     fi
-    
+
     echo -e "${GREEN}✓ manifest.json modified for development${NC}"
-    
+
     # Step 3: Update imports to use bundled library
     echo -e "${YELLOW}[3/3] Updating imports to use bundled library...${NC}"
-    
+
     IMPORT_COUNT=0
     for py_file in $(find "$COMPONENT_PATH" -name "*.py" -not -path "*/pymitsubishi/*"); do
         if grep -q "from pymitsubishi" "$py_file" || grep -q "import pymitsubishi" "$py_file"; then
@@ -191,38 +191,38 @@ EOF
             fi
         fi
     done
-    
+
     if [ $IMPORT_COUNT -gt 0 ]; then
         echo -e "${GREEN}✓ Updated imports in $IMPORT_COUNT file(s)${NC}"
     else
         echo -e "${GREEN}✓ All imports already using bundled library${NC}"
     fi
-    
+
 else
     # Production mode: Ensure clean state
-    
+
     # Step 1: Clean up any dev mode artifacts
     echo -e "${YELLOW}[1/2] Preparing production build...${NC}"
-    
+
     # Remove bundled pymitsubishi if it exists
     if [ -d "$COMPONENT_PATH/pymitsubishi" ]; then
         echo "  Removing bundled pymitsubishi library..."
         rm -rf "$COMPONENT_PATH/pymitsubishi"
         echo -e "${GREEN}✓ Removed bundled library${NC}"
     fi
-    
+
     # Step 2: Restore production manifest.json
     echo -e "${YELLOW}[2/2] Ensuring manifest.json is in production state...${NC}"
-    
+
     MANIFEST_FILE="$COMPONENT_PATH/manifest.json"
     MANIFEST_BACKUP="$COMPONENT_PATH/manifest.json.backup"
-    
+
     # If backup exists, restore it
     if [ -f "$MANIFEST_BACKUP" ]; then
         cp "$MANIFEST_BACKUP" "$MANIFEST_FILE"
         echo "  Restored manifest.json from backup"
     fi
-    
+
     # Ensure pymitsubishi requirement is present
     python3 << EOF
 import json
@@ -233,35 +233,35 @@ manifest_file = "$MANIFEST_FILE"
 try:
     with open(manifest_file, 'r') as f:
         manifest = json.load(f)
-    
+
     # Ensure pymitsubishi is in requirements
     requirements = manifest.get('requirements', [])
     has_pymitsubishi = any('pymitsubishi' in req.lower() for req in requirements)
-    
+
     if not has_pymitsubishi:
         requirements.append('pymitsubishi>=0.2.0')
         manifest['requirements'] = requirements
         print("  Added pymitsubishi>=0.2.0 to requirements")
-    
+
     # Remove dev mode marker if present
     if '_dev_mode' in manifest:
         del manifest['_dev_mode']
         print("  Removed dev mode marker")
-    
+
     with open(manifest_file, 'w') as f:
         json.dump(manifest, f, indent=2)
-    
+
     print("  manifest.json ready for production")
 except Exception as e:
     print(f"Error modifying manifest.json: {e}", file=sys.stderr)
     sys.exit(1)
 EOF
-    
+
     if [ $? -ne 0 ]; then
         echo -e "${RED}✗ Failed to prepare manifest.json${NC}"
         exit 1
     fi
-    
+
     # Restore normal imports
     for py_file in $(find "$COMPONENT_PATH" -name "*.py"); do
         if grep -q "from \.pymitsubishi" "$py_file"; then
@@ -270,7 +270,7 @@ EOF
             sed -i '' 's/from \. import pymitsubishi/import pymitsubishi/g' "$py_file"
         fi
     done
-    
+
     echo -e "${GREEN}✓ Production build prepared${NC}"
 fi
 
@@ -291,7 +291,7 @@ if [ "$SKIP_DEPLOY" = false ]; then
         echo -e "${RED}✗ Deployment failed${NC}"
         exit 1
     fi
-    
+
     # Restart if not skipped
     if [ "$SKIP_RESTART" = false ]; then
         echo ""
@@ -299,11 +299,11 @@ if [ "$SKIP_DEPLOY" = false ]; then
         sshpass -f "$SSHPASS_FILE" ssh "$HA_USER@$HA_SERVER" "sudo docker restart homeassistant"
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}✓ Home Assistant restarting${NC}"
-            
+
             # Wait for restart
             echo -e "${YELLOW}Waiting for Home Assistant to start (30 seconds)...${NC}"
             sleep 30
-            
+
             # Check integration status
             echo ""
             echo -e "${YELLOW}Checking integration status...${NC}"
@@ -342,7 +342,7 @@ if [ "$SKIP_DEPLOY" = false ]; then
     else
         echo "  • Restarted: Skipped"
     fi
-    
+
     echo ""
     echo -e "${YELLOW}Useful commands:${NC}"
     echo "  Monitor logs:     sshpass -f $SSHPASS_FILE ssh $HA_USER@$HA_SERVER \"sudo tail -f /config/home-assistant.log | grep -i mitsubishi\""
