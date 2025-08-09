@@ -163,6 +163,7 @@ try:
 
     with open(manifest_file, 'w') as f:
         json.dump(manifest, f, indent=2)
+        f.write('\n')  # Add trailing newline
 
     print(f"  Modified manifest.json (removed {len(original_reqs) - len(manifest['requirements'])} pymitsubishi requirement(s))")
 except Exception as e:
@@ -250,6 +251,7 @@ try:
 
     with open(manifest_file, 'w') as f:
         json.dump(manifest, f, indent=2)
+        f.write('\n')  # Add trailing newline
 
     print("  manifest.json ready for production")
 except Exception as e:
