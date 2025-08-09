@@ -154,3 +154,12 @@ Thumbs.db
 *.db
 *.db-shm
 *.db-wal
+
+# Local development scripts and analysis
+build_dev_integration.sh
+restore_production_mode.sh
+build_and_deploy.sh
+analyze_mode_changes.py
+AUTO_MODE_ANALYSIS.md
+mitsubishi-integration*.tar.gz
+custom_components/mitsubishi/manifest.json.backup
