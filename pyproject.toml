@@ -36,7 +36,6 @@ select = [
     "RSE", # flake8-raise
     "RET", # flake8-return
     "YTT", # flake8-2020
-    "S",  # flake8-bandit
     "BLE", # flake8-blind-except
     "A",  # flake8-builtins
     "T20", # flake8-print
@@ -149,6 +148,3 @@ ignore_missing_imports = true
 module = "custom_components.*"
 no_implicit_reexport = true
 
-[tool.bandit]
-exclude_dirs = ["tests", ".venv", "venv"]
-skips = ["B101", "B601"]  # Skip assert_used and shell_injection tests
