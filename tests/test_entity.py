@@ -1,4 +1,5 @@
 """Tests for the MobileEntity class."""
+
 from unittest.mock import MagicMock
 
 import pytest

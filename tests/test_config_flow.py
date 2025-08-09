@@ -1,4 +1,5 @@
 """Test the Mitsubishi Air Conditioner config flow."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -326,11 +327,12 @@ class TestConfigFlow:
             "encryption_key": "test_key",
         }
 
-        with patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiAPI"
-        ) as mock_api_class, patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiController"
-        ) as mock_controller_class:
+        with (
+            patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class,
+            patch(
+                "custom_components.mitsubishi.config_flow.MitsubishiController"
+            ) as mock_controller_class,
+        ):
             # Set up mocks for exception during get_status_summary
             mock_api = MagicMock()
             mock_api.close = MagicMock()

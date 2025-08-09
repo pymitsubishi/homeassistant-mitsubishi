@@ -1,4 +1,5 @@
 """Tests for the select platform."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -86,11 +87,11 @@ async def test_vertical_vane_select_async_select_option(hass, mock_coordinator, 
     select = MitsubishiVerticalVaneSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await select.async_select_option("swing")
 
         # Should call the lambda function wrapping the controller command
@@ -188,11 +189,11 @@ async def test_horizontal_vane_select_async_select_option(
     select = MitsubishiHorizontalVaneSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await select.async_select_option("center")
 
         # Should call the lambda function wrapping the controller command
@@ -272,11 +273,11 @@ async def test_power_saving_select_async_select_option_enabled(
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await select.async_select_option("Enabled")
 
         # Should call the lambda function wrapping the controller command
@@ -292,11 +293,11 @@ async def test_power_saving_select_async_select_option_disabled(
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
     select.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await select.async_select_option("Disabled")
 
         # Should call the lambda function wrapping the controller command
@@ -332,11 +333,13 @@ async def test_vertical_vane_select_all_options(hass, mock_coordinator, mock_con
     ]
 
     for option, _ in test_cases:
-        with patch.object(
-            mock_coordinator, "async_request_refresh", new=AsyncMock()
-        ) as mock_refresh, patch.object(
-            hass, "async_add_executor_job", new=AsyncMock()
-        ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+        with (
+            patch.object(
+                mock_coordinator, "async_request_refresh", new=AsyncMock()
+            ) as mock_refresh,
+            patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+            patch("asyncio.sleep", new=AsyncMock()),
+        ):
             await select.async_select_option(option)
 
             # Should call the lambda function wrapping the controller command
@@ -365,11 +368,13 @@ async def test_horizontal_vane_select_all_options(hass, mock_coordinator, mock_c
     ]
 
     for option, _ in test_cases:
-        with patch.object(
-            mock_coordinator, "async_request_refresh", new=AsyncMock()
-        ) as mock_refresh, patch.object(
-            hass, "async_add_executor_job", new=AsyncMock()
-        ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+        with (
+            patch.object(
+                mock_coordinator, "async_request_refresh", new=AsyncMock()
+            ) as mock_refresh,
+            patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+            patch("asyncio.sleep", new=AsyncMock()),
+        ):
             await select.async_select_option(option)
 
             # Should call the lambda function wrapping the controller command

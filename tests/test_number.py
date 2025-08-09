@@ -1,4 +1,5 @@
 """Tests for the number platform."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -70,11 +71,11 @@ async def test_async_set_native_value_success(hass, mock_coordinator, mock_confi
     number.hass = hass  # Set hass attribute
 
     # Mock successful controller call and asyncio.sleep
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await number.async_set_native_value(65.0)
 
         # Should call the lambda function wrapping the controller command
@@ -89,9 +90,12 @@ async def test_async_set_native_value_failure(hass, mock_coordinator, mock_confi
     number.hass = hass  # Set hass attribute
 
     # Mock failed controller call
-    with patch.object(
-        hass, "async_add_executor_job", new=AsyncMock(return_value=False)
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(
+            hass, "async_add_executor_job", new=AsyncMock(return_value=False)
+        ) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await number.async_set_native_value(40.0)
 
         # Should call the lambda function wrapping the controller command
@@ -110,9 +114,12 @@ async def test_async_set_native_value_exception(hass, mock_coordinator, mock_con
     number.hass = hass  # Set hass attribute
 
     # Mock exception during controller call
-    with patch.object(
-        hass, "async_add_executor_job", side_effect=Exception("Network error")
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(
+            hass, "async_add_executor_job", side_effect=Exception("Network error")
+        ) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         # Should not raise exception, just log it
         await number.async_set_native_value(30.0)
 
@@ -139,11 +146,11 @@ async def test_async_set_native_value_float_conversion(hass, mock_coordinator, m
     number.hass = hass  # Set hass attribute
 
     # Test that 85.7 gets converted to 85 (int)
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await number.async_set_native_value(85.7)
 
         # Should call the lambda function wrapping the controller command

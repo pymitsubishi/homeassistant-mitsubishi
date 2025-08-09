@@ -40,7 +40,7 @@ Thank you for your interest in contributing to the Home Assistant Mitsubishi Int
    ```bash
    # Install Home Assistant in development mode
    pip install homeassistant
-   
+
    # Or clone Home Assistant core for full development
    git clone https://github.com/home-assistant/core.git
    ```
@@ -157,13 +157,13 @@ from custom_components.mitsubishi.const import DOMAIN
 async def test_setup_entry(hass: HomeAssistant, mock_config_entry):
     """Test setting up the integration."""
     mock_config_entry.add_to_hass(hass)
-    
+
     with patch("custom_components.mitsubishi.MitsubishiController") as mock_controller:
         mock_controller.return_value.fetch_unit_info = AsyncMock(return_value=True)
-        
+
         assert await async_setup_entry(hass, mock_config_entry)
         await hass.async_block_till_done()
-        
+
         assert DOMAIN in hass.data
 ```
 
@@ -207,7 +207,7 @@ Ensure HACS compatibility:
    ```bash
    # If running in Docker
    docker restart homeassistant
-   
+
    # Or if running directly
    hass --script restart
    ```

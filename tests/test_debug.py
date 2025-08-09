@@ -1,4 +1,5 @@
 """Debug test to understand hass fixture."""
+
 import pytest
 
 

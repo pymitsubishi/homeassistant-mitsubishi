@@ -1,4 +1,5 @@
 """Tests for SwiCago-inspired binary sensors."""
+
 from unittest.mock import MagicMock
 
 import pytest

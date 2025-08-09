@@ -5,12 +5,12 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: '^tests/fixtures/'
+        exclude: "^tests/fixtures/"
       - id: end-of-file-fixer
-        exclude: '^tests/fixtures/'
+        exclude: "^tests/fixtures/"
       - id: check-yaml
       - id: check-json
-        exclude: '.vscode/'
+        exclude: ".vscode/"
       - id: check-toml
       - id: check-merge-conflict
       - id: check-case-conflict
@@ -18,9 +18,9 @@ repos:
       - id: debug-statements
         language_version: python3
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ["--fix=lf"]
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
 
   # Python code formatting and linting
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -38,22 +38,22 @@ repos:
     hooks:
       - id: mypy
         files: ^custom_components/
-        args: 
+        args:
           - --ignore-missing-imports
           - --no-warn-unused-ignores
           - --show-error-codes
-        additional_dependencies: 
+        additional_dependencies:
           - types-requests
           - homeassistant-stubs
         pass_filenames: false
 
   # Security checks
   - repo: https://github.com/PyCQA/bandit
-    rev: '1.8.0'
+    rev: "1.8.0"
     hooks:
       - id: bandit
-        args: ['-c', 'pyproject.toml']
-        additional_dependencies: ['bandit[toml]']
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
         files: ^custom_components/
         exclude: ^tests/
 
@@ -63,7 +63,7 @@ repos:
     hooks:
       - id: prettier
         types: [yaml]
-        exclude: '.github/'
+        exclude: ".github/"
 
   # Check for common issues in Python code
   - repo: https://github.com/pre-commit/pygrep-hooks

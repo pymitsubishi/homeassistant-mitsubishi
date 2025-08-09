@@ -129,11 +129,10 @@ def mock_async_methods():
 
     @contextmanager
     def _patch_async_methods(hass, coordinator):
-        with patch.object(
-            coordinator, "async_request_refresh", new=AsyncMock()
-        ) as mock_refresh, patch.object(
-            hass, "async_add_executor_job", new=AsyncMock()
-        ) as mock_executor:
+        with (
+            patch.object(coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+            patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        ):
             yield mock_executor, mock_refresh
 
     return _patch_async_methods

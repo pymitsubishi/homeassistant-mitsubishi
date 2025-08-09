@@ -1,4 +1,5 @@
 """Tests for the MitsubishiDataUpdateCoordinator."""
+
 from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 

@@ -1,4 +1,5 @@
 """Tests for the sensor platform."""
+
 from unittest.mock import MagicMock, patch
 
 import pytest

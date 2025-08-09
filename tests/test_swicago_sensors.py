@@ -1,4 +1,5 @@
 """Tests for SwiCago-inspired sensors and energy monitoring sensors."""
+
 from unittest.mock import MagicMock
 
 import pytest

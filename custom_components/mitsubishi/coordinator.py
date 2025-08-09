@@ -111,9 +111,9 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
                 if hasattr(self.controller.state.general, "mode_raw_value"):
                     summary["mode_raw_value"] = self.controller.state.general.mode_raw_value
                 if hasattr(self.controller.state.general, "wide_vane_adjustment"):
-                    summary[
-                        "wide_vane_adjustment"
-                    ] = self.controller.state.general.wide_vane_adjustment
+                    summary["wide_vane_adjustment"] = (
+                        self.controller.state.general.wide_vane_adjustment
+                    )
                 if hasattr(self.controller.state.general, "temp_mode"):
                     summary["temperature_mode"] = (
                         "direct" if self.controller.state.general.temp_mode else "segment"

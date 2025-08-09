@@ -1,4 +1,5 @@
 """Tests for the climate platform."""
+
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
@@ -202,9 +203,11 @@ async def test_async_set_temperature(
     mock_coordinator.data = {"target_temp": 25.0}
 
     # Mock the controller method and coordinator refresh
-    with patch.object(mock_coordinator.controller, "set_temperature"), mock_async_methods(
-        hass, mock_coordinator
-    ) as (mock_executor, mock_refresh), patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator.controller, "set_temperature"),
+        mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh),
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_set_temperature(**{ATTR_TEMPERATURE: 25.0})
 
         # Verify the executor was called once (centralized approach)
@@ -233,8 +236,9 @@ async def test_async_set_hvac_mode_off(
         MitsubishiClimate, mock_coordinator, mock_config_entry, hass=hass
     )
 
-    with mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh), patch(
-        "asyncio.sleep", new=AsyncMock()
+    with (
+        mock_async_methods(hass, mock_coordinator) as (mock_executor, mock_refresh),
+        patch("asyncio.sleep", new=AsyncMock()),
     ):
         await climate.async_set_hvac_mode(HVACMode.OFF)
 
@@ -251,11 +255,11 @@ async def test_async_set_hvac_mode_heat_from_off(hass, mock_coordinator, mock_co
     climate.hass = hass  # Set hass attribute
     mock_coordinator.data = {"power": "OFF"}  # Currently off
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
         # Should call: set_power and set_mode (2 total, centralized approach)
@@ -271,11 +275,11 @@ async def test_async_set_hvac_mode_heat_from_on(hass, mock_coordinator, mock_con
     climate.hass = hass  # Set hass attribute
     mock_coordinator.data = {"power": "ON", "mode": "COOLER"}  # Currently on
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
         # Should call set_mode once (centralized approach)
@@ -290,11 +294,11 @@ async def test_async_set_fan_mode(hass, mock_coordinator, mock_config_entry):
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_set_fan_mode(FAN_HIGH)
 
         # Should call set_fan_speed once (centralized approach)
@@ -309,11 +313,11 @@ async def test_async_turn_on(hass, mock_coordinator, mock_config_entry):
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_turn_on()
 
         # Should call set_power once (centralized approach)
@@ -328,11 +332,11 @@ async def test_async_turn_off(hass, mock_coordinator, mock_config_entry):
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_turn_off()
 
         # Should call set_power once (centralized approach)
@@ -400,11 +404,11 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_set_swing_mode(SWING_VERTICAL)
 
         # Should call set_vertical_vane once (centralized approach)
@@ -420,11 +424,11 @@ async def test_async_set_swing_mode_horizontal(hass, mock_coordinator, mock_conf
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_set_swing_mode(SWING_HORIZONTAL)
 
         # Should call set_horizontal_vane once (centralized approach)
@@ -440,11 +444,11 @@ async def test_async_set_swing_mode_both(hass, mock_coordinator, mock_config_ent
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch("asyncio.sleep", new=AsyncMock()):
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch("asyncio.sleep", new=AsyncMock()),
+    ):
         await climate.async_set_swing_mode(SWING_BOTH)
 
         # Should call both vane methods twice (centralized approach, two commands)
@@ -460,11 +464,10 @@ async def test_async_set_swing_mode_off(hass, mock_coordinator, mock_config_entr
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
 
-    with patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor:
+    with (
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+    ):
         await climate.async_set_swing_mode(SWING_OFF)
 
         # For SWING_OFF, no controller methods should be called in current implementation
@@ -562,11 +565,12 @@ async def test_update_coordinator_from_controller_state_success(
 
     summary = {"target_temp": 22.0}  # Mocked status summary
 
-    with patch.object(
-        hass, "async_add_executor_job", new=AsyncMock(return_value=summary)
-    ), patch.object(
-        mock_coordinator, "async_update_listeners", new=AsyncMock()
-    ) as mock_update_listeners:
+    with (
+        patch.object(hass, "async_add_executor_job", new=AsyncMock(return_value=summary)),
+        patch.object(
+            mock_coordinator, "async_update_listeners", new=AsyncMock()
+        ) as mock_update_listeners,
+    ):
         await climate._update_coordinator_from_controller_state()
 
         # Assert that the data was set correctly
@@ -585,11 +589,11 @@ async def test_temperature_command_validation_failure(hass, mock_coordinator, mo
     # Mock coordinator data to show different temperature than expected
     mock_coordinator.data = {"target_temp": 20.0}  # Device rejected and kept old temp
 
-    with patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
+    with (
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch("asyncio.sleep", new=AsyncMock()) as mock_sleep,
+    ):
         # Mock the command execution to return True (success)
         # Mock get_status_summary to return the "rejected" temperature
         mock_executor.side_effect = [
@@ -655,11 +659,10 @@ async def test_update_coordinator_from_controller_state_exception(
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
 
-    with patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh:
+    with (
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+    ):
         # Mock get_status_summary to raise an exception
         mock_executor.side_effect = Exception("Controller error")
 
@@ -678,11 +681,11 @@ async def test_temperature_command_validation_success(hass, mock_coordinator, mo
     # Mock coordinator data to show expected temperature (validation success)
     mock_coordinator.data = {"target_temp": 25.0}  # Device accepted the temperature
 
-    with patch.object(
-        hass, "async_add_executor_job", new=AsyncMock()
-    ) as mock_executor, patch.object(
-        mock_coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mock_refresh, patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
+    with (
+        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
+        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
+        patch("asyncio.sleep", new=AsyncMock()) as mock_sleep,
+    ):
         # Mock the command execution to return True (success)
         # Mock get_status_summary to return the expected temperature
         mock_executor.side_effect = [True, {"target_temp": 25.0}]  # command succeeds, temp matches
