@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.2.0)'
+        required: true
+        type: string
+      pymitsubishi_version:
+        description: 'PyMitsubishi version requirement (e.g., 0.2.0)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      
+      - name: Update version in manifest.json
+        run: |
+          python -c "
+          import json
+          import sys
+          
+          version = '${{ github.event.inputs.version }}'
+          pymitsubishi_version = '${{ github.event.inputs.pymitsubishi_version }}'
+          
+          # Update manifest.json
+          with open('custom_components/mitsubishi/manifest.json', 'r') as f:
+              manifest = json.load(f)
+          
+          manifest['version'] = version
+          manifest['requirements'] = [f'pymitsubishi=={pymitsubishi_version}']
+          
+          with open('custom_components/mitsubishi/manifest.json', 'w') as f:
+              json.dump(manifest, f, indent=2)
+              f.write('\n')
+          
+          print(f'✅ Updated manifest.json:')
+          print(f'   Version: {version}')
+          print(f'   Requirements: pymitsubishi=={pymitsubishi_version}')
+          "
+      
+      - name: Run validation checks
+        run: |
+          # Validate manifest structure
+          python -c "
+          import json
+          with open('custom_components/mitsubishi/manifest.json') as f:
+              manifest = json.load(f)
+          print('✅ Manifest JSON is valid')
+          "
+      
+      - name: Commit version bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add custom_components/mitsubishi/manifest.json
+          git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
+      
+      - name: Create and push tag
+        run: |
+          git tag "v${{ github.event.inputs.version }}"
+          git push origin "v${{ github.event.inputs.version }}"
+      
+      - name: Push changes to main branch
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+      
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          echo "## What's Changed" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### 🎉 Highlights" >> release_notes.md
+          echo "- Updated to pymitsubishi ${{ github.event.inputs.pymitsubishi_version }}" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📦 Dependencies" >> release_notes.md
+          echo "- pymitsubishi: ${{ github.event.inputs.pymitsubishi_version }}" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📋 Compatibility" >> release_notes.md
+          echo "- Home Assistant: 2025.1.0+" >> release_notes.md
+          echo "- Python: 3.12+" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ github.event.inputs.version }}...v${{ github.event.inputs.version }}" >> release_notes.md
+      
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "v${{ github.event.inputs.version }}"
+          name: "Release v${{ github.event.inputs.version }}"
+          bodyFile: "release_notes.md"
+          draft: false
+          prerelease: false
+          makeLatest: true
+          token: ${{ secrets.GITHUB_TOKEN }}
