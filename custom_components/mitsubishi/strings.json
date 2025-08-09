@@ -27,9 +27,19 @@
       "init": {
         "title": "Reconfigure Mitsubishi Air Conditioner",
         "description": "Update the configuration settings for your Mitsubishi AC. Changes will be applied after validation and the integration will be reloaded.",
-        "data": "@.config.step.user.data"
+        "data": {
+          "host": "IP Address",
+          "encryption_key": "Encryption Key (default: unregistered)",
+          "admin_username": "Admin Username (default: admin)",
+          "admin_password": "Admin Password (default: me1debug@0567)",
+          "scan_interval": "Update Interval (seconds, 10-300)",
+          "enable_capability_detection": "Enable capability detection"
+        }
       }
     },
-    "error": "@.config.error"
+    "error": {
+      "cannot_connect": "Failed to connect to the air conditioner. Please check the IP address, encryption key, and ensure the device is accessible on your network.",
+      "unknown": "Unexpected error occurred. Please try again."
+    }
   }
 }

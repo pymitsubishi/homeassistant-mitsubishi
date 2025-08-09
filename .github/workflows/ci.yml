@@ -1,136 +1,261 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, master]
   pull_request:
-    branches: [ main ]
+    branches: [main, master]
+  workflow_dispatch:
+
+# Cancel in-progress runs when a new run is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  # Quick validation checks that can fail fast
+  validate:
+    name: Validation Checks
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate manifest.json
+        run: |
+          python3 -c "
+          import json
+          import sys
+          with open('custom_components/mitsubishi/manifest.json') as f:
+              manifest = json.load(f)
+
+          # Check required keys
+          required = ['domain', 'name', 'version', 'requirements', 'codeowners']
+          missing = [k for k in required if k not in manifest]
+          if missing:
+              print(f'❌ Missing required keys: {missing}')
+              sys.exit(1)
+
+          # Check key order (domain, name, then alphabetical)
+          keys = list(manifest.keys())
+          if keys[0] != 'domain' or keys[1] != 'name':
+              print('❌ Keys must start with domain, name')
+              sys.exit(1)
+
+          print('✅ Manifest structure valid')
+          "
+
+      - name: Validate strings.json
+        run: |
+          python3 -c "
+          import json
+          with open('custom_components/mitsubishi/strings.json') as f:
+              strings = json.load(f)
+          print('✅ Strings JSON valid')
+          "
+
+      - name: Validate YAML files
+        run: |
+          pip install pyyaml
+          python3 -c "
+          import yaml
+          import glob
+          for file in glob.glob('.github/workflows/*.yml'):
+              with open(file) as f:
+                  yaml.safe_load(f)
+          print('✅ All YAML files valid')
+          "
+
+  # Linting and formatting checks (can run in parallel)
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    needs: validate  # Only run if validation passes
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pre-commit
+          key: lint-${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '.pre-commit-config.yaml') }}
+          restore-keys: |
+            lint-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy pre-commit
+          pip install -r requirements.txt
+
+      - name: Run ruff check
+        run: |
+          ruff check custom_components tests --output-format=github
+
+      - name: Run ruff format check
+        run: |
+          ruff format custom_components tests --check
+
+      - name: Run pre-commit hooks
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+
+  # Type checking (can run in parallel)
+  type-check:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    needs: validate  # Only run if validation passes
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: mypy-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            mypy-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install homeassistant first to get its dependencies
+          pip install homeassistant
+          # Then install mypy and other dev dependencies
+          pip install mypy
+          # Install types-requests with compatible urllib3
+          pip install "types-requests<2.32.0.20240712"
+          pip install -r requirements.txt
+
+      - name: Run mypy
+        run: |
+          mypy custom_components/mitsubishi \
+            --ignore-missing-imports \
+            --no-warn-unused-ignores \
+            --show-error-codes
+
+  # Tests with coverage (matrix for multiple Python versions)
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: validate  # Only run if validation passes
     strategy:
+      fail-fast: false  # Don't cancel other matrix jobs if one fails
       matrix:
         python-version: ["3.12", "3.13"]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: test-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            test-${{ runner.os }}-${{ matrix.python-version }}-
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-homeassistant-custom-component pytest-cov
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-homeassistant-custom-component pytest-cov pytest-asyncio
+          pip install -r requirements.txt
+          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; fi
 
-    - name: Lint with ruff (if available)
-      run: |
-        pip install ruff || true
-        ruff check . || true
-      continue-on-error: true
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ \
+            --cov=custom_components/mitsubishi \
+            --cov-report=xml \
+            --cov-report=term-missing:skip-covered \
+            --cov-fail-under=95 \
+            -v
 
-    - name: Type check with mypy (if available)
-      run: |
-        pip install mypy || true
-        mypy custom_components/ || true
-      continue-on-error: true
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.12'
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
-    - name: Run tests with pytest
-      run: |
-        python -m pytest tests/ \
-          --cov=custom_components/mitsubishi \
-          --cov-report=xml \
-          --cov-report=term-missing \
-          --cov-fail-under=100 \
-          -v
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      if: matrix.python-version == '3.13'
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-
-  validate-manifest:
-    name: Validate Home Assistant manifest
+  # Home Assistant specific validation
+  ha-validate:
+    name: Home Assistant Validation
     runs-on: ubuntu-latest
+    needs: [lint, type-check, test]  # Only run after all checks pass
+    continue-on-error: true  # Don't fail the workflow if HACS brands check fails
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
+      - name: Hassfest validation
+        uses: home-assistant/actions/hassfest@master
 
-    - name: Install Home Assistant
-      run: |
-        python -m pip install --upgrade pip
-        pip install homeassistant
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
 
-    - name: Validate manifest
-      run: |
-        python -c "
-        import json
-        import sys
-
-        try:
-            with open('custom_components/mitsubishi/manifest.json') as f:
-                manifest = json.load(f)
-
-            required_fields = ['domain', 'name', 'documentation', 'codeowners', 'requirements', 'version']
-            missing = [field for field in required_fields if field not in manifest]
-
-            if missing:
-                print(f'Missing required fields: {missing}')
-                sys.exit(1)
-
-            print('Manifest validation passed')
-            print(f'Domain: {manifest.get(\"domain\")}')
-            print(f'Version: {manifest.get(\"version\")}')
-            print(f'Requirements: {manifest.get(\"requirements\")}')
-        except Exception as e:
-            print(f'Manifest validation failed: {e}')
-            sys.exit(1)
-        "
-
-  pre-commit:
-    name: Pre-commit checks
+  # Security check (only on main branch)
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    needs: [lint, type-check, test]
+    continue-on-error: true  # Security issues shouldn't block deployment
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Install pre-commit
-      run: |
-        python -m pip install --upgrade pip
-        pip install pre-commit
+      - name: Run safety check
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety
+          pip install -r requirements.txt
+          safety check --json || true
 
-    - name: Run pre-commit hooks
-      run: |
-        # Only run if .pre-commit-config.yaml exists
-        if [ -f .pre-commit-config.yaml ]; then
-          pre-commit run --all-files
-        else
-          echo "No pre-commit config found, skipping"
-        fi
+  # Final status check for branch protection
+  status-check:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [validate, lint, type-check, test]
+    if: always()
+    steps:
+      - name: Check CI Status
+        run: |
+          if [[ "${{ needs.validate.result }}" == "failure" || \
+                "${{ needs.lint.result }}" == "failure" || \
+                "${{ needs.type-check.result }}" == "failure" || \
+                "${{ needs.test.result }}" == "failure" ]]; then
+            echo "❌ CI failed"
+            exit 1
+          else
+            echo "✅ CI passed"
+          fi

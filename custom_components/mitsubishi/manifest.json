@@ -1,14 +1,13 @@
 {
   "domain": "mitsubishi",
   "name": "Mitsubishi Air Conditioner",
-  "documentation": "https://github.com/pymitsubishi/homeassistant-mitsubishi",
-  "issue_tracker": "https://github.com/pymitsubishi/homeassistant-mitsubishi/issues",
-  "requirements": ["pymitsubishi==0.2.0"],
   "codeowners": ["@ashleigh-hopkins"],
-  "version": "0.2.0",
   "config_flow": true,
-  "iot_class": "local_polling",
+  "documentation": "https://github.com/pymitsubishi/homeassistant-mitsubishi",
   "integration_type": "device",
-  "homeassistant": "2025.1.0",
-  "loggers": ["pymitsubishi"]
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/pymitsubishi/homeassistant-mitsubishi/issues",
+  "loggers": ["pymitsubishi"],
+  "requirements": ["pymitsubishi==0.2.0"],
+  "version": "0.2.0"
 }
