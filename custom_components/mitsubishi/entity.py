@@ -85,10 +85,7 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
         try:
             _LOGGER.debug(f"Executing command: {command_name}")
 
-            # Add debug=True for controller methods that support it
-            if "debug" not in kwargs:
-                kwargs["debug"] = True
-
+            # Execute the command
             success = await self.hass.async_add_executor_job(lambda: command_func(*args, **kwargs))
 
             if success:
