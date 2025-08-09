@@ -71,9 +71,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mypy types-requests
-          pip install -r requirements.txt
+          # Install homeassistant first to get its dependencies
           pip install homeassistant
+          # Then install mypy and other dev dependencies
+          pip install mypy
+          # Install types-requests with compatible urllib3
+          pip install "types-requests<2.32.0.20240712"
+          pip install -r requirements.txt
 
       - name: Run mypy
         run: |
