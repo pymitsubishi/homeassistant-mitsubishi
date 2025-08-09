@@ -147,4 +147,3 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "custom_components.*"
 no_implicit_reexport = true
-

@@ -42,6 +42,7 @@ repos:
           - --ignore-missing-imports
           - --no-warn-unused-ignores
           - --show-error-codes
+          - custom_components/
         additional_dependencies:
           - types-requests
           - homeassistant-stubs
