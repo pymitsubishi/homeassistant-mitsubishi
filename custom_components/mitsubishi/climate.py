@@ -37,9 +37,6 @@ from .entity import MitsubishiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-# Enable debug logging for pymitsubishi to see raw HTTP communication
-logging.getLogger("pymitsubishi").setLevel(logging.DEBUG)
-
 # Mapping from HA HVAC modes to Mitsubishi modes
 HVAC_MODE_MAP = {
     HVACMode.OFF: PowerOnOff.OFF,
