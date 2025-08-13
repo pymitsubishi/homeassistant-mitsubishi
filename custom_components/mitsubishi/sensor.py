@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfEnergy, UnitOfTemperature
 from homeassistant.core import HomeAssistant
@@ -49,8 +49,6 @@ async def async_setup_entry(
         ("unit_type", MitsubishiUnitTypeSensor),
         ("wifi_info", MitsubishiWifiInfoSensor),
         # SwiCago-inspired enhanced sensors
-        ("compressor_frequency", MitsubishiCompressorFrequencySensor),
-        ("estimated_power", MitsubishiEstimatedPowerSensor),
         ("mode_raw_value", MitsubishiModeRawValueSensor),
         ("temperature_mode", MitsubishiTemperatureModeSensor),
         # Energy monitoring sensors (requires pymitsubishi >= 0.1.7 with energy data)
@@ -75,6 +73,34 @@ async def async_setup_entry(
             _LOGGER.exception("Failed to create %s sensor: %s", sensor_name, e)
 
     _LOGGER.debug("Created %d sensors out of %d attempted", len(sensors), len(sensor_classes))
+
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "runtime_minutes", SensorStateClass.MEASUREMENT))
+
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "energy_unknown_6_8"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "operating", SensorStateClass.MEASUREMENT))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "energy_unknown_10_11", SensorStateClass.MEASUREMENT))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "energy_unknown_12_"))
+
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "error_unknown_6_8"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "error_unknown_11_"))
+
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "general_unknown_6_7"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "general_unknown_13_14"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "general_unknown_20_"))
+
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "sensor_unknown_6_7"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "temperature_8", SensorStateClass.MEASUREMENT))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "sensor_unknown_9"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "temperature_11", SensorStateClass.MEASUREMENT))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "sensor_unknown_13_14"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "sensor_unknown_21_"))
+
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "unknown5_unknown_6_"))
+
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "unknown9_unknown_6_8"))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "unknown9_unknown_9", SensorStateClass.MEASUREMENT))
+    sensors.append(MitsubishiUnknownSensor(coordinator, config_entry, "unknown9_unknown_10_"))
+
     async_add_entities(sensors)
 
 
@@ -408,105 +434,6 @@ class MitsubishiWifiInfoSensor(BaseMitsubishiDiagnosticSensor):
         return self._filter_none_values(attributes)
 
 
-# SwiCago-inspired enhanced sensors
-class MitsubishiCompressorFrequencySensor(MitsubishiEntity, SensorEntity):
-    """Compressor frequency sensor for Mitsubishi AC (SwiCago enhancement)."""
-
-    _attr_name = "Compressor Frequency"
-    _attr_icon = "mdi:fan"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_native_unit_of_measurement = "Hz"
-
-    def __init__(
-        self,
-        coordinator: MitsubishiDataUpdateCoordinator,
-        config_entry: ConfigEntry,
-    ) -> None:
-        """Initialize the compressor frequency sensor."""
-        super().__init__(coordinator, config_entry, "compressor_frequency")
-
-    @property
-    def native_value(self) -> int | None:
-        """Return the compressor frequency."""
-        if (
-            self.coordinator.data
-            and (energy_states := self.coordinator.data.get("energy_states"))
-            and energy_states.get("compressor_frequency") is not None
-        ):
-            return energy_states["compressor_frequency"]
-        return None
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        return self.native_value is not None
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return entity specific state attributes."""
-        attrs = {"source": "SwiCago enhancement"}
-        if has_energy_state(self.coordinator):
-            attrs["operating"] = self.coordinator.controller.state.energy.operating
-        return attrs
-
-
-class MitsubishiEstimatedPowerSensor(MitsubishiEntity, SensorEntity):
-    """Estimated power consumption sensor for Mitsubishi AC (SwiCago enhancement)."""
-
-    _attr_name = "Estimated Power"
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_native_unit_of_measurement = "W"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(
-        self,
-        coordinator: MitsubishiDataUpdateCoordinator,
-        config_entry: ConfigEntry,
-    ) -> None:
-        """Initialize the estimated power sensor."""
-        super().__init__(coordinator, config_entry, "estimated_power")
-
-    @property
-    def native_value(self) -> float | None:
-        """Return the estimated power consumption."""
-        if (
-            self.coordinator.data
-            and (energy_states := self.coordinator.data.get("energy_states"))
-            and energy_states.get("estimated_power_watts") is not None
-        ):
-            return energy_states["estimated_power_watts"]
-        return None
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        return self.native_value is not None
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return entity specific state attributes."""
-        attrs = {
-            "source": "SwiCago enhancement",
-            "estimation_method": "Compressor frequency + mode + fan speed",
-            "accuracy": "Rough estimate - varies with conditions",
-        }
-        if (
-            hasattr(self.coordinator, "controller")
-            and hasattr(self.coordinator.controller, "state")
-            and self.coordinator.controller.state
-            and hasattr(self.coordinator.controller.state, "energy")
-            and self.coordinator.controller.state.energy
-        ):
-            energy = self.coordinator.controller.state.energy
-            attrs.update(
-                {
-                    "compressor_frequency": energy.compressor_frequency,
-                    "operating_status": energy.operating,
-                }
-            )
-        return attrs
-
-
 class MitsubishiModeRawValueSensor(MitsubishiEntity, SensorEntity):
     """Mode raw value sensor for Mitsubishi AC (SwiCago enhancement)."""
 
@@ -654,16 +581,6 @@ class BaseMitsubishiEnergySensor(MitsubishiEntity, SensorEntity):
             "energy_type": self._energy_type,
             "unit_conversion": "Wh to kWh (÷1000)",
         }
-        if (
-            hasattr(self.coordinator, "controller")
-            and hasattr(self.coordinator.controller, "state")
-            and self.coordinator.controller.state
-            and hasattr(self.coordinator.controller.state, "energy")
-            and self.coordinator.controller.state.energy
-        ):
-            energy = self.coordinator.controller.state.energy
-            attrs["operating_status"] = energy.operating
-            attrs["compressor_frequency"] = energy.compressor_frequency
         return attrs
 
 
@@ -785,3 +702,23 @@ class MitsubishiEnergyFanSensor(BaseMitsubishiEnergySensor):
     def native_value(self) -> float | None:
         """Return the fan mode energy consumption."""
         return self._get_energy_value("energy_total_fan_kWh")
+
+
+class MitsubishiUnknownSensor(MitsubishiEntity, SensorEntity):
+    """Diagnostic sensor for (currently) unknown fields"""
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+            self,
+            coordinator: MitsubishiDataUpdateCoordinator,
+            config_entry: ConfigEntry,
+            name: str,
+            sensor_state_class: SensorStateClass.MEASUREMENT = None,
+    ) -> None:
+        super().__init__(coordinator, config_entry, name)
+        self._attr_name = name
+        self._attr_state_class = sensor_state_class
+
+    @property
+    def native_value(self) -> float | None:
+        return self.coordinator.data.get(self._attr_name)

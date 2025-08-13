@@ -81,9 +81,6 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator):
                 and self.controller.state.energy
             ):
                 energy_data = {
-                    "compressor_frequency": self.controller.state.energy.compressor_frequency,
-                    "operating": self.controller.state.energy.operating,
-                    "estimated_power_watts": self.controller.state.energy.estimated_power_watts,
                 }
 
                 # Add energy consumption values if available

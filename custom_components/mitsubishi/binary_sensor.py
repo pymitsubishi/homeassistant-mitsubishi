@@ -182,20 +182,6 @@ class MitsubishiOperatingBinarySensor(MitsubishiEntity, BinarySensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return entity specific state attributes."""
         attrs = {"source": "SwiCago enhancement"}
-        if (
-            hasattr(self.coordinator, "controller")
-            and hasattr(self.coordinator.controller, "state")
-            and self.coordinator.controller.state
-            and hasattr(self.coordinator.controller.state, "energy")
-            and self.coordinator.controller.state.energy
-        ):
-            energy = self.coordinator.controller.state.energy
-            attrs.update(
-                {
-                    "compressor_frequency": energy.compressor_frequency,
-                    "estimated_power_watts": energy.estimated_power_watts,
-                }
-            )
         return attrs
 
 
