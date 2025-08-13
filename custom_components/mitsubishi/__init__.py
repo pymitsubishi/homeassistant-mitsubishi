@@ -48,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         # Initialize the API and controller with admin credentials
         api = MitsubishiAPI(
-            device_ip=host,
+            device_host_port=host,
             encryption_key=encryption_key,
             admin_username=admin_username,
             admin_password=admin_password,

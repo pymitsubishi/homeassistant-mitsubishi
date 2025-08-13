@@ -49,7 +49,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     encryption_key = data.get(CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY)
     _LOGGER.debug("Using encryption key: %s", encryption_key)
 
-    api = MitsubishiAPI(device_ip=data[CONF_HOST], encryption_key=encryption_key)
+    api = MitsubishiAPI(device_host_port=data[CONF_HOST], encryption_key=encryption_key)
     controller = MitsubishiController(api=api)
 
     try:
