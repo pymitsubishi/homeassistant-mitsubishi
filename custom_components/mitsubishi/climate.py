@@ -7,13 +7,6 @@ from typing import Any
 
 from homeassistant.components.climate import (
     FAN_AUTO,
-    FAN_HIGH,
-    FAN_LOW,
-    FAN_MEDIUM,
-    SWING_BOTH,
-    SWING_HORIZONTAL,
-    SWING_OFF,
-    SWING_VERTICAL,
     ClimateEntity,
     ClimateEntityFeature,
     HVACAction,
@@ -34,6 +27,12 @@ from pymitsubishi import (
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
 from .entity import MitsubishiEntity
+from .select import (
+    HORIZONTAL_WIND_OPTIONS,
+    HORIZONTAL_WIND_REVERSE,
+    VERTICAL_WIND_OPTIONS,
+    VERTICAL_WIND_REVERSE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,33 +46,19 @@ HVAC_MODE_MAP = {
     HVACMode.FAN_ONLY: DriveMode.FAN,
 }
 
-# Reverse mapping for state reporting
-MITSUBISHI_TO_HVAC_MODE = {
-    DriveMode.HEATER: HVACMode.HEAT,
-    DriveMode.COOLER: HVACMode.COOL,
-    DriveMode.AUTO: HVACMode.AUTO,
-    DriveMode.AUTO_COOLER: HVACMode.COOL,
-    DriveMode.AUTO_HEATER: HVACMode.HEAT,
-    DriveMode.DEHUM: HVACMode.DRY,
-    DriveMode.FAN: HVACMode.FAN_ONLY,
-}
+HVAC_MODE_REVERSE_LOOKUP = {v: k for k, v in HVAC_MODE_MAP.items()}
 
 # Fan speed mapping
 FAN_SPEED_MAP = {
     FAN_AUTO: WindSpeed.AUTO,
-    FAN_LOW: WindSpeed.LEVEL_1,
-    FAN_MEDIUM: WindSpeed.LEVEL_2,
-    FAN_HIGH: WindSpeed.LEVEL_3,
-    "full": WindSpeed.LEVEL_FULL,
+    "1": WindSpeed.LEVEL_1,
+    "2": WindSpeed.LEVEL_2,
+    "3": WindSpeed.LEVEL_3,
+    "4": WindSpeed.LEVEL_4,
+    "5": WindSpeed.LEVEL_FULL,
 }
 
-MITSUBISHI_TO_FAN_MODE = {
-    WindSpeed.AUTO: FAN_AUTO,
-    WindSpeed.LEVEL_1: FAN_LOW,
-    WindSpeed.LEVEL_2: FAN_MEDIUM,
-    WindSpeed.LEVEL_3: FAN_HIGH,
-    WindSpeed.LEVEL_FULL: FAN_HIGH,
-}
+MITSUBISHI_TO_FAN_MODE =  {v: k for k, v in FAN_SPEED_MAP.items()}
 
 # HVAC Action mapping
 HVAC_ACTION_MAP = {
@@ -114,13 +99,17 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         HVACMode.DRY,
         HVACMode.FAN_ONLY,
     ]
-    _attr_fan_modes = [FAN_AUTO, FAN_LOW, FAN_MEDIUM, FAN_HIGH, "full"]
-    _attr_swing_modes = [SWING_OFF, SWING_VERTICAL, SWING_HORIZONTAL, SWING_BOTH]
+    _attr_fan_modes = [FAN_AUTO, "1", "2", "3", "4", "5"]
+    _attr_swing_modes = list(VERTICAL_WIND_OPTIONS.keys())
+    _attr_swing_horizontal_modes = list(HORIZONTAL_WIND_OPTIONS.keys())
 
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
         | ClimateEntityFeature.SWING_MODE
+        | ClimateEntityFeature.SWING_HORIZONTAL_MODE
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
     )
 
     def __init__(
@@ -146,6 +135,18 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
             return float(target_temp)
         return None
 
+    async def async_set_temperature(self, **kwargs: Any) -> None:
+        """Set new target temperature."""
+        temperature = kwargs.get(ATTR_TEMPERATURE)
+        if temperature is None:
+            return
+
+        await self._execute_command_with_refresh(
+            f"set temperature to {temperature}°C",
+            self.coordinator.controller.set_temperature,
+            temperature,
+        )
+
     @property
     def hvac_mode(self) -> HVACMode:
         """Return hvac operation ie. heat, cool mode."""
@@ -158,11 +159,38 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         if mode_name:
             try:
                 drive_mode = DriveMode[mode_name]
-                return MITSUBISHI_TO_HVAC_MODE.get(drive_mode, HVACMode.OFF)
+                return HVAC_MODE_REVERSE_LOOKUP.get(drive_mode, HVACMode.OFF)
             except (KeyError, ValueError):
                 return HVACMode.OFF
 
         return HVACMode.OFF
+
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set new target hvac mode."""
+        if hvac_mode == HVACMode.OFF:
+            await self._execute_command_with_refresh(
+                f"set HVAC mode to {hvac_mode}", self.coordinator.controller.set_power, False
+            )
+        else:
+            # Turn on if currently off
+            if self.hvac_mode == HVACMode.OFF:
+                power_success = await self._execute_command_with_refresh(
+                    "turn on device before setting mode",
+                    self.coordinator.controller.set_power,
+                    True,
+                )
+                if not power_success:
+                    return
+
+            # Set the mode
+            if hvac_mode in HVAC_MODE_MAP:
+                drive_mode = HVAC_MODE_MAP[hvac_mode]
+                if isinstance(drive_mode, DriveMode):
+                    await self._execute_command_with_refresh(
+                        f"set HVAC mode to {hvac_mode}",
+                        self.coordinator.controller.set_mode,
+                        drive_mode,
+                    )
 
     @property
     def hvac_action(self) -> HVACAction:
@@ -203,12 +231,44 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
                 pass
         return FAN_AUTO
 
+    async def async_set_fan_mode(self, fan_mode: str) -> None:
+        """Set new target fan mode."""
+        if fan_mode in FAN_SPEED_MAP:
+            wind_speed = FAN_SPEED_MAP[fan_mode]
+            await self._execute_command_with_refresh(
+                f"set fan mode to {fan_mode}", self.coordinator.controller.set_fan_speed, wind_speed
+            )
+
     @property
     def swing_mode(self) -> str:
         """Return the swing setting."""
-        # This is a simplified swing mode - in reality, Mitsubishi has separate
-        # horizontal and vertical swing controls
-        return SWING_OFF  # Default for now, can be enhanced later
+        mitsubishi_swing_mode = VerticalWindDirection[self.coordinator.data.get("vertical_vane_right", "AUTO")]
+        return VERTICAL_WIND_REVERSE.get(mitsubishi_swing_mode)
+
+    async def async_set_swing_mode(self, swing_mode: str) -> None:
+        """Set new target swing operation."""
+        mitsubishi_swing_mode = VERTICAL_WIND_OPTIONS[swing_mode]
+        await self._execute_command_with_refresh(
+            f"set swing mode to {mitsubishi_swing_mode} (vertical)",
+            self.coordinator.controller.set_vertical_vane,
+            mitsubishi_swing_mode,
+            "right",
+        )
+
+    @property
+    def swing_horizontal_mode(self) -> str | None:
+        """Return horizontal vane position or mode."""
+        mitsubishi_swing_horizontal_mode = HorizontalWindDirection[self.coordinator.data.get("horizontal_vane", "AUTO")]
+        return HORIZONTAL_WIND_REVERSE[mitsubishi_swing_horizontal_mode]
+
+    async def async_set_swing_horizontal_mode(self, swing_horizontal_mode: str) -> None:
+        """Set new target horizontal swing operation."""
+        mitsubishi_swing_horizontal_mode = HORIZONTAL_WIND_OPTIONS[swing_horizontal_mode]
+        await self._execute_command_with_refresh(
+            f"set swing mode to {mitsubishi_swing_horizontal_mode} (horizontal)",
+            self.coordinator.controller.set_horizontal_vane,
+            mitsubishi_swing_horizontal_mode,
+        )
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -250,85 +310,6 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
         return attributes
 
-    async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set new target temperature."""
-        temperature = kwargs.get(ATTR_TEMPERATURE)
-        if temperature is None:
-            return
-
-        await self._execute_command_with_refresh(
-            f"set temperature to {temperature}°C",
-            self.coordinator.controller.set_temperature,
-            temperature,
-        )
-
-    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        """Set new target hvac mode."""
-        if hvac_mode == HVACMode.OFF:
-            await self._execute_command_with_refresh(
-                f"set HVAC mode to {hvac_mode}", self.coordinator.controller.set_power, False
-            )
-        else:
-            # Turn on if currently off
-            if self.hvac_mode == HVACMode.OFF:
-                power_success = await self._execute_command_with_refresh(
-                    "turn on device before setting mode",
-                    self.coordinator.controller.set_power,
-                    True,
-                )
-                if not power_success:
-                    return
-
-            # Set the mode
-            if hvac_mode in HVAC_MODE_MAP:
-                drive_mode = HVAC_MODE_MAP[hvac_mode]
-                if isinstance(drive_mode, DriveMode):
-                    await self._execute_command_with_refresh(
-                        f"set HVAC mode to {hvac_mode}",
-                        self.coordinator.controller.set_mode,
-                        drive_mode,
-                    )
-
-    async def async_set_fan_mode(self, fan_mode: str) -> None:
-        """Set new target fan mode."""
-        if fan_mode in FAN_SPEED_MAP:
-            wind_speed = FAN_SPEED_MAP[fan_mode]
-            await self._execute_command_with_refresh(
-                f"set fan mode to {fan_mode}", self.coordinator.controller.set_fan_speed, wind_speed
-            )
-
-    async def async_set_swing_mode(self, swing_mode: str) -> None:
-        """Set new target swing operation."""
-        # This is a placeholder implementation
-        # Real implementation would need to handle vertical and horizontal vanes separately
-        if swing_mode == SWING_VERTICAL:
-            await self._execute_command_with_refresh(
-                f"set swing mode to {swing_mode} (vertical)",
-                self.coordinator.controller.set_vertical_vane,
-                VerticalWindDirection.SWING,
-                "right",
-            )
-        elif swing_mode == SWING_HORIZONTAL:
-            await self._execute_command_with_refresh(
-                f"set swing mode to {swing_mode} (horizontal)",
-                self.coordinator.controller.set_horizontal_vane,
-                HorizontalWindDirection.LCR_S,
-            )
-        elif swing_mode == SWING_BOTH:
-            # For SWING_BOTH, we need to set both directions
-            # Note: This will cause two separate refreshes, but it's simpler than custom logic
-            await self._execute_command_with_refresh(
-                f"set swing mode to {swing_mode} (vertical)",
-                self.coordinator.controller.set_vertical_vane,
-                VerticalWindDirection.SWING,
-                "right",
-            )
-            await self._execute_command_with_refresh(
-                f"set swing mode to {swing_mode} (horizontal)",
-                self.coordinator.controller.set_horizontal_vane,
-                HorizontalWindDirection.LCR_S,
-            )
-        # SWING_OFF would set them to AUTO or a fixed position
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
