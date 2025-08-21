@@ -9,11 +9,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.mitsubishi.config_flow import CannotConnect, OptionsFlowHandler
+from custom_components.mitsubishi.config_flow import (
+    CannotConnect,
+    OptionsFlowHandler,
+    validate_input,
+)
 from custom_components.mitsubishi.const import (
     CONF_ADMIN_PASSWORD,
     CONF_ADMIN_USERNAME,
-    CONF_ENABLE_CAPABILITY_DETECTION,
     CONF_ENCRYPTION_KEY,
     CONF_SCAN_INTERVAL,
     DOMAIN,
@@ -35,15 +38,8 @@ async def test_form(hass: HomeAssistant) -> None:
     with (
         patch(
             "custom_components.mitsubishi.config_flow.MitsubishiController.fetch_status",
-            return_value=True,
-        ) as mock_fetch,
-        patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiController.get_status_summary",
             return_value=TEST_SYSTEM_DATA,
-        ),
-        patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiAPI.close",
-        ),
+        ) as mock_fetch,
         patch(
             "custom_components.mitsubishi.async_setup_entry",
             return_value=True,
@@ -54,8 +50,8 @@ async def test_form(hass: HomeAssistant) -> None:
             USER_INPUT,
         )
         await hass.async_block_till_done()
-        mock_setup_entry.assert_called_once()
         mock_fetch.assert_called_once()
+        mock_setup_entry.assert_called_once()
 
     assert result2["type"] is FlowResultType.CREATE_ENTRY
     assert result2["title"] == "Mitsubishi AC (00:11:22:33:44:55)"
@@ -68,14 +64,7 @@ async def test_form(hass: HomeAssistant) -> None:
     with (
         patch(
             "custom_components.mitsubishi.config_flow.MitsubishiController.fetch_status",
-            new=AsyncMock(return_value=True),
-        ),
-        patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiController.get_status_summary",
             return_value=TEST_SYSTEM_DATA,
-        ),
-        patch(
-            "custom_components.mitsubishi.config_flow.MitsubishiAPI.close",
         ),
     ):
         result4 = await hass.config_entries.flow.async_configure(
@@ -125,19 +114,7 @@ def mock_api():
 def mock_controller():
     """Create a mock MitsubishiController."""
     controller = MagicMock()
-    controller.fetch_status.return_value = True
-    controller.get_status_summary.return_value = {
-        "power": "on",
-        "target_temp": 24.0,
-        "room_temp": 22.5,
-        "mode": "cool",
-        "fan_speed": "auto",
-        "device_info": {
-            "model": "MAC-577IF-2E",
-            "firmware": "1.0.0",
-            "mac_address": "AA:BB:CC:DD:EE:FF",
-        },
-    }
+    controller.fetch_status.return_value = TEST_SYSTEM_DATA
     return controller
 
 
@@ -204,14 +181,13 @@ class TestConfigFlow:
                 )
 
                 assert result2["type"] == FlowResultType.CREATE_ENTRY
-                assert result2["title"] == "Mitsubishi AC (192.168.1.100)"
+                assert result2["title"] == "Mitsubishi AC (00:11:22:33:44:55)"
                 assert result2["data"] == {
                     "host": "192.168.1.100",
                     "admin_username": "admin",
                     "admin_password": "password",
                     "scan_interval": 30,
                     "encryption_key": "unregistered",
-                    "enable_capability_detection": True,
                 }
 
     @pytest.mark.asyncio
@@ -227,21 +203,7 @@ class TestConfigFlow:
             ) as mock_controller_class:
                 # Create a proper mock that returns the host as unique_id
                 mock_controller = MagicMock()
-                mock_controller.fetch_status.return_value = True
-                # Mock get_status_summary to return a proper dict-like object
-                status_summary = {
-                    "power": "on",
-                    "target_temp": 24.0,
-                    "room_temp": 22.5,
-                    "mode": "cool",
-                    "fan_speed": "auto",
-                    "device_info": {
-                        "model": "MAC-577IF-2E",
-                        "firmware": "1.0.0",
-                        "mac_address": "AA:BB:CC:DD:EE:FF",
-                    },
-                }
-                mock_controller.get_status_summary.return_value = status_summary
+                mock_controller.fetch_status.return_value = TEST_SYSTEM_DATA
                 mock_controller_class.return_value = mock_controller
 
                 # First create and add an entry successfully
@@ -320,8 +282,6 @@ class TestConfigFlow:
     @pytest.mark.asyncio
     async def test_validate_input_exception_during_validation(self, hass: HomeAssistant) -> None:
         """Test validate_input when exception occurs during validation process."""
-        from custom_components.mitsubishi.config_flow import CannotConnect, validate_input
-
         test_data = {
             "host": "192.168.1.100",
             "encryption_key": "test_key",
@@ -339,8 +299,7 @@ class TestConfigFlow:
             mock_api_class.return_value = mock_api
 
             mock_controller = MagicMock()
-            mock_controller.fetch_status = MagicMock(return_value=True)
-            mock_controller.get_status_summary = MagicMock(side_effect=Exception("Summary error"))
+            mock_controller.fetch_status = MagicMock(side_effect=CannotConnect())
             mock_controller_class.return_value = mock_controller
 
             with pytest.raises(CannotConnect):
@@ -365,7 +324,6 @@ class TestOptionsFlow:
                 CONF_ADMIN_USERNAME: "admin",
                 CONF_ADMIN_PASSWORD: "password",
                 CONF_SCAN_INTERVAL: 30,
-                CONF_ENABLE_CAPABILITY_DETECTION: True,
             },
             entry_id="test_entry_id",
         )
@@ -403,7 +361,6 @@ class TestOptionsFlow:
             CONF_SCAN_INTERVAL: 60,
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
-            CONF_ENABLE_CAPABILITY_DETECTION: True,
         }
 
         with patch(
@@ -431,7 +388,6 @@ class TestOptionsFlow:
             CONF_SCAN_INTERVAL: 30,
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
-            CONF_ENABLE_CAPABILITY_DETECTION: True,
         }
 
         with patch(
@@ -456,7 +412,6 @@ class TestOptionsFlow:
             CONF_SCAN_INTERVAL: 30,
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
-            CONF_ENABLE_CAPABILITY_DETECTION: True,
         }
 
         with patch(

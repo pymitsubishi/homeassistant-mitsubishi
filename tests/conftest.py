@@ -2,9 +2,21 @@
 
 from __future__ import annotations
 
+import dataclasses
+from unittest.mock import AsyncMock, MagicMock
+
+import pymitsubishi
 import pytest
 
-from . import patch_api_close, patch_controller, patch_get_status_summary
+from custom_components.mitsubishi.const import DOMAIN
+
+from . import (
+    TEST_SYSTEM_DATA,
+    TEST_UNIT_INFO,
+    patch_api_close,
+    patch_controller,
+    patch_get_status_summary,
+)
 
 # Import Home Assistant test utilities
 pytest_plugins = "pytest_homeassistant_custom_component"
@@ -40,23 +52,18 @@ def mock_api_close():
 @pytest.fixture
 def mock_coordinator():
     """Create a mock coordinator."""
-    from unittest.mock import AsyncMock, MagicMock
-
-    from custom_components.mitsubishi.const import DOMAIN
-
-    from . import TEST_SYSTEM_DATA
-
     coordinator = MagicMock()
-    coordinator.data = TEST_SYSTEM_DATA
+    coordinator.data = dataclasses.replace(TEST_SYSTEM_DATA)
     coordinator.domain = DOMAIN
     coordinator.update_interval = 30
-    coordinator.fetch_unit_info = AsyncMock()
+    coordinator.get_unit_info = AsyncMock(return_value=TEST_UNIT_INFO)
     coordinator.async_config_entry_first_refresh = AsyncMock()
     coordinator.async_request_refresh = AsyncMock()
     coordinator.async_update_listeners = MagicMock()
 
     # Add controller with API mock
     coordinator.controller = MagicMock()
+    coordinator.controller.wait_time_after_command = 0.1
     coordinator.controller.api = MagicMock()
     coordinator.controller.api.close = MagicMock()
 
@@ -93,17 +100,13 @@ def mock_mitsubishi_controller():
     from unittest.mock import MagicMock
 
     mock_controller = MagicMock()
-    mock_controller.fetch_status = MagicMock(return_value=True)
-    mock_controller.get_status_summary = MagicMock(
-        return_value={
-            "mac": "00:11:22:33:44:55",
-            "serial": "TEST123456",
-            "power": "ON",
-            "mode": "COOLER",
-            "target_temp": 24.0,
-            "room_temp": 22.5,
-        }
-    )
+    mock_controller.state = MagicMock()
+    mock_controller.state.general = pymitsubishi.GeneralStates()
+    mock_controller.state.sensors = pymitsubishi.SensorStates()
+    mock_controller.state.error = pymitsubishi.ErrorStates()
+    mock_controller.state.energy = pymitsubishi.EnergyStates()
+
+    mock_controller.fetch_status = MagicMock(return_value=mock_controller.state)
     mock_controller.get_unit_info = MagicMock(
         return_value={
             "adaptor_info": {
