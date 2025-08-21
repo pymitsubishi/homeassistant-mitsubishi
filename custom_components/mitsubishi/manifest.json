@@ -13,7 +13,7 @@
     "pymitsubishi"
   ],
   "requirements": [
-    "pymitsubishi==0.2.0"
+    "git+https://github.com/pymitsubishi/pymitsubishi.git@parse_binary#pymitsubishi==0.2.0"
   ],
   "version": "0.2.0"
 }

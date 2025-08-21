@@ -31,25 +31,20 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
         self._config_entry = config_entry
         self._key = key
 
-        # Get device information (handle case where coordinator.data is None)
         if coordinator.data:
-            device_mac = coordinator.data.get("mac", config_entry.data["host"])
-            device_serial = coordinator.data.get("serial")
-            capabilities = coordinator.data.get("capabilities", {})
+            device_mac = coordinator.data.mac
+            device_serial = coordinator.data.serial
         else:
             device_mac = config_entry.data["host"]
             device_serial = None
-            capabilities = {}
 
         # Set device info
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_mac)},
             manufacturer="Mitsubishi Electric",
-            model=capabilities.get("device_model", "MAC-577IF-2E WiFi Adapter"),
             name=f"Mitsubishi AC {device_mac[-8:]}"
             if device_mac
             else f"Mitsubishi AC ({config_entry.data['host']})",
-            sw_version=capabilities.get("firmware_version"),
             hw_version=device_mac,
             serial_number=device_serial,
             configuration_url=f"http://{config_entry.data['host']}",
@@ -70,7 +65,7 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
 
         This method implements the correct timing for all pymitsubishi commands:
         1. Send command to device
-        2. Wait 2 seconds for device to process
+        2. Wait for device to process
         3. Fetch fresh status from device
         4. Update Home Assistant state
 
@@ -97,7 +92,7 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
 
                 # Wait for the device to process the command
                 _LOGGER.debug(f"Waiting for device to process {command_name}...")
-                await asyncio.sleep(2.0)  # Based on empirical testing
+                await asyncio.sleep(self.coordinator.controller.wait_time_after_command)
 
                 # Now fetch fresh data from the device
                 await self.coordinator.async_request_refresh()

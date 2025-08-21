@@ -7,6 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 
 from custom_components.mitsubishi.const import DOMAIN
 from custom_components.mitsubishi.entity import MitsubishiEntity
+from tests import TEST_SYSTEM_DATA
 
 
 @pytest.mark.asyncio
@@ -19,11 +20,7 @@ async def test_mitsubishi_entity_initialization(hass):
     mock_config_entry.data = config_data
 
     mock_coordinator = MagicMock()
-    mock_coordinator.data = {
-        "mac": "00:11:22:33:44:55",
-        "serial": "TEST123456",
-        "capabilities": {"device_model": "MAC-577IF-2E", "firmware_version": "1.0.0"},
-    }
+    mock_coordinator.data = TEST_SYSTEM_DATA
 
     # Create the entity
     entity = MitsubishiEntity(mock_coordinator, mock_config_entry, "test_key")
@@ -35,9 +32,7 @@ async def test_mitsubishi_entity_initialization(hass):
     # Check device info attributes
     assert entity.device_info["identifiers"] == {(DOMAIN, "00:11:22:33:44:55")}
     assert entity.device_info["manufacturer"] == "Mitsubishi Electric"
-    assert entity.device_info["model"] == "MAC-577IF-2E"
     assert entity.device_info["name"] == "Mitsubishi AC 33:44:55"
-    assert entity.device_info["sw_version"] == "1.0.0"
     assert entity.device_info["hw_version"] == "00:11:22:33:44:55"
     assert entity.device_info["serial_number"] == "TEST123456"
 
@@ -55,7 +50,7 @@ async def test_mitsubishi_entity_availability(hass):
     mock_config_entry.data = config_data
 
     mock_coordinator = MagicMock()
-    mock_coordinator.data = {}
+    mock_coordinator.data = TEST_SYSTEM_DATA
     mock_coordinator.last_update_success = True
 
     # Create the entity
@@ -94,7 +89,6 @@ async def test_mitsubishi_entity_initialization_with_none_data(hass):
     # Should have device info based on host fallback
     assert entity.device_info["identifiers"] == {(DOMAIN, "192.168.1.100")}
     assert entity.device_info["manufacturer"] == "Mitsubishi Electric"
-    assert entity.device_info["model"] == "MAC-577IF-2E WiFi Adapter"  # Default value
     assert entity.device_info["name"] == "Mitsubishi AC 68.1.100"  # Last 8 chars of IP
     assert entity.device_info["hw_version"] == "192.168.1.100"
     assert entity.device_info["serial_number"] is None
