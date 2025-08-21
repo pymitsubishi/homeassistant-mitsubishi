@@ -2,20 +2,48 @@
 
 from unittest.mock import AsyncMock, patch
 
+import pymitsubishi
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.mitsubishi.const import DOMAIN
 
-TEST_SYSTEM_DATA = {
-    "mac": "00:11:22:33:44:55",
-    "serial": "TEST123456",
-    "power": "ON",
-    "mode": "COOLER",
-    "target_temp": 24.0,
-    "room_temp": 22.5,
-    "capabilities": {},
+TEST_SYSTEM_DATA = pymitsubishi.ParsedDeviceState(
+    mac="00:11:22:33:44:55",
+    serial="TEST123456",
+    general=pymitsubishi.GeneralStates(),
+    sensors=pymitsubishi.SensorStates(),
+    energy=pymitsubishi.EnergyStates(),
+    errors=pymitsubishi.ErrorStates(),
+)
+TEST_UNIT_INFO = {
+    'Adaptor Information': {
+        'Adaptor name': 'MAC-577IF-E',
+        'Application version': '33.00',
+        'Release version': '00.06',
+        'Flash version': '00.01',
+        'Boot version': '00.01',
+        'Common platform version': '01.08',
+        'Test release version': '00.00',
+        'MAC address': '00:11:22:33:44:55',
+        'ID': '1234567890',
+        'Manufacturing date': '2021/08/12',
+        'Current time': '2001/01/01 00:18:17',
+        'Channel': 6,
+        'RSSI': -45.0,
+        'IT communication status': 'Normal',
+        'Server operation': 'ON',
+        'Server communication status': 'Error (DNS)',
+        'Server communication status(HEMS)': '--',
+        'SOI communication status': 'Unsupported',
+        'Thermal image timestamp': '--'
+    },
+    'Unit Information': {
+        'Unit type': 'RAC',
+        'IT protocol version': '03.00',
+        'Error': '8000'
+    }
 }
 
 USER_INPUT = {
@@ -24,7 +52,6 @@ USER_INPUT = {
     "admin_username": "admin",
     "admin_password": "password",
     "scan_interval": 30,
-    "enable_capability_detection": True,
 }
 
 

@@ -16,7 +16,6 @@ from pymitsubishi import MitsubishiAPI, MitsubishiController
 from .const import (
     CONF_ADMIN_PASSWORD,
     CONF_ADMIN_USERNAME,
-    CONF_ENABLE_CAPABILITY_DETECTION,
     CONF_ENCRYPTION_KEY,
     CONF_SCAN_INTERVAL,
     DEFAULT_ADMIN_PASSWORD,
@@ -37,7 +36,6 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
             vol.Coerce(int), vol.Range(min=10, max=300)
         ),
-        vol.Optional(CONF_ENABLE_CAPABILITY_DETECTION, default=True): bool,
     }
 )
 
@@ -55,21 +53,19 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     try:
         # Test connection
         _LOGGER.debug("Attempting to fetch status from device")
-        success = await hass.async_add_executor_job(controller.fetch_status)
-        _LOGGER.debug("Fetch status result: %s", success)
-        if not success:
+        try:
+            state = await hass.async_add_executor_job(controller.fetch_status)
+        except Exception as e:
             _LOGGER.error("Failed to fetch status from device")
-            raise CannotConnect
+            raise CannotConnect from e
 
         # Get device info for unique_id
-        _LOGGER.debug("Getting status summary")
-        summary = controller.get_status_summary()
-        _LOGGER.debug("Status summary: %s", summary)
+        _LOGGER.debug("Status: %s", state)
         await hass.async_add_executor_job(api.close)
 
         return {
-            "title": f"Mitsubishi AC ({summary.get('mac', data[CONF_HOST])})",
-            "unique_id": summary.get("mac") or summary.get("serial") or data[CONF_HOST],
+            "title": f"Mitsubishi AC ({state.mac or data[CONF_HOST]})",
+            "unique_id": state.mac or state.serial or data[CONF_HOST],
         }
 
     except Exception as e:
@@ -82,6 +78,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Mitsubishi Air Conditioner."""
 
     VERSION = 1
+    MINOR_VERSION = 1
 
     @staticmethod
     def async_get_options_flow(
@@ -176,9 +173,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         current_scan_interval = self._config_entry.data.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
-        current_capability_detection = self._config_entry.data.get(
-            CONF_ENABLE_CAPABILITY_DETECTION, True
-        )
 
         options_schema = vol.Schema(
             {
@@ -189,10 +183,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(
                     vol.Coerce(int), vol.Range(min=10, max=300)
                 ),
-                vol.Optional(
-                    CONF_ENABLE_CAPABILITY_DETECTION,
-                    default=current_capability_detection,
-                ): bool,
             }
         )
 

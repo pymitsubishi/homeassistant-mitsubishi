@@ -46,22 +46,11 @@ async def test_dehumidifier_number_native_value(hass, mock_coordinator, mock_con
     number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
 
     # Test with dehumidifier setting data
-    mock_coordinator.data = {"dehumidifier_setting": 75}
-    assert number.native_value == 75.0
+    assert number.native_value == 0
 
     # Test without dehumidifier setting data
-    mock_coordinator.data = {}
+    mock_coordinator.data = None
     assert number.native_value is None
-
-
-@pytest.mark.asyncio
-async def test_dehumidifier_number_native_value_string(hass, mock_coordinator, mock_config_entry):
-    """Test dehumidifier number native value with string input."""
-    number = MitsubishiDehumidifierNumber(mock_coordinator, mock_config_entry)
-
-    # Test with string value that converts to float
-    mock_coordinator.data = {"dehumidifier_setting": "50"}
-    assert number.native_value == 50.0
 
 
 @pytest.mark.asyncio

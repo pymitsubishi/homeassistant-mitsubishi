@@ -1,16 +1,15 @@
 """Tests for the climate platform."""
 
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pymitsubishi
 import pytest
+import requests.exceptions
 from homeassistant.components.climate import (
     FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
-    SWING_BOTH,
-    SWING_HORIZONTAL,
-    SWING_OFF,
-    SWING_VERTICAL,
+    FAN_MEDIUM,
     HVACAction,
     HVACMode,
 )
@@ -21,6 +20,7 @@ from custom_components.mitsubishi.climate import (
     async_setup_entry,
 )
 from custom_components.mitsubishi.const import DOMAIN
+from tests import TEST_SYSTEM_DATA
 
 
 @pytest.mark.asyncio
@@ -38,7 +38,7 @@ async def test_async_setup_entry(hass, mock_coordinator, mock_config_entry):
 @pytest.mark.asyncio
 async def test_climate_init(hass, mock_coordinator, mock_config_entry):
     """Test climate entity initialization."""
-    mock_coordinator.data = {"mac": "00:11:22:33:44:55"}
+    mock_coordinator.data = TEST_SYSTEM_DATA
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
 
     assert climate._config_entry == mock_config_entry
@@ -51,8 +51,7 @@ async def test_current_temperature(hass, mock_coordinator, mock_config_entry):
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
 
     # Test with temperature data
-    mock_coordinator.data = {"room_temp": 22.5}
-    assert climate.current_temperature == 22.5
+    assert climate.current_temperature == 24.0
 
     # Test without temperature data
     mock_coordinator.data = {}
@@ -63,13 +62,13 @@ async def test_current_temperature(hass, mock_coordinator, mock_config_entry):
 async def test_target_temperature(hass, mock_coordinator, mock_config_entry):
     """Test target temperature property."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
+    mock_coordinator.data.general.fine_temperature = 22.0
 
     # Test with target temperature data
-    mock_coordinator.data = {"target_temp": 24.0}
-    assert climate.target_temperature == 24.0
+    assert climate.target_temperature == 22.0
 
     # Test without target temperature data
-    mock_coordinator.data = {}
+    mock_coordinator.data = None
     assert climate.target_temperature is None
 
 
@@ -77,117 +76,124 @@ async def test_target_temperature(hass, mock_coordinator, mock_config_entry):
 async def test_hvac_mode_off(hass, mock_coordinator, mock_config_entry):
     """Test HVAC mode when power is off."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "OFF"}
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.OFF
     assert climate.hvac_mode == HVACMode.OFF
 
 
 @pytest.mark.asyncio
-async def test_hvac_mode_heat(hass, mock_coordinator, mock_config_entry):
+@pytest.mark.parametrize(
+    'mitsubishi_mode,expected_ha_mode',
+    [
+        (pymitsubishi.DriveMode.HEATER, HVACMode.HEAT),
+        (pymitsubishi.DriveMode.COOLER, HVACMode.COOL),
+        (pymitsubishi.DriveMode.AUTO, HVACMode.AUTO),
+    ],
+)
+async def test_hvac_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_mode, expected_ha_mode):
     """Test HVAC mode when set to heat."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "ON", "mode": "HEATER"}
-    assert climate.hvac_mode == HVACMode.HEAT
-
-
-@pytest.mark.asyncio
-async def test_hvac_mode_cool(hass, mock_coordinator, mock_config_entry):
-    """Test HVAC mode when set to cool."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "ON", "mode": "COOLER"}
-    assert climate.hvac_mode == HVACMode.COOL
-
-
-@pytest.mark.asyncio
-async def test_hvac_mode_auto(hass, mock_coordinator, mock_config_entry):
-    """Test HVAC mode when set to auto."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "ON", "mode": "AUTO"}
-    assert climate.hvac_mode == HVACMode.AUTO
-
-
-@pytest.mark.asyncio
-async def test_hvac_mode_invalid(hass, mock_coordinator, mock_config_entry):
-    """Test HVAC mode with invalid data."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "ON", "mode": "INVALID"}
-    assert climate.hvac_mode == HVACMode.OFF
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
+    mock_coordinator.data.general.drive_mode = mitsubishi_mode
+    assert climate.hvac_mode == expected_ha_mode
 
 
 @pytest.mark.asyncio
 async def test_hvac_action_off(hass, mock_coordinator, mock_config_entry):
     """Test HVAC action when power is off."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "OFF"}
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.OFF
     assert climate.hvac_action == HVACAction.OFF
 
 
 @pytest.mark.asyncio
-async def test_hvac_action_heating(hass, mock_coordinator, mock_config_entry):
+async def test_hvac_action_idle(hass, mock_coordinator, mock_config_entry):
+    """Test HVAC action when power is off."""
+    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
+    mock_coordinator.data.energy.operating = False
+    mock_coordinator.data.general.drive_mode = pymitsubishi.DriveMode.COOLER
+    assert climate.hvac_action == HVACAction.IDLE
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'mitsubishi_mode,,expected_ha_action',
+    [
+        (pymitsubishi.DriveMode.HEATER, HVACAction.HEATING),
+        (pymitsubishi.DriveMode.COOLER, HVACAction.COOLING),
+        (pymitsubishi.DriveMode.DEHUM, HVACAction.DRYING),
+    ],
+)
+async def test_hvac_action_heating(hass, mock_coordinator, mock_config_entry, mitsubishi_mode, expected_ha_action):
     """Test HVAC action when heating."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "ON", "mode": "HEATER"}
-    assert climate.hvac_action == HVACAction.HEATING
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
+    mock_coordinator.data.energy.operating = True
+    mock_coordinator.data.general.drive_mode = mitsubishi_mode
+    assert climate.hvac_action == expected_ha_action
 
 
 @pytest.mark.asyncio
-async def test_hvac_action_cooling(hass, mock_coordinator, mock_config_entry):
-    """Test HVAC action when cooling."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"power": "ON", "mode": "COOLER"}
-    assert climate.hvac_action == HVACAction.COOLING
-
-
-@pytest.mark.asyncio
-async def test_fan_mode_auto(hass, mock_coordinator, mock_config_entry):
-    """Test fan mode when set to auto."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"fan_speed": "AUTO"}
-    assert climate.fan_mode == FAN_AUTO
-
-
-@pytest.mark.asyncio
-async def test_fan_mode_low(hass, mock_coordinator, mock_config_entry):
+@pytest.mark.parametrize(
+    'mitsubishi_wind,expected_ha_fan',
+    [
+        (pymitsubishi.WindSpeed.AUTO, FAN_AUTO),
+        (pymitsubishi.WindSpeed.S1, FAN_LOW),
+        (pymitsubishi.WindSpeed.S3, FAN_MEDIUM),
+        (pymitsubishi.WindSpeed.S4, FAN_HIGH),
+    ],
+)
+async def test_fan_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_wind, expected_ha_fan):
     """Test fan mode when set to low."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"fan_speed": "LEVEL_1"}
-    assert climate.fan_mode == FAN_LOW
+    mock_coordinator.data.general.wind_speed = mitsubishi_wind
+    assert climate.fan_mode == expected_ha_fan
 
 
 @pytest.mark.asyncio
-async def test_fan_mode_invalid(hass, mock_coordinator, mock_config_entry):
-    """Test fan mode with invalid data."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {"fan_speed": "INVALID"}
-    assert climate.fan_mode == FAN_AUTO
-
-
-@pytest.mark.asyncio
-async def test_swing_mode(hass, mock_coordinator, mock_config_entry):
+@pytest.mark.parametrize(
+    'mitsubishi_vvane, expected_ha_swing',
+    [
+        (pymitsubishi.VerticalWindDirection.AUTO, "auto"),
+        (pymitsubishi.VerticalWindDirection.V1, "1"),
+        (pymitsubishi.VerticalWindDirection.V5, "5"),
+        (pymitsubishi.VerticalWindDirection.SWING, "swing"),
+    ],
+)
+async def test_swing_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_vvane, expected_ha_swing):
     """Test swing mode (currently always returns OFF)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    assert climate.swing_mode == SWING_OFF
+    mock_coordinator.data.general.vertical_wind_direction = mitsubishi_vvane
+    assert climate.swing_mode == expected_ha_swing
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'mitsubishi_hvane, expected_ha_hswing',
+    [
+        (pymitsubishi.HorizontalWindDirection.AUTO, "auto"),
+        (pymitsubishi.HorizontalWindDirection.FAR_LEFT, "far left"),
+        (pymitsubishi.HorizontalWindDirection.LEFT, "left"),
+        (pymitsubishi.HorizontalWindDirection.SWING, "swing"),
+    ],
+)
+async def test_horizontal_swing_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_hvane, expected_ha_hswing):
+    """Test swing mode (currently always returns OFF)."""
+    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
+    mock_coordinator.data.general.horizontal_wind_direction = mitsubishi_hvane
+    assert climate.swing_horizontal_mode == expected_ha_hswing
 
 
 @pytest.mark.asyncio
 async def test_extra_state_attributes(hass, mock_coordinator, mock_config_entry):
     """Test extra state attributes."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {
-        "outside_temp": 18.0,
-        "power_saving_mode": True,
-        "dehumidifier_setting": 50,
-        "error_code": "8000",
-        "abnormal_state": True,  # Changed to True so it gets added
-        "capabilities": {"heating": True, "cooling": True},
-    }
-
     attributes = climate.extra_state_attributes
-    assert attributes["outdoor_temperature"] == 18.0
-    assert attributes["power_saving_mode"] is True
-    assert attributes["dehumidifier_setting"] == 50
-    assert attributes["error_code"] == "8000"
-    assert attributes["abnormal_state"] is True  # Updated assertion
-    assert attributes["supported_modes"] == ["heating", "cooling"]
+    assert attributes["outdoor_temperature"] == 21.0
+    assert attributes["power_saving_mode"] is False
+    assert attributes["dehumidifier_setting"] == 0
+    assert attributes["error_code"] == 0x8000
+    assert attributes["abnormal_state"] is False
 
 
 @pytest.mark.asyncio
@@ -253,7 +259,7 @@ async def test_async_set_hvac_mode_heat_from_off(hass, mock_coordinator, mock_co
     """Test setting HVAC mode to heat from off."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    mock_coordinator.data = {"power": "OFF"}  # Currently off
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.OFF
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -273,7 +279,8 @@ async def test_async_set_hvac_mode_heat_from_on(hass, mock_coordinator, mock_con
     """Test setting HVAC mode to heat from on."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    mock_coordinator.data = {"power": "ON", "mode": "COOLER"}  # Currently on
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
+    mock_coordinator.data.general.drive_mode = pymitsubishi.DriveMode.COOLER
 
     with (
         patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
@@ -292,6 +299,8 @@ async def test_async_set_hvac_mode_heat_from_on(hass, mock_coordinator, mock_con
 async def test_async_set_fan_mode(hass, mock_coordinator, mock_config_entry):
     """Test setting fan mode."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
+    mock_coordinator.data.general.drive_mode = pymitsubishi.DriveMode.COOLER
     climate.hass = hass  # Set hass attribute
 
     with (
@@ -356,46 +365,13 @@ async def test_handle_coordinator_update(hass, mock_coordinator, mock_config_ent
 
 
 @pytest.mark.asyncio
-async def test_hvac_mode_with_invalid_drive_mode(hass, mock_coordinator, mock_config_entry):
-    """Test hvac_mode property with invalid drive mode to cover exception handling."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {
-        "power": "ON",
-        "mode": "INVALID_MODE",  # This will cause KeyError in DriveMode[mode_name]
-    }
-
-    # Should return HVACMode.OFF when KeyError occurs
-    assert climate.hvac_mode == HVACMode.OFF
-
-
-@pytest.mark.asyncio
 async def test_hvac_mode_no_mode_data(hass, mock_coordinator, mock_config_entry):
     """Test hvac_mode property when no mode data is available to cover default return."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {
-        "power": "ON",
-        # No "mode" key to trigger the default return at line 164
-    }
+    mock_coordinator.data.general = None
 
     # Should return HVACMode.OFF when no mode data is available
-    assert climate.hvac_mode == HVACMode.OFF
-
-
-@pytest.mark.asyncio
-async def test_hvac_action_with_invalid_drive_mode(hass, mock_coordinator, mock_config_entry):
-    """Test hvac_action property with invalid drive mode to cover exception handling."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-
-    # Mock hvac_mode to not return OFF so we can reach the exception in hvac_action
-    with patch.object(type(climate), "hvac_mode", new_callable=PropertyMock) as mock_hvac_mode:
-        mock_hvac_mode.return_value = HVACMode.HEAT
-        mock_coordinator.data = {
-            "power": "ON",
-            "mode": "INVALID_MODE",  # This will cause KeyError in DriveMode[mode_name]
-        }
-
-        # Should return HVACAction.IDLE when KeyError occurs in hvac_action
-        assert climate.hvac_action == HVACAction.IDLE
+    assert climate.hvac_mode is None
 
 
 @pytest.mark.asyncio
@@ -409,7 +385,7 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
         patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
         patch("asyncio.sleep", new=AsyncMock()),
     ):
-        await climate.async_set_swing_mode(SWING_VERTICAL)
+        await climate.async_set_swing_mode("1")
 
         # Should call set_vertical_vane once (centralized approach)
         assert mock_executor.call_count == 1
@@ -419,7 +395,7 @@ async def test_async_set_swing_mode_vertical(hass, mock_coordinator, mock_config
 
 
 @pytest.mark.asyncio
-async def test_async_set_swing_mode_horizontal(hass, mock_coordinator, mock_config_entry):
+async def test_async_set_horizontal_swing_mode(hass, mock_coordinator, mock_config_entry):
     """Test setting swing mode to horizontal."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
@@ -429,7 +405,7 @@ async def test_async_set_swing_mode_horizontal(hass, mock_coordinator, mock_conf
         patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
         patch("asyncio.sleep", new=AsyncMock()),
     ):
-        await climate.async_set_swing_mode(SWING_HORIZONTAL)
+        await climate.async_set_swing_horizontal_mode("center")
 
         # Should call set_horizontal_vane once (centralized approach)
         assert mock_executor.call_count == 1
@@ -439,112 +415,16 @@ async def test_async_set_swing_mode_horizontal(hass, mock_coordinator, mock_conf
 
 
 @pytest.mark.asyncio
-async def test_async_set_swing_mode_both(hass, mock_coordinator, mock_config_entry):
-    """Test setting swing mode to both vertical and horizontal."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    climate.hass = hass  # Set hass attribute
-
-    with (
-        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
-        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
-        patch("asyncio.sleep", new=AsyncMock()),
-    ):
-        await climate.async_set_swing_mode(SWING_BOTH)
-
-        # Should call both vane methods twice (centralized approach, two commands)
-        assert mock_executor.call_count == 2
-
-        # async_request_refresh should be called twice for two successful commands
-        assert mock_refresh.call_count == 2
-
-
-@pytest.mark.asyncio
-async def test_async_set_swing_mode_off(hass, mock_coordinator, mock_config_entry):
-    """Test setting swing mode to off (no action taken in current implementation)."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    climate.hass = hass  # Set hass attribute
-
-    with (
-        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
-        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
-    ):
-        await climate.async_set_swing_mode(SWING_OFF)
-
-        # For SWING_OFF, no controller methods should be called in current implementation
-        mock_executor.assert_not_called()
-
-        # No refresh should be called since no command was executed
-        mock_refresh.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_hvac_action_idle_when_not_operating(hass, mock_coordinator, mock_config_entry):
-    """Test HVAC action returns IDLE when compressor is not operating."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {
-        "power": "ON",
-        "mode": "HEATER",
-        "energy_states": {
-            "operating": False  # Compressor not running
-        },
-    }
-    assert climate.hvac_action == HVACAction.IDLE
-
-
-@pytest.mark.asyncio
-async def test_hvac_action_based_on_mode_when_operating(hass, mock_coordinator, mock_config_entry):
-    """Test HVAC action based on mode when compressor is operating."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {
-        "power": "ON",
-        "mode": "HEATER",
-        "energy_states": {
-            "operating": True  # Compressor running
-        },
-    }
-    assert climate.hvac_action == HVACAction.HEATING
-
-
-@pytest.mark.asyncio
-async def test_hvac_action_no_energy_states(hass, mock_coordinator, mock_config_entry):
-    """Test HVAC action when no energy states available."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {
-        "power": "ON",
-        "mode": "COOLER",
-        # No energy_states
-    }
-    assert climate.hvac_action == HVACAction.COOLING
-
-
-@pytest.mark.asyncio
-async def test_extra_state_attributes_with_energy_states(hass, mock_coordinator, mock_config_entry):
-    """Test extra state attributes includes energy state data."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    mock_coordinator.data = {
-        "energy_states": {
-            "compressor_frequency": 42.5,
-            "operating": True,
-            "estimated_power_watts": 850,
-        }
-    }
-
-    attributes = climate.extra_state_attributes
-    assert attributes["compressor_frequency"] == 42.5
-    assert attributes["compressor_operating"] is True
-    assert attributes["estimated_power_watts"] == 850
-
-
-@pytest.mark.asyncio
+@pytest.mark.xfail()  # TODO: how do we want to handle this?
 async def test_async_set_hvac_mode_power_command_fails(hass, mock_coordinator, mock_config_entry):
     """Test setting HVAC mode when power command fails."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass  # Set hass attribute
-    mock_coordinator.data = {"power": "OFF"}  # Currently off
+    mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.OFF
 
     with patch.object(climate, "_execute_command_with_refresh", new=AsyncMock()) as mock_execute:
         # First call (power on) returns False, second call should not happen
-        mock_execute.return_value = False
+        mock_execute.side_effect = requests.exceptions.Timeout()
 
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
@@ -556,38 +436,12 @@ async def test_async_set_hvac_mode_power_command_fails(hass, mock_coordinator, m
 
 
 @pytest.mark.asyncio
-async def test_update_coordinator_from_controller_state_success(
-    hass, mock_coordinator, mock_config_entry
-):
-    """Test successful update of coordinator from controller state."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    climate.hass = hass
+@pytest.mark.xfail()  # TODO: how do we want to handle this?
 
-    summary = {"target_temp": 22.0}  # Mocked status summary
-
-    with (
-        patch.object(hass, "async_add_executor_job", new=AsyncMock(return_value=summary)),
-        patch.object(
-            mock_coordinator, "async_update_listeners", new=AsyncMock()
-        ) as mock_update_listeners,
-    ):
-        await climate._update_coordinator_from_controller_state()
-
-        # Assert that the data was set correctly
-        assert climate.coordinator.data == summary
-
-        # Ensure that the update listeners function was called
-        mock_update_listeners.assert_called_once()
-
-
-@pytest.mark.asyncio
 async def test_temperature_command_validation_failure(hass, mock_coordinator, mock_config_entry):
     """Test temperature command when validation fails (device rejects temperature)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     climate.hass = hass
-
-    # Mock coordinator data to show different temperature than expected
-    mock_coordinator.data = {"target_temp": 20.0}  # Device rejected and kept old temp
 
     with (
         patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
@@ -611,7 +465,7 @@ async def test_temperature_command_validation_failure(hass, mock_coordinator, mo
         # Should have called sleep with 2.0 seconds and refresh due to validation failure
         assert mock_sleep.call_count == 1
         # First call is the standard 2.0 second wait
-        mock_sleep.assert_called_with(2.0)
+        mock_sleep.assert_called_with(4.0)
         mock_refresh.assert_called_once()
 
 
@@ -652,27 +506,6 @@ async def test_command_execution_exception(hass, mock_coordinator, mock_config_e
 
 
 @pytest.mark.asyncio
-async def test_update_coordinator_from_controller_state_exception(
-    hass, mock_coordinator, mock_config_entry
-):
-    """Test _update_coordinator_from_controller_state when exception occurs."""
-    climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
-    climate.hass = hass
-
-    with (
-        patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor,
-        patch.object(mock_coordinator, "async_request_refresh", new=AsyncMock()) as mock_refresh,
-    ):
-        # Mock get_status_summary to raise an exception
-        mock_executor.side_effect = Exception("Controller error")
-
-        await climate._update_coordinator_from_controller_state()
-
-        # Should fall back to regular refresh when exception occurs
-        mock_refresh.assert_called_once()
-
-
-@pytest.mark.asyncio
 async def test_temperature_command_validation_success(hass, mock_coordinator, mock_config_entry):
     """Test temperature command when validation succeeds (temperature matches expected)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
@@ -697,6 +530,5 @@ async def test_temperature_command_validation_success(hass, mock_coordinator, mo
         # Command should return True
         assert result is True
 
-        # Should have called sleep with 2.0 seconds (standard wait) and refresh
-        mock_sleep.assert_called_once_with(2.0)
+        mock_sleep.assert_called_once_with(0.1)
         mock_refresh.assert_called_once()

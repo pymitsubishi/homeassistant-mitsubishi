@@ -54,9 +54,10 @@ class MitsubishiDehumidifierNumber(MitsubishiEntity, NumberEntity):
     @property
     def native_value(self) -> float | None:
         """Return the current dehumidifier level."""
-        if dehumidifier_level := self.coordinator.data.get("dehumidifier_setting"):
-            return float(dehumidifier_level)
-        return None
+        try:
+            return self.coordinator.data.general.dehum_setting
+        except AttributeError:
+            return None
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the dehumidifier level."""
