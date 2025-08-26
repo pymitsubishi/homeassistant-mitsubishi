@@ -52,8 +52,9 @@ async def test_async_update_data_success(hass, mock_mitsubishi_controller):
     coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
 
     with patch.object(
-            hass, "async_add_executor_job",
-            AsyncMock(return_value=mock_mitsubishi_controller.state),
+        hass,
+        "async_add_executor_job",
+        AsyncMock(return_value=mock_mitsubishi_controller.state),
     ) as mock_executor:
         result = await coordinator._async_update_data()
 

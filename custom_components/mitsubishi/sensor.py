@@ -34,53 +34,87 @@ async def async_setup_entry(
         coordinator.data is not None,
     )
 
-    sensors = []
+    sensors: list[SensorEntity] = []
 
-    sensors.append(MitsubishiSensor(
-        coordinator, config_entry,
-        "Inside Temperature 1", "inside_temperature_1_fine",
-        lambda d: float(d.sensors.inside_temperature_1_fine),
-        SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS,
-    ))
-    sensors.append(MitsubishiSensor(
-        coordinator, config_entry,
-        "Inside Temperature 2", "inside_temperature_2",
-        lambda d: float(d.sensors.inside_temperature_2),
-        SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS,
-        entity_category=EntityCategory.DIAGNOSTIC,
-    ))
-    sensors.append(MitsubishiSensor(
-        coordinator, config_entry,
-        "Outside Temperature", "outside_temp",
-        lambda d: float(d.sensors.outside_temperature),
-        SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS,
-    ))
-    sensors.append(MitsubishiSensor(
-        coordinator, config_entry,
-        "Power", "power",
-        lambda d: float(d.energy.power_watt),
-        SensorDeviceClass.POWER, UnitOfPower.WATT,
-    ))
-    sensors.append(MitsubishiSensor(
-        coordinator, config_entry,
-        "Energy", "energy",
-        lambda d: float(d.energy.energy_hecto_watt_hour) * 0.1,
-        SensorDeviceClass.ENERGY, UnitOfEnergy.KILO_WATT_HOUR,
-    ))
-    sensors.append(MitsubishiSensor(
-        coordinator, config_entry,
-        "Runtime", "runtime_minutes",
-        lambda d: float(d.sensors.runtime_minutes),
-        SensorDeviceClass.DURATION, UnitOfTime.MINUTES,
-        entity_category=EntityCategory.DIAGNOSTIC,
-    ))
-    sensors.append(MitsubishiSensor(
-        coordinator, config_entry,
-        "Power mode", "power_mode",
-        lambda d: float(d.auto_state.power_mode),
-        entity_category=EntityCategory.DIAGNOSTIC,
-        sensor_state_class=SensorStateClass.MEASUREMENT,
-    ))
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Inside Temperature 1",
+            "inside_temperature_1_fine",
+            lambda d: float(d.sensors.inside_temperature_1_fine),
+            SensorDeviceClass.TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+        )
+    )
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Inside Temperature 2",
+            "inside_temperature_2",
+            lambda d: float(d.sensors.inside_temperature_2),
+            SensorDeviceClass.TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        )
+    )
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Outside Temperature",
+            "outside_temp",
+            lambda d: float(d.sensors.outside_temperature),
+            SensorDeviceClass.TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+        )
+    )
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Power",
+            "power",
+            lambda d: float(d.energy.power_watt),
+            SensorDeviceClass.POWER,
+            UnitOfPower.WATT,
+        )
+    )
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Energy",
+            "energy",
+            lambda d: float(d.energy.energy_hecto_watt_hour) * 0.1,
+            SensorDeviceClass.ENERGY,
+            UnitOfEnergy.KILO_WATT_HOUR,
+        )
+    )
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Runtime",
+            "runtime_minutes",
+            lambda d: float(d.sensors.runtime_minutes),
+            SensorDeviceClass.DURATION,
+            UnitOfTime.MINUTES,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        )
+    )
+    sensors.append(
+        MitsubishiSensor(
+            coordinator,
+            config_entry,
+            "Power mode",
+            "power_mode",
+            lambda d: float(d.auto_state.power_mode),
+            entity_category=EntityCategory.DIAGNOSTIC,
+            sensor_state_class=SensorStateClass.MEASUREMENT,
+        )
+    )
 
     sensors.append(MitsubishiErrorSensor(coordinator, config_entry))
 
@@ -89,16 +123,16 @@ async def async_setup_entry(
 
 class MitsubishiSensor(MitsubishiEntity, SensorEntity):
     def __init__(
-            self,
-            coordinator: MitsubishiDataUpdateCoordinator,
-            config_entry: ConfigEntry,
-            sensor_name: str,
-            key: str,
-            getter: typing.Callable[[pymitsubishi.ParsedDeviceState], float | None],
-            device_class: SensorDeviceClass = None,
-            native_unit_of_measurement: StrEnum | str = None,
-            entity_category: EntityCategory | None = None,
-            sensor_state_class: SensorStateClass = None,
+        self,
+        coordinator: MitsubishiDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        sensor_name: str,
+        key: str,
+        getter: typing.Callable[[pymitsubishi.ParsedDeviceState], float | None],
+        device_class: SensorDeviceClass | None = None,
+        native_unit_of_measurement: StrEnum | str | None = None,
+        entity_category: EntityCategory | None = None,
+        sensor_state_class: SensorStateClass | None = None,
     ) -> None:
         self._attr_name = sensor_name
         self._getter = getter
@@ -139,11 +173,9 @@ class MitsubishiErrorSensor(MitsubishiEntity, SensorEntity):
             return None
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return entity specific state attributes."""
         try:
-            return {
-                "abnormal_state": self.coordinator.data.errors.is_abnormal_state
-            }
+            return {"abnormal_state": self.coordinator.data.errors.is_abnormal_state}
         except (TypeError, KeyError, AttributeError):
             return None

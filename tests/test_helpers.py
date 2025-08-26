@@ -24,7 +24,7 @@ async def test_async_setup_entry(hass, mock_config_entry, mock_coordinator):
         mock_controller.fetch_status = MagicMock(return_value=True)
         mock_controller_class.return_value = mock_controller
 
-        mock_coordinator.get_unit_info = AsyncMock(return_value = {})
+        mock_coordinator.get_unit_info = AsyncMock(return_value={})
 
         # Mock device registry
         mock_registry = MagicMock()
@@ -107,7 +107,5 @@ async def test_async_setup_entry_connection_failure(hass, mock_config_entry):
         mock_controller_class.side_effect = requests.exceptions.RequestException("foobar")
 
         # Should raise ConfigEntryNotReady when connection fails
-        with pytest.raises(
-            ConfigEntryNotReady, match="foobar"
-        ):
+        with pytest.raises(ConfigEntryNotReady, match="foobar"):
             await async_setup_entry(hass, mock_config_entry)

@@ -83,9 +83,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             sw_versions.append(f"Flash: {ver}")
         if (ver := unit_info.get("Adaptor Information", {}).get("Boot version")) is not None:
             sw_versions.append(f"Boot: {ver}")
-        if (ver := unit_info.get("Adaptor Information", {}).get("Common platform version")) is not None:
+        if (
+            ver := unit_info.get("Adaptor Information", {}).get("Common platform version")
+        ) is not None:
             sw_versions.append(f"CP: {ver}")
-        if (ver := unit_info.get("Adaptor Information", {}).get("Test release version")) is not None:
+        if (
+            ver := unit_info.get("Adaptor Information", {}).get("Test release version")
+        ) is not None:
             sw_versions.append(f"Test: {ver}")
         sw_version_str = " | ".join(sw_versions)
 
@@ -133,20 +137,21 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Migrate old entry."""
-    _LOGGER.debug("Migrating configuration from version %s.%s", config_entry.version, config_entry.minor_version)
+    _LOGGER.debug(
+        "Migrating configuration from version %s.%s",
+        config_entry.version,
+    )
 
     if config_entry.version > 1:
         # downgrade not supported
         return False
 
     if config_entry.version == 1:
-        if config_entry.minor_version > 1:
-            # downgrade not supported
-            return False
-        if config_entry.minor_version == 1:
-            return True
+        return True
 
-        new_data = {**config_entry.data}
-        hass.config_entries.async_update_entry(config_entry, data=new_data, version=1, minor_version=1)
+    # new_data = {**config_entry.data}
+    # hass.config_entries.async_update_entry(
+    #     config_entry, data=new_data, version=1, minor_version=1
+    # )
 
     return False
