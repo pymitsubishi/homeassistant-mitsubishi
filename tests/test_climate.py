@@ -82,14 +82,16 @@ async def test_hvac_mode_off(hass, mock_coordinator, mock_config_entry):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    'mitsubishi_mode,expected_ha_mode',
+    "mitsubishi_mode,expected_ha_mode",
     [
         (pymitsubishi.DriveMode.HEATER, HVACMode.HEAT),
         (pymitsubishi.DriveMode.COOLER, HVACMode.COOL),
         (pymitsubishi.DriveMode.AUTO, HVACMode.AUTO),
     ],
 )
-async def test_hvac_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_mode, expected_ha_mode):
+async def test_hvac_mode(
+    hass, mock_coordinator, mock_config_entry, mitsubishi_mode, expected_ha_mode
+):
     """Test HVAC mode when set to heat."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
@@ -117,14 +119,16 @@ async def test_hvac_action_idle(hass, mock_coordinator, mock_config_entry):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    'mitsubishi_mode,,expected_ha_action',
+    "mitsubishi_mode,,expected_ha_action",
     [
         (pymitsubishi.DriveMode.HEATER, HVACAction.HEATING),
         (pymitsubishi.DriveMode.COOLER, HVACAction.COOLING),
         (pymitsubishi.DriveMode.DEHUM, HVACAction.DRYING),
     ],
 )
-async def test_hvac_action_heating(hass, mock_coordinator, mock_config_entry, mitsubishi_mode, expected_ha_action):
+async def test_hvac_action_heating(
+    hass, mock_coordinator, mock_config_entry, mitsubishi_mode, expected_ha_action
+):
     """Test HVAC action when heating."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     mock_coordinator.data.general.power_on_off = pymitsubishi.PowerOnOff.ON
@@ -135,7 +139,7 @@ async def test_hvac_action_heating(hass, mock_coordinator, mock_config_entry, mi
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    'mitsubishi_wind,expected_ha_fan',
+    "mitsubishi_wind,expected_ha_fan",
     [
         (pymitsubishi.WindSpeed.AUTO, FAN_AUTO),
         (pymitsubishi.WindSpeed.S1, FAN_LOW),
@@ -143,7 +147,9 @@ async def test_hvac_action_heating(hass, mock_coordinator, mock_config_entry, mi
         (pymitsubishi.WindSpeed.S4, FAN_HIGH),
     ],
 )
-async def test_fan_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_wind, expected_ha_fan):
+async def test_fan_mode(
+    hass, mock_coordinator, mock_config_entry, mitsubishi_wind, expected_ha_fan
+):
     """Test fan mode when set to low."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     mock_coordinator.data.general.wind_speed = mitsubishi_wind
@@ -152,7 +158,7 @@ async def test_fan_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_wi
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    'mitsubishi_vvane, expected_ha_swing',
+    "mitsubishi_vvane, expected_ha_swing",
     [
         (pymitsubishi.VerticalWindDirection.AUTO, "auto"),
         (pymitsubishi.VerticalWindDirection.V1, "1"),
@@ -160,7 +166,9 @@ async def test_fan_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_wi
         (pymitsubishi.VerticalWindDirection.SWING, "swing"),
     ],
 )
-async def test_swing_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_vvane, expected_ha_swing):
+async def test_swing_mode(
+    hass, mock_coordinator, mock_config_entry, mitsubishi_vvane, expected_ha_swing
+):
     """Test swing mode (currently always returns OFF)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     mock_coordinator.data.general.vertical_wind_direction = mitsubishi_vvane
@@ -169,7 +177,7 @@ async def test_swing_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    'mitsubishi_hvane, expected_ha_hswing',
+    "mitsubishi_hvane, expected_ha_hswing",
     [
         (pymitsubishi.HorizontalWindDirection.AUTO, "auto"),
         (pymitsubishi.HorizontalWindDirection.FAR_LEFT, "far left"),
@@ -177,7 +185,9 @@ async def test_swing_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_
         (pymitsubishi.HorizontalWindDirection.SWING, "swing"),
     ],
 )
-async def test_horizontal_swing_mode(hass, mock_coordinator, mock_config_entry, mitsubishi_hvane, expected_ha_hswing):
+async def test_horizontal_swing_mode(
+    hass, mock_coordinator, mock_config_entry, mitsubishi_hvane, expected_ha_hswing
+):
     """Test swing mode (currently always returns OFF)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
     mock_coordinator.data.general.horizontal_wind_direction = mitsubishi_hvane
@@ -437,7 +447,6 @@ async def test_async_set_hvac_mode_power_command_fails(hass, mock_coordinator, m
 
 @pytest.mark.asyncio
 @pytest.mark.xfail()  # TODO: how do we want to handle this?
-
 async def test_temperature_command_validation_failure(hass, mock_coordinator, mock_config_entry):
     """Test temperature command when validation fails (device rejects temperature)."""
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)

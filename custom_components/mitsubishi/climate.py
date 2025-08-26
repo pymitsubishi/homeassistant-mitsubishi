@@ -119,7 +119,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
         | ClimateEntityFeature.SWING_MODE
-        | ClimateEntityFeature.SWING_HORIZONTAL_MODE
+        | ClimateEntityFeature.SWING_HORIZONTAL_MODE  # type: ignore[attr-defined]
     )
 
     def __init__(
@@ -203,9 +203,8 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
                     True,
                 )
 
-
     @property
-    def hvac_action(self) -> HVACAction:
+    def hvac_action(self) -> HVACAction | None:
         """Return the current running hvac operation."""
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
@@ -242,7 +241,8 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         await self._execute_command_with_refresh(
-            f"set fan mode to {fan_mode}", self.coordinator.controller.set_fan_speed,
+            f"set fan mode to {fan_mode}",
+            self.coordinator.controller.set_fan_speed,
             FAN_SPEED_HA_TO_MITSUBISHI[fan_mode],
         )
 
@@ -255,7 +255,8 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
         await self._execute_command_with_refresh(
-            f"set swing mode to {swing_mode}", self.coordinator.controller.set_vertical_vane,
+            f"set swing mode to {swing_mode}",
+            self.coordinator.controller.set_vertical_vane,
             VSWING_HA_TO_MITSUBISHI[swing_mode],
         )
 
