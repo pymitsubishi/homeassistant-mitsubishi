@@ -90,6 +90,7 @@ async def async_setup_entry(
             lambda d: float(d.energy.energy_hecto_watt_hour) * 0.1,
             SensorDeviceClass.ENERGY,
             UnitOfEnergy.KILO_WATT_HOUR,
+            sensor_state_class=SensorStateClass.TOTAL_INCREASING,
         )
     )
     sensors.append(
