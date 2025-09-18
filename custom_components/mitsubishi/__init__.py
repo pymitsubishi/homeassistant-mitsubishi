@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+import requests.exceptions
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
@@ -64,7 +65,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinator = MitsubishiDataUpdateCoordinator(hass, controller, scan_interval)
 
         # Fetch unit info for device registry enrichment
-        unit_info = await coordinator.get_unit_info()
+        try:
+            unit_info = await coordinator.get_unit_info()
+        except requests.exceptions.HTTPError:
+            unit_info = {}
 
         # Fetch initial data
         await coordinator.async_config_entry_first_refresh()

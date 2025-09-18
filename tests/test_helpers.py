@@ -97,6 +97,39 @@ async def test_async_setup_entry_with_comprehensive_unit_info(
 
 
 @pytest.mark.asyncio
+async def test_async_setup_entry_without_unit_info(hass, mock_config_entry, mock_coordinator):
+    """Test setup with failing unit info"""
+
+    with (
+        patch("custom_components.mitsubishi.MitsubishiController") as mock_controller_class,
+        patch(
+            "custom_components.mitsubishi.MitsubishiDataUpdateCoordinator",
+            return_value=mock_coordinator,
+        ),
+        patch("custom_components.mitsubishi.dr.async_get") as mock_device_registry,
+        patch.object(hass.config_entries, "async_forward_entry_setups", return_value=None),
+    ):
+        mock_controller = MagicMock()
+        mock_controller.fetch_status = MagicMock(return_value=True)
+        mock_controller_class.return_value = mock_controller
+
+        # Mock device registry
+        mock_registry = MagicMock()
+        mock_device_registry.return_value = mock_registry
+
+        mock_coordinator.get_unit_info = MagicMock(
+            side_effect=requests.exceptions.HTTPError("404 Client Error: Not Found for url")
+        )
+
+        result = await async_setup_entry(hass, mock_config_entry)
+
+        assert result is True
+
+        # Verify device registry was called with comprehensive info
+        mock_registry.async_get_or_create.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_async_setup_entry_connection_failure(hass, mock_config_entry):
     """Test setup when connection to device fails."""
     from homeassistant.exceptions import ConfigEntryNotReady
