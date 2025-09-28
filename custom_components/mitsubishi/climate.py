@@ -71,6 +71,7 @@ HSWING_HA_TO_MITSUBISHI = {
     "left and center": HorizontalWindDirection.LEFT_CENTER,
     "center and right": HorizontalWindDirection.CENTER_RIGHT,
     "left, center and right": HorizontalWindDirection.LEFT_CENTER_RIGHT,
+    "left and right": HorizontalWindDirection.LEFT_RIGHT,
     "swing": HorizontalWindDirection.SWING,
 }
 HSWING_MITSUBISHI_TO_HA = {v: k for k, v in HSWING_HA_TO_MITSUBISHI.items()}
