@@ -188,21 +188,15 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
                 f"set HVAC mode to {hvac_mode}", self.coordinator.controller.set_power, False
             )
         else:
+            changeset = self.coordinator.controller.changeset()
+            changeset.set_power(PowerOnOff.ON)
+            changeset.set_mode(MODE_HA_TO_MITSUBISHI[hvac_mode])
             # Set the mode
             await self._execute_command_with_refresh(
                 f"set HVAC mode to {hvac_mode}",
-                self.coordinator.controller.set_mode,
-                MODE_HA_TO_MITSUBISHI[hvac_mode],
+                self.coordinator.controller.apply_changeset,
+                changeset,
             )
-
-            # Turn on if currently off
-            # Set mode before setting power, so the unit can start in the correct mode
-            if self.hvac_mode == HVACMode.OFF:
-                await self._execute_command_with_refresh(
-                    "turn on device before setting mode",
-                    self.coordinator.controller.set_power,
-                    True,
-                )
 
     @property
     def hvac_action(self) -> HVACAction | None:
