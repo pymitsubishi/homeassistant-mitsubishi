@@ -240,9 +240,9 @@ try:
     has_pymitsubishi = any('pymitsubishi' in req.lower() for req in requirements)
 
     if not has_pymitsubishi:
-        requirements.append('pymitsubishi>=0.2.0')
+        requirements.append('pymitsubishi>=0.4.0')
         manifest['requirements'] = requirements
-        print("  Added pymitsubishi>=0.2.0 to requirements")
+        print("  Added pymitsubishi>=0.4.0 to requirements")
 
     # Remove dev mode marker if present
     if '_dev_mode' in manifest:
@@ -330,7 +330,7 @@ if [ "$MODE" = "dev" ]; then
     echo -e "${MAGENTA}Using bundled pymitsubishi library from: $PYMITSUBISHI_PATH${NC}"
 else
     echo -e "${GREEN}=== PRODUCTION Build Complete ===${NC}"
-    echo -e "${BLUE}Using PyPI pymitsubishi (version >=0.2.0)${NC}"
+    echo -e "${BLUE}Using PyPI pymitsubishi (version >=0.4.0)${NC}"
 fi
 
 if [ "$SKIP_DEPLOY" = false ]; then
