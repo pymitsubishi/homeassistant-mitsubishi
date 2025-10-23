@@ -278,10 +278,10 @@ async def test_async_set_hvac_mode_heat_from_off(hass, mock_coordinator, mock_co
     ):
         await climate.async_set_hvac_mode(HVACMode.HEAT)
 
-        # Should call: set_power and set_mode (2 total, centralized approach)
-        assert mock_executor.call_count == 2
-        # async_request_refresh should be called twice
-        assert mock_refresh.call_count == 2
+        # Should call: set_power and set_mode together (1 total, centralized approach)
+        assert mock_executor.call_count == 1
+        # async_request_refresh should be called once
+        assert mock_refresh.call_count == 1
 
 
 @pytest.mark.asyncio
