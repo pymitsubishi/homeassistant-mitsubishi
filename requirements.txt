@@ -1,5 +1,5 @@
 # Main dependency
-pymitsubishi>=0.4.1
+pymitsubishi>=0.4.2
 
 # Development dependencies
 ruff

@@ -51,7 +51,7 @@ async def test_current_temperature(hass, mock_coordinator, mock_config_entry):
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
 
     # Test with temperature data
-    assert climate.current_temperature == 24.0
+    assert climate.current_temperature == 24.5
 
     # Test without temperature data
     mock_coordinator.data = {}
