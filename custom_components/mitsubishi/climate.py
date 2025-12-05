@@ -117,7 +117,10 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
     _attr_swing_horizontal_modes = list(HSWING_HA_TO_MITSUBISHI.keys())
 
     _attr_supported_features = (
-        ClimateEntityFeature.TARGET_TEMPERATURE
+        0
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
         | ClimateEntityFeature.SWING_MODE
         | ClimateEntityFeature.SWING_HORIZONTAL_MODE  # type: ignore[attr-defined]
