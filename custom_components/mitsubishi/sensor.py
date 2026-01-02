@@ -79,6 +79,7 @@ async def async_setup_entry(
             lambda d: float(d.energy.power_watt),
             SensorDeviceClass.POWER,
             UnitOfPower.WATT,
+            sensor_state_class=SensorStateClass.MEASUREMENT,
         )
     )
     sensors.append(
