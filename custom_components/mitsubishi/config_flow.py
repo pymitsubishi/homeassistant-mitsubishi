@@ -11,12 +11,16 @@ from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import selector
 from pymitsubishi import MitsubishiAPI, MitsubishiController
 
 from .const import (
     CONF_ADMIN_PASSWORD,
     CONF_ADMIN_USERNAME,
     CONF_ENCRYPTION_KEY,
+    CONF_EXPERIMENTAL_FEATURES,
+    CONF_EXTERNAL_TEMP_ENTITY,
+    CONF_REMOTE_TEMP_MODE,
     CONF_SCAN_INTERVAL,
     DEFAULT_ADMIN_PASSWORD,
     DEFAULT_ADMIN_USERNAME,
@@ -139,18 +143,37 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             _LOGGER.debug("Processing options user input: %s", user_input)
             try:
-                # Validate the new configuration
+                # Separate options from connection data
+                experimental_features = user_input.pop(CONF_EXPERIMENTAL_FEATURES, False)
+                external_temp_entity = user_input.pop(CONF_EXTERNAL_TEMP_ENTITY, None)
+
+                # Validate the connection configuration
                 _LOGGER.debug("Validating new configuration")
                 await validate_input(self.hass, user_input)
                 _LOGGER.debug("Validation successful for options")
 
-                # Update the config entry with new data
-                self.hass.config_entries.async_update_entry(self._config_entry, data=user_input)
+                # Update the config entry data (connection settings)
+                self.hass.config_entries.async_update_entry(
+                    self._config_entry,
+                    data=user_input,
+                )
 
                 # Trigger reload of the integration to apply changes
                 await self.hass.config_entries.async_reload(self._config_entry.entry_id)
 
-                return self.async_create_entry(title="", data={})
+                # Build new options, preserving remote_temp_mode if it exists
+                new_options = {
+                    CONF_EXPERIMENTAL_FEATURES: experimental_features,
+                }
+                if experimental_features and external_temp_entity:
+                    new_options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
+                # Preserve remote_temp_mode from existing options
+                if CONF_REMOTE_TEMP_MODE in self._config_entry.options:
+                    new_options[CONF_REMOTE_TEMP_MODE] = self._config_entry.options[
+                        CONF_REMOTE_TEMP_MODE
+                    ]
+
+                return self.async_create_entry(title="", data=new_options)
 
             except CannotConnect:
                 _LOGGER.error("Cannot connect to device with new settings")
@@ -173,18 +196,35 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         current_scan_interval = self._config_entry.data.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
+        current_experimental = self._config_entry.options.get(CONF_EXPERIMENTAL_FEATURES, False)
+        current_external_temp_entity = self._config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY, "")
 
-        options_schema = vol.Schema(
-            {
-                vol.Required(CONF_HOST, default=current_host): str,
-                vol.Optional(CONF_ENCRYPTION_KEY, default=current_encryption_key): str,
-                vol.Optional(CONF_ADMIN_USERNAME, default=current_admin_username): str,
-                vol.Optional(CONF_ADMIN_PASSWORD, default=current_admin_password): str,
-                vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(
-                    vol.Coerce(int), vol.Range(min=10, max=300)
-                ),
-            }
-        )
+        # Base schema with connection settings
+        schema_dict = {
+            vol.Required(CONF_HOST, default=current_host): str,
+            vol.Optional(CONF_ENCRYPTION_KEY, default=current_encryption_key): str,
+            vol.Optional(CONF_ADMIN_USERNAME, default=current_admin_username): str,
+            vol.Optional(CONF_ADMIN_PASSWORD, default=current_admin_password): str,
+            vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(
+                vol.Coerce(int), vol.Range(min=10, max=300)
+            ),
+            vol.Optional(CONF_EXPERIMENTAL_FEATURES, default=current_experimental): bool,
+        }
+
+        # Only show external temp entity selector if experimental features are enabled
+        if current_experimental:
+            schema_dict[
+                vol.Optional(
+                    CONF_EXTERNAL_TEMP_ENTITY,
+                    description={"suggested_value": current_external_temp_entity},
+                )
+            ] = selector.EntitySelector(
+                selector.EntitySelectorConfig(
+                    domain=["sensor", "input_number", "number"],
+                )
+            )
+
+        options_schema = vol.Schema(schema_dict)
 
         return self.async_show_form(step_id="init", data_schema=options_schema, errors=errors)
 

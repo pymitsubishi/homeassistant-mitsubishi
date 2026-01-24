@@ -33,7 +33,13 @@
           "admin_username": "Admin Username (default: admin)",
           "admin_password": "Admin Password (default: me1debug@0567)",
           "scan_interval": "Update Interval (seconds, 10-300)",
-          "enable_capability_detection": "Enable capability detection"
+          "enable_capability_detection": "Enable capability detection",
+          "experimental_features": "Enable experimental features",
+          "external_temperature_entity": "External Temperature Sensor"
+        },
+        "data_description": {
+          "experimental_features": "Enable experimental features like remote temperature sensor support. These features may change or be removed in future versions.",
+          "external_temperature_entity": "Select a temperature sensor to use as the room temperature when Remote mode is selected. Leave empty to only use the internal sensor."
         }
       }
     },
