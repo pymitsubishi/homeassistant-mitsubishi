@@ -33,19 +33,18 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         scan_interval: int = DEFAULT_SCAN_INTERVAL,
     ) -> None:
         """Initialize."""
-        self.controller = controller
-        self.config_entry = config_entry
-        self.unit_info = None  # Will be populated on first update or by config flow
-        # Load persisted remote temperature mode (AC doesn't report it, so we track it)
-        self._remote_temp_mode = config_entry.options.get(CONF_REMOTE_TEMP_MODE, False)
-        self._startup_mode_applied = False
-
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
+            config_entry=config_entry,
             update_interval=timedelta(seconds=scan_interval),
         )
+        self.controller = controller
+        self.unit_info = None  # Will be populated on first update or by config flow
+        # Load persisted remote temperature mode (AC doesn't report it, so we track it)
+        self._remote_temp_mode = config_entry.options.get(CONF_REMOTE_TEMP_MODE, False)
+        self._startup_mode_applied = False
 
     def set_remote_temp_mode(self, enabled: bool) -> None:
         """Set whether remote temperature mode is enabled and persist to storage."""

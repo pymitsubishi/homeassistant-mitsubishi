@@ -118,8 +118,8 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
 
     _attr_supported_features = (
         0
-        | ClimateEntityFeature.TURN_ON
-        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON  # type: ignore[attr-defined]
+        | ClimateEntityFeature.TURN_OFF  # type: ignore[attr-defined]
         | ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
         | ClimateEntityFeature.SWING_MODE
