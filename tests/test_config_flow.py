@@ -388,7 +388,9 @@ class TestOptionsFlow:
         )
         hass.config_entries.async_reload.assert_called_once_with("test_entry_id")
 
-    async def test_options_flow_with_experimental_features(self, hass: HomeAssistant, mock_config_entry):
+    async def test_options_flow_with_experimental_features(
+        self, hass: HomeAssistant, mock_config_entry
+    ):
         """Test options flow with experimental features enabled goes to step 2."""
         # Mock the config entries registry methods
         hass.config_entries.async_update_entry = MagicMock()
@@ -418,9 +420,9 @@ class TestOptionsFlow:
         assert result["step_id"] == "experimental"
 
         # Now complete the experimental step with an entity selection
-        result2 = await options_flow.async_step_experimental({
-            CONF_EXTERNAL_TEMP_ENTITY: "sensor.room_temp"
-        })
+        result2 = await options_flow.async_step_experimental(
+            {CONF_EXTERNAL_TEMP_ENTITY: "sensor.room_temp"}
+        )
 
         assert result2["type"] == FlowResultType.CREATE_ENTRY
         assert result2["data"] == {
