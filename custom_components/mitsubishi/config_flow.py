@@ -133,8 +133,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        super().__init__()
         self._config_entry = config_entry
+
+    @property
+    def config_entry(self) -> config_entries.ConfigEntry:
+        """Return the config entry."""
+        return self._config_entry
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:
         """Manage the options."""
@@ -154,12 +158,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
                 # Update the config entry data (connection settings)
                 self.hass.config_entries.async_update_entry(
-                    self._config_entry,
+                    self.config_entry,
                     data=user_input,
                 )
 
                 # Trigger reload of the integration to apply changes
-                await self.hass.config_entries.async_reload(self._config_entry.entry_id)
+                await self.hass.config_entries.async_reload(self.config_entry.entry_id)
 
                 # Build new options, preserving remote_temp_mode if it exists
                 new_options = {
@@ -168,8 +172,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 if experimental_features and external_temp_entity:
                     new_options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
                 # Preserve remote_temp_mode from existing options
-                if CONF_REMOTE_TEMP_MODE in self._config_entry.options:
-                    new_options[CONF_REMOTE_TEMP_MODE] = self._config_entry.options[
+                if CONF_REMOTE_TEMP_MODE in self.config_entry.options:
+                    new_options[CONF_REMOTE_TEMP_MODE] = self.config_entry.options[
                         CONF_REMOTE_TEMP_MODE
                     ]
 
@@ -183,21 +187,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 errors["base"] = "unknown"
 
         # Create options schema with current values as defaults
-        current_host = self._config_entry.data.get(CONF_HOST, "")
-        current_encryption_key = self._config_entry.data.get(
+        current_host = self.config_entry.data.get(CONF_HOST, "")
+        current_encryption_key = self.config_entry.data.get(
             CONF_ENCRYPTION_KEY, DEFAULT_ENCRYPTION_KEY
         )
-        current_admin_username = self._config_entry.data.get(
+        current_admin_username = self.config_entry.data.get(
             CONF_ADMIN_USERNAME, DEFAULT_ADMIN_USERNAME
         )
-        current_admin_password = self._config_entry.data.get(
+        current_admin_password = self.config_entry.data.get(
             CONF_ADMIN_PASSWORD, DEFAULT_ADMIN_PASSWORD
         )
-        current_scan_interval = self._config_entry.data.get(
+        current_scan_interval = self.config_entry.data.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
-        current_experimental = self._config_entry.options.get(CONF_EXPERIMENTAL_FEATURES, False)
-        current_external_temp_entity = self._config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY, "")
+        current_experimental = self.config_entry.options.get(CONF_EXPERIMENTAL_FEATURES, False)
+        current_external_temp_entity = self.config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY, "")
 
         # Base schema with connection settings
         schema_dict = {
