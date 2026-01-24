@@ -296,11 +296,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         new_options: dict[str, Any] = {
             CONF_EXPERIMENTAL_FEATURES: self._experimental_features,
         }
-        if self._experimental_features and external_temp_entity:
-            new_options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
-        # Preserve remote_temp_mode from existing options
-        if CONF_REMOTE_TEMP_MODE in self.config_entry.options:
-            new_options[CONF_REMOTE_TEMP_MODE] = self.config_entry.options[CONF_REMOTE_TEMP_MODE]
+        if self._experimental_features:
+            # Only preserve experimental settings when experimental features are enabled
+            if external_temp_entity:
+                new_options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
+            # Preserve remote_temp_mode from existing options
+            if CONF_REMOTE_TEMP_MODE in self.config_entry.options:
+                new_options[CONF_REMOTE_TEMP_MODE] = self.config_entry.options[
+                    CONF_REMOTE_TEMP_MODE
+                ]
+        # When experimental features are disabled, don't preserve remote_temp_mode
+        # This ensures a clean state when the feature is turned off
 
         return self.async_create_entry(title="", data=new_options)
 

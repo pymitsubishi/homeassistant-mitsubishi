@@ -115,7 +115,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 "falling back to internal sensor"
             )
             await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self._remote_temp_mode = False
+            self.set_remote_temp_mode(False)
             return
 
         state = self.hass.states.get(external_entity_id)
@@ -126,7 +126,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 external_entity_id,
             )
             await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self._remote_temp_mode = False
+            self.set_remote_temp_mode(False)
             return
 
         if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
@@ -136,7 +136,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 state.state,
             )
             await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self._remote_temp_mode = False
+            self.set_remote_temp_mode(False)
             return
 
         try:
@@ -157,4 +157,4 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 e,
             )
             await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self._remote_temp_mode = False
+            self.set_remote_temp_mode(False)

@@ -22,5 +22,5 @@ CONF_EXTERNAL_TEMP_ENTITY = "external_temperature_entity"
 CONF_REMOTE_TEMP_MODE = "remote_temp_mode"
 
 # Temperature Source Modes
-TEMP_SOURCE_INTERNAL = "internal"
-TEMP_SOURCE_REMOTE = "remote"
+TEMP_SOURCE_INTERNAL = "Internal"
+TEMP_SOURCE_REMOTE = "Remote"

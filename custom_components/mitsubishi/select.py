@@ -15,6 +15,8 @@ from .const import (
     CONF_EXPERIMENTAL_FEATURES,
     CONF_EXTERNAL_TEMP_ENTITY,
     DOMAIN,
+    TEMP_SOURCE_INTERNAL,
+    TEMP_SOURCE_REMOTE,
 )
 from .coordinator import MitsubishiDataUpdateCoordinator
 from .entity import MitsubishiEntity
@@ -82,7 +84,7 @@ class MitsubishiTemperatureSourceSelect(MitsubishiEntity, SelectEntity):
 
     _attr_name = "Temperature Source"
     _attr_icon = "mdi:thermometer"
-    _attr_options = ["Internal", "Remote"]
+    _attr_options = [TEMP_SOURCE_INTERNAL, TEMP_SOURCE_REMOTE]
 
     def __init__(
         self,
@@ -96,11 +98,11 @@ class MitsubishiTemperatureSourceSelect(MitsubishiEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         """Return the current temperature source mode."""
-        return "Remote" if self.coordinator.remote_temp_mode else "Internal"
+        return TEMP_SOURCE_REMOTE if self.coordinator.remote_temp_mode else TEMP_SOURCE_INTERNAL
 
     async def async_select_option(self, option: str) -> None:
         """Set the temperature source mode."""
-        if option == "Internal":
+        if option == TEMP_SOURCE_INTERNAL:
             # Switch to internal sensor
             self.coordinator.set_remote_temp_mode(False)
             await self.hass.async_add_executor_job(
