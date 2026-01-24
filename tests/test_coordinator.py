@@ -11,10 +11,10 @@ from custom_components.mitsubishi.coordinator import MitsubishiDataUpdateCoordin
 
 
 @pytest.mark.asyncio
-async def test_coordinator_init(hass, mock_mitsubishi_controller):
+async def test_coordinator_init(hass, mock_mitsubishi_controller, mock_config_entry):
     """Test coordinator initialization."""
     coordinator = MitsubishiDataUpdateCoordinator(
-        hass, mock_mitsubishi_controller, DEFAULT_SCAN_INTERVAL
+        hass, mock_mitsubishi_controller, mock_config_entry, DEFAULT_SCAN_INTERVAL
     )
 
     assert coordinator.controller == mock_mitsubishi_controller
@@ -24,18 +24,22 @@ async def test_coordinator_init(hass, mock_mitsubishi_controller):
 
 
 @pytest.mark.asyncio
-async def test_coordinator_init_custom_interval(hass, mock_mitsubishi_controller):
+async def test_coordinator_init_custom_interval(hass, mock_mitsubishi_controller, mock_config_entry):
     """Test coordinator initialization with custom scan interval."""
     custom_interval = 60
-    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller, custom_interval)
+    coordinator = MitsubishiDataUpdateCoordinator(
+        hass, mock_mitsubishi_controller, mock_config_entry, custom_interval
+    )
 
     assert coordinator.update_interval == timedelta(seconds=custom_interval)
 
 
 @pytest.mark.asyncio
-async def test_fetch_unit_info_success(hass, mock_mitsubishi_controller):
+async def test_fetch_unit_info_success(hass, mock_mitsubishi_controller, mock_config_entry):
     """Test successful unit info fetching."""
-    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
+    coordinator = MitsubishiDataUpdateCoordinator(
+        hass, mock_mitsubishi_controller, mock_config_entry
+    )
 
     # Mock unit info fetch
     expected_unit_info = {"Adapter Information": {"Adaptor name": "MAC-577IF-2E"}}
@@ -47,9 +51,11 @@ async def test_fetch_unit_info_success(hass, mock_mitsubishi_controller):
 
 
 @pytest.mark.asyncio
-async def test_async_update_data_success(hass, mock_mitsubishi_controller):
+async def test_async_update_data_success(hass, mock_mitsubishi_controller, mock_config_entry):
     """Test successful data update."""
-    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
+    coordinator = MitsubishiDataUpdateCoordinator(
+        hass, mock_mitsubishi_controller, mock_config_entry
+    )
 
     with patch.object(
         hass,
@@ -63,9 +69,11 @@ async def test_async_update_data_success(hass, mock_mitsubishi_controller):
 
 
 @pytest.mark.asyncio
-async def test_async_update_data_fetch_status_fails(hass, mock_mitsubishi_controller):
+async def test_async_update_data_fetch_status_fails(hass, mock_mitsubishi_controller, mock_config_entry):
     """Test data update when fetch_status fails."""
-    coordinator = MitsubishiDataUpdateCoordinator(hass, mock_mitsubishi_controller)
+    coordinator = MitsubishiDataUpdateCoordinator(
+        hass, mock_mitsubishi_controller, mock_config_entry
+    )
 
     mock_mitsubishi_controller.fetch_status.side_effect = UpdateFailed("foobar")
 

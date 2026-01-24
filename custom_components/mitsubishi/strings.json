@@ -38,8 +38,8 @@
           "external_temperature_entity": "External Temperature Sensor"
         },
         "data_description": {
-          "experimental_features": "Enable experimental features like remote temperature sensor support. These features may change or be removed in future versions.",
-          "external_temperature_entity": "Select a temperature sensor to use as the room temperature when Remote mode is selected. Leave empty to only use the internal sensor."
+          "experimental_features": "Enable experimental features like remote temperature sensor support. These features may change or be removed in future versions. WARNING: The remote temperature feature should NOT be used for critical heating/cooling needs. If your Home Assistant server goes offline, your external sensor becomes unavailable, or provides invalid readings, the AC will NOT automatically revert to its internal sensor. You must manually switch back to Internal mode.",
+          "external_temperature_entity": "Select a temperature sensor to use as the room temperature when Remote mode is selected. Leave empty to only use the internal sensor. The AC must receive regular temperature updates - if updates stop, the AC continues using the last received value indefinitely."
         }
       }
     },

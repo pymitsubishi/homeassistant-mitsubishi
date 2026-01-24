@@ -370,7 +370,8 @@ class TestOptionsFlow:
             result = await options_flow.async_step_init(new_data)
 
         assert result["type"] == FlowResultType.CREATE_ENTRY
-        assert result["data"] == {}
+        # Options flow now returns experimental_features setting
+        assert result["data"] == {"experimental_features": False}
         hass.config_entries.async_update_entry.assert_called_once_with(
             mock_config_entry, data=new_data
         )

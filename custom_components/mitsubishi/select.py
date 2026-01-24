@@ -30,7 +30,7 @@ async def async_setup_entry(
     """Set up Mitsubishi select entities."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
-    entities = [MitsubishiPowerSavingSelect(coordinator, config_entry)]
+    entities: list[SelectEntity] = [MitsubishiPowerSavingSelect(coordinator, config_entry)]
 
     # Only add Temperature Source selector if experimental features are enabled
     if config_entry.options.get(CONF_EXPERIMENTAL_FEATURES, False):
@@ -153,7 +153,7 @@ class MitsubishiTemperatureSourceSelect(MitsubishiEntity, SelectEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return entity specific state attributes."""
-        attrs = {"source": "Mitsubishi AC"}
+        attrs: dict[str, Any] = {"source": "Mitsubishi AC"}
         external_entity_id = self._config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY)
         if external_entity_id:
             attrs["external_temperature_entity"] = external_entity_id

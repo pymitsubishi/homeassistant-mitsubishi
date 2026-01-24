@@ -53,12 +53,13 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         _LOGGER.info("Remote temperature mode set to: %s", enabled)
 
         # Persist to config entry options
-        new_options = dict(self.config_entry.options)
-        new_options[CONF_REMOTE_TEMP_MODE] = enabled
-        self.hass.config_entries.async_update_entry(
-            self.config_entry,
-            options=new_options,
-        )
+        if self.config_entry is not None:
+            new_options = dict(self.config_entry.options)
+            new_options[CONF_REMOTE_TEMP_MODE] = enabled
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                options=new_options,
+            )
 
     @property
     def remote_temp_mode(self) -> bool:
@@ -68,6 +69,8 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
     @property
     def experimental_features_enabled(self) -> bool:
         """Return whether experimental features are enabled."""
+        if self.config_entry is None:
+            return False
         return self.config_entry.options.get(CONF_EXPERIMENTAL_FEATURES, False)
 
     async def get_unit_info(self) -> dict:
@@ -103,6 +106,8 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
 
     async def _send_remote_temperature(self) -> None:
         """Send remote temperature to AC if configured and available."""
+        if self.config_entry is None:
+            return
         external_entity_id = self.config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY)
 
         if not external_entity_id:
