@@ -4,9 +4,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from custom_components.mitsubishi.const import DOMAIN
+from custom_components.mitsubishi.const import (
+    CONF_EXPERIMENTAL_FEATURES,
+    CONF_EXTERNAL_TEMP_ENTITY,
+    DOMAIN,
+)
 from custom_components.mitsubishi.select import (
     MitsubishiPowerSavingSelect,
+    MitsubishiTemperatureSourceSelect,
     async_setup_entry,
 )
 
@@ -94,6 +99,129 @@ async def test_power_saving_select_extra_state_attributes(
 ):
     """Test power saving select extra state attributes."""
     select = MitsubishiPowerSavingSelect(mock_coordinator, mock_config_entry)
+
+    attributes = select.extra_state_attributes
+    assert attributes == {"source": "Mitsubishi AC"}
+
+
+@pytest.fixture
+def mock_config_entry_experimental():
+    """Create a mock config entry with experimental features enabled."""
+    from homeassistant.const import CONF_HOST
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title="Test Mitsubishi AC",
+        unique_id="00:11:22:33:44:56",
+        data={
+            CONF_HOST: "192.168.1.100",
+            "encryption_key": "unregistered",
+            "admin_username": "admin",
+            "admin_password": "password",
+            "scan_interval": 30,
+        },
+        options={
+            CONF_EXPERIMENTAL_FEATURES: True,
+            CONF_EXTERNAL_TEMP_ENTITY: "sensor.room_temp",
+        },
+        entry_id="test_entry_exp_id",
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_setup_entry_with_experimental(
+    hass, mock_coordinator, mock_config_entry_experimental
+):
+    """Test setup with experimental features enabled creates temperature source select."""
+    hass.data[DOMAIN] = {mock_config_entry_experimental.entry_id: mock_coordinator}
+    async_add_entities = MagicMock()
+    await async_setup_entry(hass, mock_config_entry_experimental, async_add_entities)
+    async_add_entities.assert_called_once()
+    entities = async_add_entities.call_args[0][0]
+    assert len(entities) == 2
+    assert isinstance(entities[0], MitsubishiPowerSavingSelect)
+    assert isinstance(entities[1], MitsubishiTemperatureSourceSelect)
+
+
+@pytest.mark.asyncio
+async def test_temperature_source_select_init(
+    hass, mock_coordinator, mock_config_entry_experimental
+):
+    """Test temperature source select entity initialization."""
+    select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry_experimental)
+
+    assert select._attr_name == "Temperature Source"
+    assert select._attr_icon == "mdi:thermometer"
+    assert select._attr_options == ["Internal", "Remote"]
+    assert select.unique_id.endswith("_temperature_source_select")
+
+
+@pytest.mark.asyncio
+async def test_temperature_source_select_current_option_internal(
+    hass, mock_coordinator, mock_config_entry_experimental
+):
+    """Test temperature source select current option when in internal mode."""
+    mock_coordinator.remote_temp_mode = False
+    select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry_experimental)
+
+    assert select.current_option == "Internal"
+
+
+@pytest.mark.asyncio
+async def test_temperature_source_select_current_option_remote(
+    hass, mock_coordinator, mock_config_entry_experimental
+):
+    """Test temperature source select current option when in remote mode."""
+    mock_coordinator.remote_temp_mode = True
+    select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry_experimental)
+
+    assert select.current_option == "Remote"
+
+
+@pytest.mark.asyncio
+async def test_temperature_source_select_switch_to_internal(
+    hass, mock_coordinator, mock_config_entry_experimental
+):
+    """Test switching temperature source to internal."""
+    mock_coordinator.set_remote_temp_mode = MagicMock()
+    select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry_experimental)
+    select.hass = hass
+    select.async_write_ha_state = MagicMock()
+
+    with patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor:
+        await select.async_select_option("Internal")
+
+        mock_coordinator.set_remote_temp_mode.assert_called_once_with(False)
+        mock_executor.assert_called_once()
+        select.async_write_ha_state.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_temperature_source_select_switch_to_remote_no_entity(
+    hass, mock_coordinator, mock_config_entry
+):
+    """Test switching to remote fails when no external entity configured."""
+    mock_coordinator.set_remote_temp_mode = MagicMock()
+    select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry)
+    select.hass = hass
+    select.async_write_ha_state = MagicMock()
+
+    with patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor:
+        await select.async_select_option("Remote")
+
+        # Should not change mode when no entity configured
+        mock_coordinator.set_remote_temp_mode.assert_not_called()
+        mock_executor.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_temperature_source_select_extra_state_attributes_no_entity(
+    hass, mock_coordinator, mock_config_entry
+):
+    """Test temperature source select extra state attributes without external entity."""
+    select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry)
+    select.hass = hass
 
     attributes = select.extra_state_attributes
     assert attributes == {"source": "Mitsubishi AC"}

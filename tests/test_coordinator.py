@@ -24,7 +24,9 @@ async def test_coordinator_init(hass, mock_mitsubishi_controller, mock_config_en
 
 
 @pytest.mark.asyncio
-async def test_coordinator_init_custom_interval(hass, mock_mitsubishi_controller, mock_config_entry):
+async def test_coordinator_init_custom_interval(
+    hass, mock_mitsubishi_controller, mock_config_entry
+):
     """Test coordinator initialization with custom scan interval."""
     custom_interval = 60
     coordinator = MitsubishiDataUpdateCoordinator(
@@ -69,7 +71,9 @@ async def test_async_update_data_success(hass, mock_mitsubishi_controller, mock_
 
 
 @pytest.mark.asyncio
-async def test_async_update_data_fetch_status_fails(hass, mock_mitsubishi_controller, mock_config_entry):
+async def test_async_update_data_fetch_status_fails(
+    hass, mock_mitsubishi_controller, mock_config_entry
+):
     """Test data update when fetch_status fails."""
     coordinator = MitsubishiDataUpdateCoordinator(
         hass, mock_mitsubishi_controller, mock_config_entry
@@ -79,3 +83,44 @@ async def test_async_update_data_fetch_status_fails(hass, mock_mitsubishi_contro
 
     with pytest.raises(UpdateFailed, match="foobar"):
         await coordinator._async_update_data()
+
+
+@pytest.mark.asyncio
+async def test_coordinator_remote_temp_mode_property(
+    hass, mock_mitsubishi_controller, mock_config_entry
+):
+    """Test remote_temp_mode property returns False by default."""
+    coordinator = MitsubishiDataUpdateCoordinator(
+        hass, mock_mitsubishi_controller, mock_config_entry
+    )
+
+    assert coordinator.remote_temp_mode is False
+
+
+@pytest.mark.asyncio
+async def test_coordinator_experimental_features_disabled(
+    hass, mock_mitsubishi_controller, mock_config_entry
+):
+    """Test experimental_features_enabled property when disabled."""
+    coordinator = MitsubishiDataUpdateCoordinator(
+        hass, mock_mitsubishi_controller, mock_config_entry
+    )
+
+    assert coordinator.experimental_features_enabled is False
+
+
+@pytest.mark.asyncio
+async def test_coordinator_set_remote_temp_mode(
+    hass, mock_mitsubishi_controller, mock_config_entry
+):
+    """Test set_remote_temp_mode method."""
+    mock_config_entry.add_to_hass(hass)
+    coordinator = MitsubishiDataUpdateCoordinator(
+        hass, mock_mitsubishi_controller, mock_config_entry
+    )
+
+    coordinator.set_remote_temp_mode(True)
+    assert coordinator.remote_temp_mode is True
+
+    coordinator.set_remote_temp_mode(False)
+    assert coordinator.remote_temp_mode is False
