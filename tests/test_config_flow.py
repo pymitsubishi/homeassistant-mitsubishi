@@ -18,6 +18,8 @@ from custom_components.mitsubishi.const import (
     CONF_ADMIN_PASSWORD,
     CONF_ADMIN_USERNAME,
     CONF_ENCRYPTION_KEY,
+    CONF_EXPERIMENTAL_FEATURES,
+    CONF_EXTERNAL_TEMP_ENTITY,
     CONF_SCAN_INTERVAL,
     DOMAIN,
 )
@@ -346,7 +348,7 @@ class TestOptionsFlow:
         assert CONF_SCAN_INTERVAL in schema_keys
 
     async def test_options_flow_successful_update(self, hass: HomeAssistant, mock_config_entry):
-        """Test successful options flow update."""
+        """Test successful options flow update without experimental features."""
         # Mock the config entries registry methods
         hass.config_entries.async_update_entry = MagicMock()
         hass.config_entries.async_reload = AsyncMock()
@@ -361,6 +363,7 @@ class TestOptionsFlow:
             CONF_SCAN_INTERVAL: 60,
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
+            CONF_EXPERIMENTAL_FEATURES: False,
         }
 
         with patch(
@@ -370,12 +373,61 @@ class TestOptionsFlow:
             result = await options_flow.async_step_init(new_data)
 
         assert result["type"] == FlowResultType.CREATE_ENTRY
-        # Options flow now returns experimental_features setting
+        # Options flow returns experimental_features setting
         assert result["data"] == {"experimental_features": False}
+        # Connection data should not include experimental_features
+        expected_connection_data = {
+            CONF_HOST: "192.168.1.101",
+            CONF_ENCRYPTION_KEY: "new_key",
+            CONF_SCAN_INTERVAL: 60,
+            CONF_ADMIN_USERNAME: "admin",
+            CONF_ADMIN_PASSWORD: "password",
+        }
         hass.config_entries.async_update_entry.assert_called_once_with(
-            mock_config_entry, data=new_data
+            mock_config_entry, data=expected_connection_data
         )
         hass.config_entries.async_reload.assert_called_once_with("test_entry_id")
+
+    async def test_options_flow_with_experimental_features(self, hass: HomeAssistant, mock_config_entry):
+        """Test options flow with experimental features enabled goes to step 2."""
+        # Mock the config entries registry methods
+        hass.config_entries.async_update_entry = MagicMock()
+        hass.config_entries.async_reload = AsyncMock()
+
+        # Create options flow
+        options_flow = OptionsFlowHandler(mock_config_entry)
+        options_flow.hass = hass
+
+        new_data = {
+            CONF_HOST: "192.168.1.101",
+            CONF_ENCRYPTION_KEY: "new_key",
+            CONF_SCAN_INTERVAL: 60,
+            CONF_ADMIN_USERNAME: "admin",
+            CONF_ADMIN_PASSWORD: "password",
+            CONF_EXPERIMENTAL_FEATURES: True,
+        }
+
+        with patch(
+            "custom_components.mitsubishi.config_flow.validate_input",
+            return_value={"title": "Test Device", "unique_id": "test_mac"},
+        ):
+            result = await options_flow.async_step_init(new_data)
+
+        # Should go to experimental step
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "experimental"
+
+        # Now complete the experimental step with an entity selection
+        result2 = await options_flow.async_step_experimental({
+            CONF_EXTERNAL_TEMP_ENTITY: "sensor.room_temp"
+        })
+
+        assert result2["type"] == FlowResultType.CREATE_ENTRY
+        assert result2["data"] == {
+            "experimental_features": True,
+            "external_temperature_entity": "sensor.room_temp",
+        }
+        hass.config_entries.async_reload.assert_called_with("test_entry_id")
 
     async def test_options_flow_cannot_connect(self, hass: HomeAssistant, mock_config_entry):
         """Test options flow with connection error."""
@@ -389,6 +441,7 @@ class TestOptionsFlow:
             CONF_SCAN_INTERVAL: 30,
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
+            CONF_EXPERIMENTAL_FEATURES: False,
         }
 
         with patch(
@@ -413,6 +466,7 @@ class TestOptionsFlow:
             CONF_SCAN_INTERVAL: 30,
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
+            CONF_EXPERIMENTAL_FEATURES: False,
         }
 
         with patch(

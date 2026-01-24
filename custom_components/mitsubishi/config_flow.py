@@ -134,6 +134,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
         self._config_entry = config_entry
+        self._connection_data: dict[str, Any] = {}
+        self._experimental_features: bool = False
 
     @property
     def config_entry(self) -> config_entries.ConfigEntry:
@@ -141,43 +143,29 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self._config_entry
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:
-        """Manage the options."""
+        """Step 1: Connection settings and experimental features toggle."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            _LOGGER.debug("Processing options user input: %s", user_input)
+            _LOGGER.debug("Processing options step init: %s", user_input)
             try:
-                # Separate options from connection data
-                experimental_features = user_input.pop(CONF_EXPERIMENTAL_FEATURES, False)
-                external_temp_entity = user_input.pop(CONF_EXTERNAL_TEMP_ENTITY, None)
+                # Extract experimental features flag
+                self._experimental_features = user_input.pop(CONF_EXPERIMENTAL_FEATURES, False)
 
                 # Validate the connection configuration
                 _LOGGER.debug("Validating new configuration")
                 await validate_input(self.hass, user_input)
                 _LOGGER.debug("Validation successful for options")
 
-                # Update the config entry data (connection settings)
-                self.hass.config_entries.async_update_entry(
-                    self.config_entry,
-                    data=user_input,
-                )
+                # Store connection data for later
+                self._connection_data = user_input
 
-                # Trigger reload of the integration to apply changes
-                await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+                # If experimental features enabled, go to step 2 for entity selection
+                if self._experimental_features:
+                    return await self.async_step_experimental()
 
-                # Build new options, preserving remote_temp_mode if it exists
-                new_options = {
-                    CONF_EXPERIMENTAL_FEATURES: experimental_features,
-                }
-                if experimental_features and external_temp_entity:
-                    new_options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
-                # Preserve remote_temp_mode from existing options
-                if CONF_REMOTE_TEMP_MODE in self.config_entry.options:
-                    new_options[CONF_REMOTE_TEMP_MODE] = self.config_entry.options[
-                        CONF_REMOTE_TEMP_MODE
-                    ]
-
-                return self.async_create_entry(title="", data=new_options)
+                # Otherwise, save and finish
+                return await self._async_save_options(external_temp_entity=None)
 
             except CannotConnect:
                 _LOGGER.error("Cannot connect to device with new settings")
@@ -201,36 +189,67 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
         current_experimental = self.config_entry.options.get(CONF_EXPERIMENTAL_FEATURES, False)
+
+        options_schema = vol.Schema(
+            {
+                vol.Required(CONF_HOST, default=current_host): str,
+                vol.Optional(CONF_ENCRYPTION_KEY, default=current_encryption_key): str,
+                vol.Optional(CONF_ADMIN_USERNAME, default=current_admin_username): str,
+                vol.Optional(CONF_ADMIN_PASSWORD, default=current_admin_password): str,
+                vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(
+                    vol.Coerce(int), vol.Range(min=10, max=300)
+                ),
+                vol.Optional(CONF_EXPERIMENTAL_FEATURES, default=current_experimental): bool,
+            }
+        )
+
+        return self.async_show_form(step_id="init", data_schema=options_schema, errors=errors)
+
+    async def async_step_experimental(self, user_input: dict[str, Any] | None = None) -> Any:
+        """Step 2: Configure experimental features (external temperature sensor)."""
+        if user_input is not None:
+            external_temp_entity = user_input.get(CONF_EXTERNAL_TEMP_ENTITY)
+            return await self._async_save_options(external_temp_entity=external_temp_entity)
+
         current_external_temp_entity = self.config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY, "")
 
-        # Base schema with connection settings
-        schema_dict = {
-            vol.Required(CONF_HOST, default=current_host): str,
-            vol.Optional(CONF_ENCRYPTION_KEY, default=current_encryption_key): str,
-            vol.Optional(CONF_ADMIN_USERNAME, default=current_admin_username): str,
-            vol.Optional(CONF_ADMIN_PASSWORD, default=current_admin_password): str,
-            vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(
-                vol.Coerce(int), vol.Range(min=10, max=300)
-            ),
-            vol.Optional(CONF_EXPERIMENTAL_FEATURES, default=current_experimental): bool,
-        }
-
-        # Only show external temp entity selector if experimental features are enabled
-        if current_experimental:
-            schema_dict[
+        experimental_schema = vol.Schema(
+            {
                 vol.Optional(
                     CONF_EXTERNAL_TEMP_ENTITY,
                     description={"suggested_value": current_external_temp_entity},
-                )
-            ] = selector.EntitySelector(
-                selector.EntitySelectorConfig(
-                    domain=["sensor", "input_number", "number"],
-                )
-            )
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(
+                        domain=["sensor", "input_number", "number"],
+                    )
+                ),
+            }
+        )
 
-        options_schema = vol.Schema(schema_dict)
+        return self.async_show_form(step_id="experimental", data_schema=experimental_schema)
 
-        return self.async_show_form(step_id="init", data_schema=options_schema, errors=errors)
+    async def _async_save_options(self, external_temp_entity: str | None) -> Any:
+        """Save connection data and options."""
+        # Update the config entry data (connection settings)
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            data=self._connection_data,
+        )
+
+        # Trigger reload of the integration to apply changes
+        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+
+        # Build new options
+        new_options: dict[str, Any] = {
+            CONF_EXPERIMENTAL_FEATURES: self._experimental_features,
+        }
+        if self._experimental_features and external_temp_entity:
+            new_options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
+        # Preserve remote_temp_mode from existing options
+        if CONF_REMOTE_TEMP_MODE in self.config_entry.options:
+            new_options[CONF_REMOTE_TEMP_MODE] = self.config_entry.options[CONF_REMOTE_TEMP_MODE]
+
+        return self.async_create_entry(title="", data=new_options)
 
 
 class CannotConnect(HomeAssistantError):
