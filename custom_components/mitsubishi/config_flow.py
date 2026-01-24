@@ -40,6 +40,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
             vol.Coerce(int), vol.Range(min=10, max=300)
         ),
+        vol.Optional(CONF_EXPERIMENTAL_FEATURES, default=False): bool,
     }
 )
 
@@ -84,6 +85,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     MINOR_VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize the config flow."""
+        self._connection_data: dict[str, Any] = {}
+        self._experimental_features: bool = False
+        self._device_info: dict[str, Any] = {}
+
     @staticmethod
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
@@ -99,6 +106,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             _LOGGER.debug("Processing user input for config flow")
             try:
+                # Extract experimental features flag
+                self._experimental_features = user_input.pop(CONF_EXPERIMENTAL_FEATURES, False)
+
                 _LOGGER.debug("Calling validate_input")
                 info = await validate_input(self.hass, user_input)
                 _LOGGER.debug("Validation successful, info: %s", info)
@@ -107,8 +117,16 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(info["unique_id"])
                 self._abort_if_unique_id_configured()
 
-                _LOGGER.debug("Creating config entry")
-                return self.async_create_entry(title=info["title"], data=user_input)
+                # Store for later
+                self._connection_data = user_input
+                self._device_info = info
+
+                # If experimental features enabled, go to step 2
+                if self._experimental_features:
+                    return await self.async_step_experimental()
+
+                # Otherwise, create entry directly
+                return self._create_entry(external_temp_entity=None)
 
             except CannotConnect:
                 _LOGGER.error("Cannot connect to device")
@@ -125,6 +143,41 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.debug("Showing config form with errors: %s", errors)
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
+
+    async def async_step_experimental(self, user_input: dict[str, Any] | None = None) -> Any:
+        """Step 2: Configure experimental features (external temperature sensor)."""
+        if user_input is not None:
+            external_temp_entity = user_input.get(CONF_EXTERNAL_TEMP_ENTITY)
+            return self._create_entry(external_temp_entity=external_temp_entity)
+
+        experimental_schema = vol.Schema(
+            {
+                vol.Optional(CONF_EXTERNAL_TEMP_ENTITY): selector.EntitySelector(
+                    selector.EntitySelectorConfig(
+                        domain=["sensor", "input_number", "number"],
+                    )
+                ),
+            }
+        )
+
+        return self.async_show_form(step_id="experimental", data_schema=experimental_schema)
+
+    def _create_entry(self, external_temp_entity: str | None) -> Any:
+        """Create the config entry with options."""
+        _LOGGER.debug("Creating config entry")
+
+        # Build options
+        options: dict[str, Any] = {
+            CONF_EXPERIMENTAL_FEATURES: self._experimental_features,
+        }
+        if self._experimental_features and external_temp_entity:
+            options[CONF_EXTERNAL_TEMP_ENTITY] = external_temp_entity
+
+        return self.async_create_entry(
+            title=self._device_info["title"],
+            data=self._connection_data,
+            options=options,
         )
 
 
