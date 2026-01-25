@@ -29,6 +29,30 @@ from .const import (
     DOMAIN,
 )
 
+
+def _get_experimental_schema(suggested_value: str | None = None) -> vol.Schema:
+    """Get the schema for experimental features configuration."""
+    entity_selector = selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            domain=["sensor", "input_number", "number"],
+        )
+    )
+    if suggested_value:
+        return vol.Schema(
+            {
+                vol.Optional(
+                    CONF_EXTERNAL_TEMP_ENTITY,
+                    description={"suggested_value": suggested_value},
+                ): entity_selector,
+            }
+        )
+    return vol.Schema(
+        {
+            vol.Optional(CONF_EXTERNAL_TEMP_ENTITY): entity_selector,
+        }
+    )
+
+
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
@@ -87,6 +111,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize the config flow."""
+        super().__init__()
         self._connection_data: dict[str, Any] = {}
         self._experimental_features: bool = False
         self._device_info: dict[str, Any] = {}
@@ -151,17 +176,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             external_temp_entity = user_input.get(CONF_EXTERNAL_TEMP_ENTITY)
             return self._create_entry(external_temp_entity=external_temp_entity)
 
-        experimental_schema = vol.Schema(
-            {
-                vol.Optional(CONF_EXTERNAL_TEMP_ENTITY): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["sensor", "input_number", "number"],
-                    )
-                ),
-            }
-        )
-
-        return self.async_show_form(step_id="experimental", data_schema=experimental_schema)
+        return self.async_show_form(step_id="experimental", data_schema=_get_experimental_schema())
 
     def _create_entry(self, external_temp_entity: str | None) -> Any:
         """Create the config entry with options."""
@@ -186,6 +201,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
+        super().__init__()
         self._config_entry = config_entry
         self._connection_data: dict[str, Any] = {}
         self._experimental_features: bool = False
@@ -266,20 +282,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         current_external_temp_entity = self.config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY, "")
 
-        experimental_schema = vol.Schema(
-            {
-                vol.Optional(
-                    CONF_EXTERNAL_TEMP_ENTITY,
-                    description={"suggested_value": current_external_temp_entity},
-                ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
-                        domain=["sensor", "input_number", "number"],
-                    )
-                ),
-            }
+        return self.async_show_form(
+            step_id="experimental",
+            data_schema=_get_experimental_schema(current_external_temp_entity or None),
         )
-
-        return self.async_show_form(step_id="experimental", data_schema=experimental_schema)
 
     async def _async_save_options(self, external_temp_entity: str | None) -> Any:
         """Save connection data and options."""

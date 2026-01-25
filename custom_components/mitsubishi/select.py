@@ -103,12 +103,8 @@ class MitsubishiTemperatureSourceSelect(MitsubishiEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Set the temperature source mode."""
         if option == TEMP_SOURCE_INTERNAL:
-            # Switch to internal sensor
-            self.coordinator.set_remote_temp_mode(False)
-            await self.hass.async_add_executor_job(
-                self.coordinator.controller.set_current_temperature,
-                None,
-            )
+            # Switch to internal sensor (set_remote_temp_mode handles the AC command)
+            await self.coordinator.set_remote_temp_mode(False)
             _LOGGER.info("Switched to internal temperature sensor")
         else:
             # Switch to remote sensor - check if external entity is configured
@@ -139,7 +135,7 @@ class MitsubishiTemperatureSourceSelect(MitsubishiEntity, SelectEntity):
                 return
 
             # Enable remote mode and send the temperature
-            self.coordinator.set_remote_temp_mode(True)
+            await self.coordinator.set_remote_temp_mode(True)
             await self.hass.async_add_executor_job(
                 self.coordinator.controller.set_current_temperature,
                 temp,

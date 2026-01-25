@@ -126,11 +126,14 @@ async def test_coordinator_set_remote_temp_mode(
         hass, mock_mitsubishi_controller, mock_config_entry
     )
 
-    coordinator.set_remote_temp_mode(True)
+    # Enable remote mode (no hardware call when enabling)
+    await coordinator.set_remote_temp_mode(True)
     assert coordinator.remote_temp_mode is True
 
-    coordinator.set_remote_temp_mode(False)
+    # Disable remote mode (should call set_current_temperature(None))
+    await coordinator.set_remote_temp_mode(False)
     assert coordinator.remote_temp_mode is False
+    mock_mitsubishi_controller.set_current_temperature.assert_called_with(None)
 
 
 @pytest.fixture

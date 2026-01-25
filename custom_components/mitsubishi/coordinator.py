@@ -46,10 +46,17 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         self._remote_temp_mode = config_entry.options.get(CONF_REMOTE_TEMP_MODE, False)
         self._startup_mode_applied = False
 
-    def set_remote_temp_mode(self, enabled: bool) -> None:
-        """Set whether remote temperature mode is enabled and persist to storage."""
+    async def set_remote_temp_mode(self, enabled: bool) -> None:
+        """Set whether remote temperature mode is enabled and persist to storage.
+
+        When disabling remote mode, this also tells the AC to use its internal sensor.
+        """
         self._remote_temp_mode = enabled
         _LOGGER.info("Remote temperature mode set to: %s", enabled)
+
+        # When disabling remote mode, tell the AC to use internal sensor
+        if not enabled:
+            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
 
         # Persist to config entry options
         if self.config_entry is not None:
@@ -114,8 +121,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 "Remote temperature mode enabled but no external entity configured, "
                 "falling back to internal sensor"
             )
-            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self.set_remote_temp_mode(False)
+            await self.set_remote_temp_mode(False)
             return
 
         state = self.hass.states.get(external_entity_id)
@@ -125,8 +131,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 "External temperature entity %s not found, falling back to internal sensor",
                 external_entity_id,
             )
-            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self.set_remote_temp_mode(False)
+            await self.set_remote_temp_mode(False)
             return
 
         if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
@@ -135,8 +140,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 external_entity_id,
                 state.state,
             )
-            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self.set_remote_temp_mode(False)
+            await self.set_remote_temp_mode(False)
             return
 
         try:
@@ -156,5 +160,4 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 external_entity_id,
                 e,
             )
-            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
-            self.set_remote_temp_mode(False)
+            await self.set_remote_temp_mode(False)

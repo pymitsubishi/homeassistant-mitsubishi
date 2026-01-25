@@ -184,17 +184,16 @@ async def test_temperature_source_select_switch_to_internal(
     hass, mock_coordinator, mock_config_entry_experimental
 ):
     """Test switching temperature source to internal."""
-    mock_coordinator.set_remote_temp_mode = MagicMock()
+    mock_coordinator.set_remote_temp_mode = AsyncMock()
     select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry_experimental)
     select.hass = hass
     select.async_write_ha_state = MagicMock()
 
-    with patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor:
-        await select.async_select_option("Internal")
+    await select.async_select_option("Internal")
 
-        mock_coordinator.set_remote_temp_mode.assert_called_once_with(False)
-        mock_executor.assert_called_once()
-        select.async_write_ha_state.assert_called_once()
+    # set_remote_temp_mode(False) handles the AC command internally
+    mock_coordinator.set_remote_temp_mode.assert_called_once_with(False)
+    select.async_write_ha_state.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -202,17 +201,15 @@ async def test_temperature_source_select_switch_to_remote_no_entity(
     hass, mock_coordinator, mock_config_entry
 ):
     """Test switching to remote fails when no external entity configured."""
-    mock_coordinator.set_remote_temp_mode = MagicMock()
+    mock_coordinator.set_remote_temp_mode = AsyncMock()
     select = MitsubishiTemperatureSourceSelect(mock_coordinator, mock_config_entry)
     select.hass = hass
     select.async_write_ha_state = MagicMock()
 
-    with patch.object(hass, "async_add_executor_job", new=AsyncMock()) as mock_executor:
-        await select.async_select_option("Remote")
+    await select.async_select_option("Remote")
 
-        # Should not change mode when no entity configured
-        mock_coordinator.set_remote_temp_mode.assert_not_called()
-        mock_executor.assert_not_called()
+    # Should not change mode when no entity configured
+    mock_coordinator.set_remote_temp_mode.assert_not_called()
 
 
 @pytest.mark.asyncio
