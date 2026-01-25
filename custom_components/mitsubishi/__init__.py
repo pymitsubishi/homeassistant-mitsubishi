@@ -62,7 +62,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             raise ConfigEntryNotReady(f"Unable to connect to Mitsubishi AC at {host}") from e
 
         # Create data update coordinator with custom scan interval
-        coordinator = MitsubishiDataUpdateCoordinator(hass, controller, scan_interval)
+        coordinator = MitsubishiDataUpdateCoordinator(hass, controller, entry, scan_interval)
 
         # Fetch unit info for device registry enrichment
         try:

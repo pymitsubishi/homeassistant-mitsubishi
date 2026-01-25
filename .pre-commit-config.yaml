@@ -45,7 +45,7 @@ repos:
           - custom_components/
         additional_dependencies:
           - types-requests
-          - homeassistant-stubs
+          - homeassistant-stubs>=2024.8.0 # Minimum version with ClimateEntityFeature.TURN_ON/OFF
         pass_filenames: false
 
   # YAML formatting

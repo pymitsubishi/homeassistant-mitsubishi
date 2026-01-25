@@ -123,7 +123,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         | ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
         | ClimateEntityFeature.SWING_MODE
-        | ClimateEntityFeature.SWING_HORIZONTAL_MODE  # type: ignore[attr-defined]
+        | ClimateEntityFeature.SWING_HORIZONTAL_MODE
     )
 
     def __init__(
