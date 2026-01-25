@@ -18,12 +18,12 @@
       },
       "experimental": {
         "title": "Experimental Features Configuration",
-        "description": "⚠️ WARNING: The remote temperature feature should NOT be used for critical heating/cooling needs. If your Home Assistant server goes offline, your external sensor becomes unavailable, or provides invalid readings, the AC will NOT automatically revert to its internal sensor. You must manually switch back to Internal mode.",
+        "description": "⚠️ WARNING: If your Home Assistant server goes offline or loses network connectivity to the AC while using remote temperature mode, the AC will continue using the last received temperature indefinitely. The integration will automatically fall back to the internal sensor if your external sensor becomes unavailable or provides invalid readings while HA is running.",
         "data": {
           "external_temperature_entity": "External Temperature Sensor"
         },
         "data_description": {
-          "external_temperature_entity": "Select a temperature sensor to use as the room temperature when Remote mode is selected. Leave empty to only use the internal sensor. The AC must receive regular temperature updates - if updates stop, the AC continues using the last received value indefinitely."
+          "external_temperature_entity": "Select a temperature sensor to use as the room temperature when Remote mode is selected. Leave empty to only use the internal sensor."
         }
       }
     },
@@ -55,12 +55,12 @@
       },
       "experimental": {
         "title": "Experimental Features Configuration",
-        "description": "⚠️ WARNING: The remote temperature feature should NOT be used for critical heating/cooling needs. If your Home Assistant server goes offline, your external sensor becomes unavailable, or provides invalid readings, the AC will NOT automatically revert to its internal sensor. You must manually switch back to Internal mode.",
+        "description": "⚠️ WARNING: If your Home Assistant server goes offline or loses network connectivity to the AC while using remote temperature mode, the AC will continue using the last received temperature indefinitely. The integration will automatically fall back to the internal sensor if your external sensor becomes unavailable or provides invalid readings while HA is running.",
         "data": {
           "external_temperature_entity": "External Temperature Sensor"
         },
         "data_description": {
-          "external_temperature_entity": "Select a temperature sensor to use as the room temperature when Remote mode is selected. Leave empty to only use the internal sensor. The AC must receive regular temperature updates - if updates stop, the AC continues using the last received value indefinitely."
+          "external_temperature_entity": "Select a temperature sensor to use as the room temperature when Remote mode is selected. Leave empty to only use the internal sensor."
         }
       }
     },
