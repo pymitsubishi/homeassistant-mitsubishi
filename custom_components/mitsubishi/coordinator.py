@@ -46,6 +46,13 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         self._remote_temp_mode = config_entry.options.get(CONF_REMOTE_TEMP_MODE, False)
         self._startup_mode_applied = False
 
+        # Log the loaded state for debugging persistence issues
+        _LOGGER.info(
+            "Coordinator initialized: remote_temp_mode=%s (from options: %s)",
+            self._remote_temp_mode,
+            dict(config_entry.options),
+        )
+
     async def set_remote_temp_mode(self, enabled: bool) -> None:
         """Set whether remote temperature mode is enabled and persist to storage.
 
@@ -95,7 +102,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 self._startup_mode_applied = True
                 if self._remote_temp_mode:
                     _LOGGER.info("Restoring remote temperature mode from persisted state")
-                    await self._send_remote_temperature()
+                    await self._send_remote_temperature(is_startup=True)
                 else:
                     _LOGGER.debug("Starting with internal temperature mode")
             elif self._remote_temp_mode:
@@ -110,8 +117,13 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         )
         return state
 
-    async def _send_remote_temperature(self) -> None:
-        """Send remote temperature to AC if configured and available."""
+    async def _send_remote_temperature(self, is_startup: bool = False) -> None:
+        """Send remote temperature to AC if configured and available.
+
+        Args:
+            is_startup: If True, don't permanently disable remote mode on failures.
+                       This handles the case where external entities aren't ready yet.
+        """
         if self.config_entry is None:
             return
         external_entity_id = self.config_entry.options.get(CONF_EXTERNAL_TEMP_ENTITY)
@@ -127,6 +139,14 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         state = self.hass.states.get(external_entity_id)
 
         if state is None:
+            if is_startup:
+                _LOGGER.warning(
+                    "External temperature entity %s not found during startup, "
+                    "will retry on next update cycle",
+                    external_entity_id,
+                )
+                # Don't disable remote mode - entity may not be loaded yet
+                return
             _LOGGER.warning(
                 "External temperature entity %s not found, falling back to internal sensor",
                 external_entity_id,
@@ -135,6 +155,15 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             return
 
         if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            if is_startup:
+                _LOGGER.warning(
+                    "External temperature entity %s is %s during startup, "
+                    "will retry on next update cycle",
+                    external_entity_id,
+                    state.state,
+                )
+                # Don't disable remote mode - entity may not be ready yet
+                return
             _LOGGER.warning(
                 "External temperature entity %s is %s, falling back to internal sensor",
                 external_entity_id,

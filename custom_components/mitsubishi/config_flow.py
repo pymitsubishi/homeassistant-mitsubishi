@@ -289,16 +289,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def _async_save_options(self, external_temp_entity: str | None) -> Any:
         """Save connection data and options."""
-        # Update the config entry data (connection settings)
-        self.hass.config_entries.async_update_entry(
-            self.config_entry,
-            data=self._connection_data,
-        )
-
-        # Trigger reload of the integration to apply changes
-        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
-
-        # Build new options
+        # Build new options FIRST (before any reload)
         new_options: dict[str, Any] = {
             CONF_EXPERIMENTAL_FEATURES: self._experimental_features,
         }
@@ -314,7 +305,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         # When experimental features are disabled, don't preserve remote_temp_mode
         # This ensures a clean state when the feature is turned off
 
-        return self.async_create_entry(title="", data=new_options)
+        # Update config entry with BOTH data and options before reload
+        # This ensures the new options are persisted before the integration restarts
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            data=self._connection_data,
+            options=new_options,
+        )
+
+        # Trigger reload of the integration to apply changes
+        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+
+        # Return empty entry since we already saved options above
+        return self.async_create_entry(title="", data={})
 
 
 class CannotConnect(HomeAssistantError):
