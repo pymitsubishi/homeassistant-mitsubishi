@@ -373,9 +373,9 @@ class TestOptionsFlow:
             result = await options_flow.async_step_init(new_data)
 
         assert result["type"] == FlowResultType.CREATE_ENTRY
-        # Options flow returns experimental_features setting
-        assert result["data"] == {"experimental_features": False}
-        # Connection data should not include experimental_features
+        # Options are now saved via async_update_entry before reload, so result["data"] is empty
+        assert result["data"] == {}
+        # Connection data and options should be saved together
         expected_connection_data = {
             CONF_HOST: "192.168.1.101",
             CONF_ENCRYPTION_KEY: "new_key",
@@ -383,8 +383,9 @@ class TestOptionsFlow:
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
         }
+        expected_options = {"experimental_features": False}
         hass.config_entries.async_update_entry.assert_called_once_with(
-            mock_config_entry, data=expected_connection_data
+            mock_config_entry, data=expected_connection_data, options=expected_options
         )
         hass.config_entries.async_reload.assert_called_once_with("test_entry_id")
 
@@ -425,10 +426,23 @@ class TestOptionsFlow:
         )
 
         assert result2["type"] == FlowResultType.CREATE_ENTRY
-        assert result2["data"] == {
+        # Options are now saved via async_update_entry before reload, so result["data"] is empty
+        assert result2["data"] == {}
+        # Verify both data and options were saved in a single async_update_entry call
+        expected_connection_data = {
+            CONF_HOST: "192.168.1.101",
+            CONF_ENCRYPTION_KEY: "new_key",
+            CONF_SCAN_INTERVAL: 60,
+            CONF_ADMIN_USERNAME: "admin",
+            CONF_ADMIN_PASSWORD: "password",
+        }
+        expected_options = {
             "experimental_features": True,
             "external_temperature_entity": "sensor.room_temp",
         }
+        hass.config_entries.async_update_entry.assert_called_once_with(
+            mock_config_entry, data=expected_connection_data, options=expected_options
+        )
         hass.config_entries.async_reload.assert_called_with("test_entry_id")
 
     async def test_options_flow_cannot_connect(self, hass: HomeAssistant, mock_config_entry):
