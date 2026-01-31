@@ -373,9 +373,9 @@ class TestOptionsFlow:
             result = await options_flow.async_step_init(new_data)
 
         assert result["type"] == FlowResultType.CREATE_ENTRY
-        # Options are now saved via async_update_entry before reload, so result["data"] is empty
-        assert result["data"] == {}
-        # Connection data and options should be saved together
+        # Options are returned by async_create_entry so HA can save them to config_entry.options
+        assert result["data"] == {"experimental_features": False}
+        # Connection data should be saved via async_update_entry
         expected_connection_data = {
             CONF_HOST: "192.168.1.101",
             CONF_ENCRYPTION_KEY: "new_key",
@@ -383,9 +383,8 @@ class TestOptionsFlow:
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
         }
-        expected_options = {"experimental_features": False}
         hass.config_entries.async_update_entry.assert_called_once_with(
-            mock_config_entry, data=expected_connection_data, options=expected_options
+            mock_config_entry, data=expected_connection_data
         )
         hass.config_entries.async_reload.assert_called_once_with("test_entry_id")
 
@@ -426,9 +425,13 @@ class TestOptionsFlow:
         )
 
         assert result2["type"] == FlowResultType.CREATE_ENTRY
-        # Options are now saved via async_update_entry before reload, so result["data"] is empty
-        assert result2["data"] == {}
-        # Verify both data and options were saved in a single async_update_entry call
+        # Options are returned by async_create_entry so HA can save them to config_entry.options
+        expected_options = {
+            "experimental_features": True,
+            "external_temperature_entity": "sensor.room_temp",
+        }
+        assert result2["data"] == expected_options
+        # Connection data should be saved via async_update_entry
         expected_connection_data = {
             CONF_HOST: "192.168.1.101",
             CONF_ENCRYPTION_KEY: "new_key",
@@ -436,12 +439,8 @@ class TestOptionsFlow:
             CONF_ADMIN_USERNAME: "admin",
             CONF_ADMIN_PASSWORD: "password",
         }
-        expected_options = {
-            "experimental_features": True,
-            "external_temperature_entity": "sensor.room_temp",
-        }
         hass.config_entries.async_update_entry.assert_called_once_with(
-            mock_config_entry, data=expected_connection_data, options=expected_options
+            mock_config_entry, data=expected_connection_data
         )
         hass.config_entries.async_reload.assert_called_with("test_entry_id")
 
