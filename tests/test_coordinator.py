@@ -252,7 +252,11 @@ async def test_send_remote_temperature_no_entity_configured(hass, mock_mitsubish
 async def test_send_remote_temperature_entity_not_found(
     hass, mock_mitsubishi_controller, mock_config_entry_experimental
 ):
-    """Test _send_remote_temperature when external entity is not found."""
+    """Test _send_remote_temperature when external entity is not found.
+
+    When entity is not found, we temporarily switch to internal mode but keep
+    remote_temp_mode enabled so we auto-resume when entity becomes available.
+    """
     mock_config_entry_experimental.add_to_hass(hass)
 
     coordinator = MitsubishiDataUpdateCoordinator(
@@ -264,16 +268,21 @@ async def test_send_remote_temperature_entity_not_found(
     with patch.object(hass, "async_add_executor_job", AsyncMock()) as mock_executor:
         await coordinator._send_remote_temperature()
 
-        # Should call set_current_temperature with None to fall back
+        # Should call set_current_temperature with None to temporarily use internal
         mock_executor.assert_called_once()
-        assert coordinator._remote_temp_mode is False
+        # Remote mode should remain enabled so we retry next cycle
+        assert coordinator._remote_temp_mode is True
 
 
 @pytest.mark.asyncio
 async def test_send_remote_temperature_entity_unavailable(
     hass, mock_mitsubishi_controller, mock_config_entry_experimental
 ):
-    """Test _send_remote_temperature when external entity is unavailable."""
+    """Test _send_remote_temperature when external entity is unavailable.
+
+    When entity is unavailable, we temporarily switch to internal mode but keep
+    remote_temp_mode enabled so we auto-resume when entity becomes available.
+    """
     mock_config_entry_experimental.add_to_hass(hass)
 
     # Set the entity state to unavailable
@@ -287,15 +296,21 @@ async def test_send_remote_temperature_entity_unavailable(
     with patch.object(hass, "async_add_executor_job", AsyncMock()) as mock_executor:
         await coordinator._send_remote_temperature()
 
+        # Should call set_current_temperature with None to temporarily use internal
         mock_executor.assert_called_once()
-        assert coordinator._remote_temp_mode is False
+        # Remote mode should remain enabled so we retry next cycle
+        assert coordinator._remote_temp_mode is True
 
 
 @pytest.mark.asyncio
 async def test_send_remote_temperature_entity_unknown(
     hass, mock_mitsubishi_controller, mock_config_entry_experimental
 ):
-    """Test _send_remote_temperature when external entity is unknown."""
+    """Test _send_remote_temperature when external entity is unknown.
+
+    When entity is unknown, we temporarily switch to internal mode but keep
+    remote_temp_mode enabled so we auto-resume when entity becomes available.
+    """
     mock_config_entry_experimental.add_to_hass(hass)
 
     # Set the entity state to unknown
@@ -309,15 +324,21 @@ async def test_send_remote_temperature_entity_unknown(
     with patch.object(hass, "async_add_executor_job", AsyncMock()) as mock_executor:
         await coordinator._send_remote_temperature()
 
+        # Should call set_current_temperature with None to temporarily use internal
         mock_executor.assert_called_once()
-        assert coordinator._remote_temp_mode is False
+        # Remote mode should remain enabled so we retry next cycle
+        assert coordinator._remote_temp_mode is True
 
 
 @pytest.mark.asyncio
 async def test_send_remote_temperature_invalid_value(
     hass, mock_mitsubishi_controller, mock_config_entry_experimental
 ):
-    """Test _send_remote_temperature when temperature value is invalid."""
+    """Test _send_remote_temperature when temperature value is invalid.
+
+    When value is invalid, we temporarily switch to internal mode but keep
+    remote_temp_mode enabled so we retry next cycle (value may become valid).
+    """
     mock_config_entry_experimental.add_to_hass(hass)
 
     # Set the entity state to an invalid value
@@ -331,8 +352,10 @@ async def test_send_remote_temperature_invalid_value(
     with patch.object(hass, "async_add_executor_job", AsyncMock()) as mock_executor:
         await coordinator._send_remote_temperature()
 
+        # Should call set_current_temperature with None to temporarily use internal
         mock_executor.assert_called_once()
-        assert coordinator._remote_temp_mode is False
+        # Remote mode should remain enabled so we retry next cycle
+        assert coordinator._remote_temp_mode is True
 
 
 @pytest.mark.asyncio

@@ -102,7 +102,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
                 self._startup_mode_applied = True
                 if self._remote_temp_mode:
                     _LOGGER.info("Restoring remote temperature mode from persisted state")
-                    await self._send_remote_temperature(is_startup=True)
+                    await self._send_remote_temperature()
                 else:
                     _LOGGER.debug("Starting with internal temperature mode")
             elif self._remote_temp_mode:
@@ -117,12 +117,13 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         )
         return state
 
-    async def _send_remote_temperature(self, is_startup: bool = False) -> None:
+    async def _send_remote_temperature(self) -> None:
         """Send remote temperature to AC if configured and available.
 
-        Args:
-            is_startup: If True, don't permanently disable remote mode on failures.
-                       This handles the case where external entities aren't ready yet.
+        If the external temperature entity is unavailable, the AC is temporarily
+        switched to use its internal sensor, but remote mode remains enabled so
+        we automatically resume sending remote temperatures when the entity
+        becomes available again.
         """
         if self.config_entry is None:
             return
@@ -139,37 +140,30 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
         state = self.hass.states.get(external_entity_id)
 
         if state is None:
-            if is_startup:
-                _LOGGER.warning(
-                    "External temperature entity %s not found during startup, "
-                    "will retry on next update cycle",
-                    external_entity_id,
-                )
-                # Don't disable remote mode - entity may not be loaded yet
-                return
             _LOGGER.warning(
-                "External temperature entity %s not found, falling back to internal sensor",
+                "External temperature entity %s not found, "
+                "temporarily using internal sensor (will retry)",
                 external_entity_id,
             )
-            await self.set_remote_temp_mode(False)
+            # Tell AC to use internal sensor temporarily, but don't disable remote mode
+            # so we automatically resume when the entity becomes available
+            await self.hass.async_add_executor_job(
+                self.controller.set_current_temperature, None
+            )
             return
 
         if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-            if is_startup:
-                _LOGGER.warning(
-                    "External temperature entity %s is %s during startup, "
-                    "will retry on next update cycle",
-                    external_entity_id,
-                    state.state,
-                )
-                # Don't disable remote mode - entity may not be ready yet
-                return
             _LOGGER.warning(
-                "External temperature entity %s is %s, falling back to internal sensor",
+                "External temperature entity %s is %s, "
+                "temporarily using internal sensor (will retry)",
                 external_entity_id,
                 state.state,
             )
-            await self.set_remote_temp_mode(False)
+            # Tell AC to use internal sensor temporarily, but don't disable remote mode
+            # so we automatically resume when the entity becomes available
+            await self.hass.async_add_executor_job(
+                self.controller.set_current_temperature, None
+            )
             return
 
         try:
@@ -184,9 +178,14 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             )
         except (ValueError, TypeError) as e:
             _LOGGER.error(
-                "Invalid temperature value '%s' from %s: %s, falling back to internal sensor",
+                "Invalid temperature value '%s' from %s: %s, "
+                "temporarily using internal sensor (will retry)",
                 state.state,
                 external_entity_id,
                 e,
             )
-            await self.set_remote_temp_mode(False)
+            # Tell AC to use internal sensor temporarily, but don't disable remote mode
+            # Invalid values might be transient (e.g., during sensor reconfiguration)
+            await self.hass.async_add_executor_job(
+                self.controller.set_current_temperature, None
+            )
