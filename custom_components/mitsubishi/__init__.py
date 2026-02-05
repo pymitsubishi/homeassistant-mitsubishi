@@ -139,9 +139,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # This prevents the AC from being stuck with stale remote temperature data
         if coordinator.remote_temp_mode:
             try:
-                _LOGGER.info(
-                    "Switching AC to internal temperature sensor during unload"
-                )
+                _LOGGER.info("Switching AC to internal temperature sensor during unload")
                 await hass.async_add_executor_job(
                     coordinator.controller.set_current_temperature, None
                 )

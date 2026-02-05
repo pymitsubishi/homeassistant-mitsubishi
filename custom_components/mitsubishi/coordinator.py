@@ -147,9 +147,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             )
             # Tell AC to use internal sensor temporarily, but don't disable remote mode
             # so we automatically resume when the entity becomes available
-            await self.hass.async_add_executor_job(
-                self.controller.set_current_temperature, None
-            )
+            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
             return
 
         if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
@@ -161,9 +159,7 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             )
             # Tell AC to use internal sensor temporarily, but don't disable remote mode
             # so we automatically resume when the entity becomes available
-            await self.hass.async_add_executor_job(
-                self.controller.set_current_temperature, None
-            )
+            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
             return
 
         try:
@@ -186,6 +182,4 @@ class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
             )
             # Tell AC to use internal sensor temporarily, but don't disable remote mode
             # Invalid values might be transient (e.g., during sensor reconfiguration)
-            await self.hass.async_add_executor_job(
-                self.controller.set_current_temperature, None
-            )
+            await self.hass.async_add_executor_job(self.controller.set_current_temperature, None)
