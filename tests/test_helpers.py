@@ -45,6 +45,8 @@ async def test_async_unload_entry(hass, mock_config_entry, mock_coordinator):
     """Test unloading of config entry."""
     # Set up the data as if the integration was already loaded
     hass.data = {"mitsubishi": {mock_config_entry.entry_id: mock_coordinator}}
+    # Remote temp mode disabled - should not try to switch to internal
+    mock_coordinator.remote_temp_mode = False
 
     # Mock the async_unload_platforms method to return True
     with patch.object(
@@ -54,6 +56,56 @@ async def test_async_unload_entry(hass, mock_config_entry, mock_coordinator):
 
         assert result is True
         mock_unload.assert_awaited_once()
+        mock_coordinator.controller.api.close.assert_called_once()
+        # set_current_temperature should NOT be called when remote mode is disabled
+        mock_coordinator.controller.set_current_temperature.assert_not_called()
+        assert mock_config_entry.entry_id not in hass.data["mitsubishi"]
+
+
+@pytest.mark.asyncio
+async def test_async_unload_entry_with_remote_temp_mode(hass, mock_config_entry, mock_coordinator):
+    """Test unloading switches AC to internal sensor when remote temp mode is enabled."""
+    # Set up the data as if the integration was already loaded
+    hass.data = {"mitsubishi": {mock_config_entry.entry_id: mock_coordinator}}
+    # Remote temp mode enabled - should switch to internal on unload
+    mock_coordinator.remote_temp_mode = True
+
+    # Mock the async_unload_platforms method to return True
+    with patch.object(
+        hass.config_entries, "async_unload_platforms", return_value=True
+    ) as mock_unload:
+        result = await async_unload_entry(hass, mock_config_entry)
+
+        assert result is True
+        mock_unload.assert_awaited_once()
+        # Should call set_current_temperature(None) to switch to internal
+        mock_coordinator.controller.set_current_temperature.assert_called_once_with(None)
+        mock_coordinator.controller.api.close.assert_called_once()
+        assert mock_config_entry.entry_id not in hass.data["mitsubishi"]
+
+
+@pytest.mark.asyncio
+async def test_async_unload_entry_remote_temp_switch_fails(
+    hass, mock_config_entry, mock_coordinator
+):
+    """Test unloading continues even if switching to internal sensor fails."""
+    # Set up the data as if the integration was already loaded
+    hass.data = {"mitsubishi": {mock_config_entry.entry_id: mock_coordinator}}
+    # Remote temp mode enabled
+    mock_coordinator.remote_temp_mode = True
+    # But switching to internal fails
+    mock_coordinator.controller.set_current_temperature.side_effect = Exception("Connection failed")
+
+    # Mock the async_unload_platforms method to return True
+    with patch.object(
+        hass.config_entries, "async_unload_platforms", return_value=True
+    ) as mock_unload:
+        result = await async_unload_entry(hass, mock_config_entry)
+
+        # Should still return True and close the API
+        assert result is True
+        mock_unload.assert_awaited_once()
+        mock_coordinator.controller.set_current_temperature.assert_called_once_with(None)
         mock_coordinator.controller.api.close.assert_called_once()
         assert mock_config_entry.entry_id not in hass.data["mitsubishi"]
 

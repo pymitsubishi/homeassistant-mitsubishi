@@ -132,8 +132,26 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok:
-        # Clean up coordinator and close API connection
+        # Clean up coordinator
         coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+
+        # If remote temperature mode was enabled, tell the AC to use internal sensor
+        # This prevents the AC from being stuck with stale remote temperature data
+        if coordinator.remote_temp_mode:
+            try:
+                _LOGGER.info(
+                    "Switching AC to internal temperature sensor during unload"
+                )
+                await hass.async_add_executor_job(
+                    coordinator.controller.set_current_temperature, None
+                )
+            except Exception:
+                _LOGGER.warning(
+                    "Failed to switch AC to internal sensor during unload, "
+                    "AC may continue using last remote temperature"
+                )
+
+        # Close API connection
         await hass.async_add_executor_job(coordinator.controller.api.close)
 
     return unload_ok
