@@ -49,7 +49,7 @@ To add the this repository to HACS in your Home Assistant instance, use this My 
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=homeassistant-mitsubishi&owner=pymitsubishi&category=Integration)
 
-After installation, please restart Home Assistant. To add Dynamic Energy Cost to your Home Assistant instance, use this My button:
+After installation, please restart Home Assistant. To add Mitsubishi Air Conditioner to your Home Assistant instance, use this My button:
 
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=homeassistant-mitsubishi)
 
