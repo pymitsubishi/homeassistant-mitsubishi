@@ -42,22 +42,38 @@ pytest tests --cov=custom_components/mitsubishi --cov-report=term-missing -v
 
 ## Installation
 
-### HACS (Recommended)
+### Install using HACS (recommended)
+If you do not have HACS installed yet visit https://hacs.xyz for installation instructions.
 
-1. Open HACS in Home Assistant
-2. Go to "Integrations"
-3. Click the three dots in the top right corner
-4. Select "Custom repositories"
-5. Add `https://github.com/pymitsubishi/homeassistant-mitsubishi` as an integration
-6. Install the integration
-7. Restart Home Assistant
+To add the this repository to HACS in your Home Assistant instance, use this My button:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=homeassistant-mitsubishi&owner=pymitsubishi&category=Integration)
+
+After installation, please restart Home Assistant. To add Mitsubishi Air Conditioner to your Home Assistant instance, use this My button:
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=homeassistant-mitsubishi)
+
+<details>
+<summary><b> Manual configuration steps</b></summary>
+
+### Semi-Manual Installation with HACS
+
+1. In Home Assistant go to HACS integrations section.
+2. Click on the 3 dots in the top right corner.
+3. Select "Custom repositories".
+4. Add the URL (https://github.com/pymitsubishi/homeassistant-mitsubishi) to the repository.
+5. Select the integration category.
+6. Click the "ADD" button.
+7. Now you are able to download the integration.
 
 ### Manual Installation
 
-1. Copy the `custom_components/mitsubishi` folder to your `custom_components` directory
-2. Restart Home Assistant
-3. Go to Configuration → Integrations
-4. Click "Add Integration" and search for "Mitsubishi Air Conditioner"
+1. Download the [latest release of homeassistant-mitsubishi](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases/latest) and extract its contents.
+2. Copy the `mitsubishi` folder into the `custom_components` directory located typically at `/config/custom_components/` in your Home Assistant directory.
+3. Restart Home Assistant to recognize the newly added custom component.  
+  <a href="https://my.home-assistant.io/redirect/developer_call_service/?service=homeassistant%2Erestart" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/developer_call_service.svg" alt="Open your Home Assistant instance and show your service developer tools with a specific action selected." /></a>
+
+</details>
 
 ## Configuration
 
