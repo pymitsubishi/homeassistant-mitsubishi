@@ -18,12 +18,12 @@
       },
       "experimental": {
         "title": "Experimental Features Configuration",
-        "description": "⚠️ WAARSCHUWING: Wanneer Home Assistant server offline gaat of de netwerk connectiviteit met de AC verliest terwijl "remote temperature" actief is, dan zal de AC de laatst ontvangen temperatuur blijven gebruiken. De integratie zal automatisch terugvallen op de interne sensor, wanneer de externe sensor onbereikbaar is of een ongelgdige waarde bevat terwijl HA aan het draaien is.",
+        "description": "⚠️ WAARSCHUWING: Wanneer Home Assistant server offline gaat of de netwerk connectiviteit met de AC verliest terwijl 'remote temperature mode' actief is, dan zal de AC de laatst ontvangen temperatuur blijven gebruiken. De integratie zal automatisch terugvallen op de interne sensor, wanneer de externe sensor onbereikbaar is of een ongelgdige waarde bevat terwijl HA aan het draaien is.",
         "data": {
           "external_temperature_entity": "Externe Temperature Sensor"
         },
         "data_description": {
-          "external_temperature_entity": "Selecteer een temperatuur sensor om te gebruiken als kamer temperatuur wanneer "remote temperature mode" is geselecteerd. Laat leeg om enkel de interne sensor te gebruiken."
+          "external_temperature_entity": "Selecteer een temperatuur sensor om te gebruiken als kamer temperatuur wanneer 'remote temperature mode' is geselecteerd. Laat leeg om enkel de interne sensor te gebruiken."
         }
       }
     },
@@ -55,12 +55,12 @@
       },
       "experimental": {
         "title": "Experimental Features Configuration",
-        "description": "⚠️ WAARSCHUWING: Wanneer Home Assistant server offline gaat of de netwerk connectiviteit met de AC verliest terwijl "remote temperature" actief is, dan zal de AC de laatst ontvangen temperatuur blijven gebruiken. De integratie zal automatisch terugvallen op de interne sensor, wanneer de externe sensor onbereikbaar is of een ongelgdige waarde bevat terwijl HA aan het draaien is.",
+        "description": "⚠️ WAARSCHUWING: Wanneer Home Assistant server offline gaat of de netwerk connectiviteit met de AC verliest terwijl 'remote temperature mode' actief is, dan zal de AC de laatst ontvangen temperatuur blijven gebruiken. De integratie zal automatisch terugvallen op de interne sensor, wanneer de externe sensor onbereikbaar is of een ongelgdige waarde bevat terwijl HA aan het draaien is.",
         "data": {
           "external_temperature_entity": "Externe Temperatuur Sensor"
         },
         "data_description": {
-          "external_temperature_entity": "Selecteer een temperatuur sensor om te gebruiken als kamer temperatuur wanneer "remote temperature mode" is geselecteerd. Laat leeg om enkel de interne sensor te gebruiken."
+          "external_temperature_entity": "Selecteer een temperatuur sensor om te gebruiken als kamer temperatuur wanneer 'remote temperature mode' is geselecteerd. Laat leeg om enkel de interne sensor te gebruiken."
         }
       }
     },
