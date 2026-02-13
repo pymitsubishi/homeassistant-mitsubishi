@@ -1,0 +1,72 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mitsubishi Air Conditioner",
+        "description": "Stel de Mitsubishi MAC-577IF-2E air conditioner in. De encryption key is standaard 'unregistered' wat werkt voor de meeste toestellen. Enkel aanpassen waneer het toestel een custom key gebruikt.",
+        "data": {
+          "host": "IP Address",
+          "encryption_key": "Encryption Key (standaard: unregistered)",
+          "admin_username": "Admin Username (standaard: admin)",
+          "admin_password": "Admin Password (standaard: me1debug@0567)",
+          "scan_interval": "Update Interval (seconden, 10-300)",
+          "experimental_features": "Activeer experimental features"
+        },
+        "data_description": {
+          "experimental_features": "Activeer experimental features zoals externe temperatuur sensor support. Deze features kunnen in de toekomst veranderen of verdwijnen in toekomstige versies."
+        }
+      },
+      "experimental": {
+        "title": "Experimental Features Configuration",
+        "description": "⚠️ WAARSCHUWING: Wanneer Home Assistant server offline gaat of de netwerk connectiviteit met de AC verliest terwijl 'remote temperature mode' actief is, dan zal de AC de laatst ontvangen temperatuur blijven gebruiken. De integratie zal automatisch terugvallen op de interne sensor, wanneer de externe sensor onbereikbaar is of een ongelgdige waarde bevat terwijl HA aan het draaien is.",
+        "data": {
+          "external_temperature_entity": "Externe Temperature Sensor"
+        },
+        "data_description": {
+          "external_temperature_entity": "Selecteer een temperatuur sensor om te gebruiken als kamer temperatuur wanneer 'remote temperature mode' is geselecteerd. Laat leeg om enkel de interne sensor te gebruiken."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Het lukt niet om te connecteren met de air conditioner. Gelieve het volgende te controleren: IP address, encryption key en dat het toestel bereikbaar is op uw netwerk.",
+      "unknown": "Onverwachte foutmelding, gelieve opnieuw te proberen."
+    },
+    "abort": {
+      "already_configured": "Het toestel is reeds ingesteld"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Herinstellen Mitsubishi Air Conditioner",
+        "description": "De configuraite instellingen van de Mitsubishi AC updaten. Aanpassingen zullen worden toegepast na validatie en de integratie zal herstart worden.",
+        "data": {
+          "host": "IP Address",
+          "encryption_key": "Encryption Key (standaard: unregistered)",
+          "admin_username": "Admin Username (standaard: admin)",
+          "admin_password": "Admin Password (standaard: me1debug@0567)",
+          "scan_interval": "Update Interval (seconden, 10-300)",
+          "enable_capability_detection": "Activeer capability detection",
+          "experimental_features": "Activeer experimentele features"
+        },
+        "data_description": {
+          "experimental_features": "Activeer experimental features zoals externe temperatuur sensor support. Deze features kunnen in de toekomst veranderen of verdwijnen in toekomstige versies."
+        }
+      },
+      "experimental": {
+        "title": "Experimental Features Configuration",
+        "description": "⚠️ WAARSCHUWING: Wanneer Home Assistant server offline gaat of de netwerk connectiviteit met de AC verliest terwijl 'remote temperature mode' actief is, dan zal de AC de laatst ontvangen temperatuur blijven gebruiken. De integratie zal automatisch terugvallen op de interne sensor, wanneer de externe sensor onbereikbaar is of een ongelgdige waarde bevat terwijl HA aan het draaien is.",
+        "data": {
+          "external_temperature_entity": "Externe Temperatuur Sensor"
+        },
+        "data_description": {
+          "external_temperature_entity": "Selecteer een temperatuur sensor om te gebruiken als kamer temperatuur wanneer 'remote temperature mode' is geselecteerd. Laat leeg om enkel de interne sensor te gebruiken."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Het lukt niet om te connecteren met de air conditioner. Gelieve het volgende te controleren: IP address, encryption key en dat het toestel bereikbaar is op uw netwerk.",
+      "unknown": "Onverwachte foutmelding, gelieve opnieuw te proberen."
+    }
+  }
+}
