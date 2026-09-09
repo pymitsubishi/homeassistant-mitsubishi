@@ -67,7 +67,9 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
             else f"Mitsubishi AC ({config_entry.data['host']})",
             hw_version=device_mac,
             serial_number=device_serial,
-            connections={(CONNECTION_NETWORK_MAC, format_mac(device_mac))} if device_serial else set(),
+            connections={(CONNECTION_NETWORK_MAC, format_mac(device_mac))}
+            if device_serial
+            else set(),
             configuration_url=f"http://{config_entry.data['host']}",
         )
 

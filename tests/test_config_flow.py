@@ -335,11 +335,13 @@ class TestConfigFlow:
         assert mock_entry.data[CONF_HOST] == "192.168.1.100"
 
         result = await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": config_entries.SOURCE_DHCP}, data=DhcpServiceInfo(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_DHCP},
+            data=DhcpServiceInfo(
                 hostname="mitsubishi",
                 ip="192.168.1.101",
                 macaddress="001122334455",
-            )
+            ),
         )
         assert result["type"] is FlowResultType.ABORT
         assert result["reason"] == "already_configured"

@@ -210,9 +210,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             options=options,
         )
 
-    async def async_step_dhcp(
-        self, discovery_info: DhcpServiceInfo
-    ) -> Any:
+    async def async_step_dhcp(self, discovery_info: DhcpServiceInfo) -> Any:
         """Handle dhcp discovery to update existing entries.
 
         This flow is triggered only by DHCP discovery of known devices.
