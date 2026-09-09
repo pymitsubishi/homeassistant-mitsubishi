@@ -12,6 +12,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
+from homeassistant.helpers.device_registry import format_mac
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from pymitsubishi import MitsubishiAPI, MitsubishiController
 
 from .const import (
@@ -202,6 +204,18 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data=self._connection_data,
             options=options,
         )
+
+    async def async_step_dhcp(
+        self, discovery_info: DhcpServiceInfo
+    ) -> Any:
+        """Handle dhcp discovery to update existing entries.
+
+        This flow is triggered only by DHCP discovery of known devices.
+        """
+        await self.async_set_unique_id(format_mac(discovery_info.macaddress))
+        self._abort_if_unique_id_configured(updates={CONF_HOST: discovery_info.ip})
+
+        return self.async_abort(reason="unknown")
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
