@@ -13,8 +13,13 @@ from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
 from homeassistant.helpers.device_registry import format_mac
-from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from pymitsubishi import MitsubishiAPI, MitsubishiController
+
+try:
+    from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
+except ImportError:
+    from homeassistant.components.dhcp import DhcpServiceInfo  # deprecated in Home Assistant 2026.2
+
 
 from .const import (
     CONF_ADMIN_PASSWORD,

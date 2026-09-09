@@ -26,6 +26,11 @@ from custom_components.mitsubishi.const import (
 
 from . import TEST_SYSTEM_DATA, USER_INPUT
 
+try:
+    from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
+except ImportError:
+    from homeassistant.components.dhcp import DhcpServiceInfo  # deprecated in Home Assistant 2026.2
+
 
 async def test_form(hass: HomeAssistant) -> None:
     """Test that form shows up."""
@@ -309,6 +314,36 @@ class TestConfigFlow:
 
             # Verify API was closed even when exception occurs
             mock_api.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_reconfigure_dhcp(self, hass: HomeAssistant, mock_api, mock_controller) -> None:
+        """Test reconfiguring existing entry."""
+
+        mock_entry = MockConfigEntry(
+            domain=DOMAIN,
+            title="Test Device",
+            data={
+                CONF_HOST: "192.168.1.100",
+                CONF_ENCRYPTION_KEY: "test_key",
+                CONF_ADMIN_USERNAME: "admin",
+                CONF_ADMIN_PASSWORD: "password",
+                CONF_SCAN_INTERVAL: 30,
+            },
+            entry_id="test_entry_id",
+        )
+        mock_entry.add_to_hass(hass)
+        assert mock_entry.data[CONF_HOST] == "192.168.1.100"
+
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_DHCP}, data=DhcpServiceInfo(
+                hostname="mitsubishi",
+                ip="192.168.1.101",
+                macaddress="001122334455",
+            )
+        )
+        assert result["type"] is FlowResultType.ABORT
+        assert result["reason"] == "already_configured"
+        assert mock_entry.data[CONF_HOST] == "192.168.1.101"
 
 
 class TestOptionsFlow:

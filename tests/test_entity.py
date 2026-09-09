@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
 
 from custom_components.mitsubishi.const import DOMAIN
 from custom_components.mitsubishi.entity import MitsubishiEntity
@@ -35,6 +36,7 @@ async def test_mitsubishi_entity_initialization(hass):
     assert entity.device_info["name"] == "Mitsubishi AC 33:44:55"
     assert entity.device_info["hw_version"] == "00:11:22:33:44:55"
     assert entity.device_info["serial_number"] == "TEST123456"
+    assert entity.device_info["connections"] == {CONNECTION_NETWORK_MAC: "00:11:22:33:44:55"}
 
     # Check unique ID
     assert entity.unique_id == "00:11:22:33:44:55_test_key"
@@ -92,6 +94,7 @@ async def test_mitsubishi_entity_initialization_with_none_data(hass):
     assert entity.device_info["name"] == "Mitsubishi AC 68.1.100"  # Last 8 chars of IP
     assert entity.device_info["hw_version"] == "192.168.1.100"
     assert entity.device_info["serial_number"] is None
+    assert entity.device_info["connections"] == set()  # No network MAC available
 
     # Check unique ID
     assert entity.unique_id == "192.168.1.100_test_key"
