@@ -319,22 +319,25 @@ class TestConfigFlow:
     async def test_reconfigure_dhcp(self, hass: HomeAssistant, mock_api, mock_controller) -> None:
         """Test reconfiguring existing entry."""
 
-        mock_entry = MockConfigEntry(
-            domain=DOMAIN,
-            title="Test Device",
-            data={
-                CONF_HOST: "192.168.1.100",
-                CONF_ENCRYPTION_KEY: "test_key",
-                CONF_ADMIN_USERNAME: "admin",
-                CONF_ADMIN_PASSWORD: "password",
-                CONF_SCAN_INTERVAL: 30,
-            },
-            entry_id="00:11:22:33:44:55",
-        )
-        mock_entry.add_to_hass(hass)
-        assert mock_entry.data[CONF_HOST] == "192.168.1.100"
-
         result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_USER}
+        )
+
+        with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class:
+            mock_api_class.return_value = mock_api
+
+            with patch(
+                "custom_components.mitsubishi.config_flow.MitsubishiController"
+            ) as mock_controller_class:
+                mock_controller_class.return_value = mock_controller
+
+                result2 = await hass.config_entries.flow.async_configure(
+                    result["flow_id"],
+                    {"host": "192.168.1.100"},
+                )
+                assert result2["type"] == FlowResultType.CREATE_ENTRY
+
+        result2 = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": config_entries.SOURCE_DHCP},
             data=DhcpServiceInfo(
@@ -343,9 +346,12 @@ class TestConfigFlow:
                 macaddress="001122334455",
             ),
         )
-        assert result["type"] is FlowResultType.ABORT
-        assert result["reason"] == "already_configured"
-        assert mock_entry.data[CONF_HOST] == "192.168.1.101"
+        assert result2["type"] is FlowResultType.ABORT
+        assert result2["reason"] == "already_configured"
+
+        entry = hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, "00:11:22:33:44:55")
+        assert entry
+        assert entry.data[CONF_HOST] == "192.168.1.101"
 
 
 class TestOptionsFlow:
