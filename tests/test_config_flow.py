@@ -26,6 +26,11 @@ from custom_components.mitsubishi.const import (
 
 from . import TEST_SYSTEM_DATA, USER_INPUT
 
+try:
+    from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
+except ImportError:
+    from homeassistant.components.dhcp import DhcpServiceInfo  # deprecated in Home Assistant 2026.2
+
 
 async def test_form(hass: HomeAssistant) -> None:
     """Test that form shows up."""
@@ -309,6 +314,44 @@ class TestConfigFlow:
 
             # Verify API was closed even when exception occurs
             mock_api.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_reconfigure_dhcp(self, hass: HomeAssistant, mock_api, mock_controller) -> None:
+        """Test reconfiguring existing entry."""
+
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_USER}
+        )
+
+        with patch("custom_components.mitsubishi.config_flow.MitsubishiAPI") as mock_api_class:
+            mock_api_class.return_value = mock_api
+
+            with patch(
+                "custom_components.mitsubishi.config_flow.MitsubishiController"
+            ) as mock_controller_class:
+                mock_controller_class.return_value = mock_controller
+
+                result2 = await hass.config_entries.flow.async_configure(
+                    result["flow_id"],
+                    {"host": "192.168.1.100"},
+                )
+                assert result2["type"] == FlowResultType.CREATE_ENTRY
+
+        result2 = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_DHCP},
+            data=DhcpServiceInfo(
+                hostname="mitsubishi",
+                ip="192.168.1.101",
+                macaddress="001122334455",
+            ),
+        )
+        assert result2["type"] is FlowResultType.ABORT
+        assert result2["reason"] == "already_configured"
+
+        entry = hass.config_entries.async_entry_for_domain_unique_id(DOMAIN, "00:11:22:33:44:55")
+        assert entry
+        assert entry.data[CONF_HOST] == "192.168.1.101"
 
 
 class TestOptionsFlow:

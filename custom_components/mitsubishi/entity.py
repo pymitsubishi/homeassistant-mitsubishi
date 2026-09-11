@@ -8,7 +8,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo, format_mac
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_OPTIMISTIC_UPDATES, DEFAULT_OPTIMISTIC_UPDATES, DOMAIN
@@ -67,6 +67,9 @@ class MitsubishiEntity(CoordinatorEntity[MitsubishiDataUpdateCoordinator]):
             else f"Mitsubishi AC ({config_entry.data['host']})",
             hw_version=device_mac,
             serial_number=device_serial,
+            connections={(CONNECTION_NETWORK_MAC, format_mac(device_mac))}
+            if device_serial
+            else set(),
             configuration_url=f"http://{config_entry.data['host']}",
         )
 
