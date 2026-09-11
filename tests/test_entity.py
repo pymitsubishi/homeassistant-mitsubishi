@@ -36,7 +36,7 @@ async def test_mitsubishi_entity_initialization(hass):
     assert entity.device_info["name"] == "Mitsubishi AC 33:44:55"
     assert entity.device_info["hw_version"] == "00:11:22:33:44:55"
     assert entity.device_info["serial_number"] == "TEST123456"
-    assert entity.device_info["connections"] == {CONNECTION_NETWORK_MAC: "00:11:22:33:44:55"}
+    assert entity.device_info["connections"] == {(CONNECTION_NETWORK_MAC, "00:11:22:33:44:55")}
 
     # Check unique ID
     assert entity.unique_id == "00:11:22:33:44:55_test_key"

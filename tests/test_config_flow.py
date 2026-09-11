@@ -329,7 +329,7 @@ class TestConfigFlow:
                 CONF_ADMIN_PASSWORD: "password",
                 CONF_SCAN_INTERVAL: 30,
             },
-            entry_id="test_entry_id",
+            entry_id="00:11:22:33:44:55",
         )
         mock_entry.add_to_hass(hass)
         assert mock_entry.data[CONF_HOST] == "192.168.1.100"
