@@ -12,7 +12,7 @@ A Home Assistant custom component for controlling and monitoring Mitsubishi MAC-
 
 This repository uses GitHub Actions for continuous integration:
 
-- **Python Versions**: 3.12, 3.13
+- **Python Version**: 3.14
 - **Tests**: Runs pytest with coverage and enforces a 100% code coverage threshold.
 - **Lint and Format**: Uses ruff for linting and formatting.
 - **Type Checking**: Uses mypy for static type checking.
@@ -70,7 +70,7 @@ After installation, please restart Home Assistant. To add Mitsubishi Air Conditi
 
 1. Download the [latest release of homeassistant-mitsubishi](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases/latest) and extract its contents.
 2. Copy the `mitsubishi` folder into the `custom_components` directory located typically at `/config/custom_components/` in your Home Assistant directory.
-3. Restart Home Assistant to recognize the newly added custom component.  
+3. Restart Home Assistant to recognize the newly added custom component.
   <a href="https://my.home-assistant.io/redirect/developer_call_service/?service=homeassistant%2Erestart" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/developer_call_service.svg" alt="Open your Home Assistant instance and show your service developer tools with a specific action selected." /></a>
 
 </details>
@@ -109,7 +109,7 @@ The integration will automatically discover your device and create the appropria
 
 ## Requirements
 
-- Home Assistant 2025.1 or later (requires Python 3.12+)
+- Home Assistant 2026.11 or later (requires Python 3.14+)
 - [pymitsubishi](https://pypi.org/project/pymitsubishi/) library (automatically installed)
 - Mitsubishi air conditioner with MAC-577IF-2E WiFi adapter.
   MAC-587 has been reported working as well.

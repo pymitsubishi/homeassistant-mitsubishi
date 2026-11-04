@@ -6,7 +6,7 @@ Thank you for your interest in contributing to the Home Assistant Mitsubishi Int
 
 ### Prerequisites
 
-- Python 3.12 or higher
+- Python 3.14 or higher
 - Git
 - Virtual environment (recommended)
 - Home Assistant development environment (optional but recommended)
@@ -297,7 +297,7 @@ This integration depends on the [pymitsubishi](https://github.com/pymitsubishi/p
 
 ### Home Assistant Compatibility
 
-- Minimum supported Home Assistant version is specified in `manifest.json`
+- Minimum supported Home Assistant version is specified in `hacs.json`
 - Follow Home Assistant's deprecation policy
 - Test with both minimum and latest HA versions
 

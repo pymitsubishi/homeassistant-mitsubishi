@@ -7,7 +7,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.mitsubishi.config_flow import (
     CannotConnect,
@@ -120,6 +120,13 @@ def mock_controller():
     return controller
 
 
+@pytest.fixture
+def mock_setup_entry():
+    """Skip setting up the entry that a successful flow creates."""
+    with patch("custom_components.mitsubishi.async_setup_entry", return_value=True) as mock:
+        yield mock
+
+
 class TestConfigFlow:
     """Test the config flow for Mitsubishi Air Conditioner."""
 
@@ -158,6 +165,7 @@ class TestConfigFlow:
                 assert result2["errors"] == {"base": "cannot_connect"}
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("mock_setup_entry")
     async def test_form_success(self, hass: HomeAssistant, mock_api, mock_controller) -> None:
         """Test successful configuration."""
         result = await hass.config_entries.flow.async_init(
@@ -193,6 +201,7 @@ class TestConfigFlow:
                 }
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("mock_setup_entry")
     async def test_form_already_configured(self, hass: HomeAssistant) -> None:
         """Test we handle already configured."""
         # Mock the entry creation first, but don't add it yet
@@ -233,6 +242,7 @@ class TestConfigFlow:
                 assert result2_dup["reason"] == "already_configured"
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("mock_setup_entry")
     async def test_form_with_options(self, hass: HomeAssistant, mock_api, mock_controller) -> None:
         """Test configuration with additional options."""
         result = await hass.config_entries.flow.async_init(
