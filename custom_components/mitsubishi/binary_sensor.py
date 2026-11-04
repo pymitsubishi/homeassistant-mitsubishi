@@ -16,6 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import MitsubishiDataUpdateCoordinator
 from .entity import MitsubishiEntity
+from .telemetry import telemetry_binary_sensors
 
 
 async def async_setup_entry(
@@ -72,6 +73,7 @@ async def async_setup_entry(
         )
     )
 
+    sensors.extend(telemetry_binary_sensors(coordinator, config_entry))
     async_add_entities(sensors)
 
 
