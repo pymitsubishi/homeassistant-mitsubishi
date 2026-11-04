@@ -70,7 +70,7 @@ If the Marketplace asks you to restart Home Assistant, restart it. To add Mitsub
 1. Download the [latest release of homeassistant-mitsubishi](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases/latest) and extract its contents.
 2. Copy the `mitsubishi` folder into the `custom_components` directory located typically at `/config/custom_components/` in your Home Assistant directory.
 3. Restart Home Assistant to recognize the newly added custom component.
-  <a href="https://my.home-assistant.io/redirect/developer_call_service/?service=homeassistant%2Erestart" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/developer_call_service.svg" alt="Open your Home Assistant instance and show your service developer tools with a specific action selected." /></a>
+   <a href="https://my.home-assistant.io/redirect/developer_call_service/?service=homeassistant%2Erestart" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/developer_call_service.svg" alt="Open your Home Assistant instance and show your service developer tools with a specific action selected." /></a>
 
 </details>
 
@@ -88,6 +88,7 @@ The integration will automatically discover your device and create the appropria
 ## Supported Entities
 
 ### Climate
+
 - **Power**: Turn the air conditioner on/off
 - **Temperature**: Set target temperature (16-32°C)
 - **Mode**: Heat, Cool, Auto, Dry, Fan
@@ -95,12 +96,14 @@ The integration will automatically discover your device and create the appropria
 - **Vane Direction**: Vertical and horizontal vane control
 
 ### Sensors
+
 - **Room Temperature**: Current room temperature
 - **Outdoor Temperature**: Outside temperature (if available)
 - **Error Status**: Device error codes and abnormal states
 - **Dehumidifier Level**: Current dehumidifier setting percentage
 
 ### Diagnostic Sensors
+
 - **Unit Information**: Complete device model and configuration details
 - **Firmware Version**: WiFi adapter firmware and version information
 - **Unit Type**: Air conditioner type and manufacturing details
@@ -117,11 +120,13 @@ The integration will automatically discover your device and create the appropria
 ## Troubleshooting
 
 ### Connection Issues
+
 - Ensure your air conditioner is connected to your WiFi network
 - Verify the IP address is correct and accessible from Home Assistant
 - Check firewall settings if connection fails
 
 ### Missing Features
+
 - Some features may not be available depending on your specific model
 - Enable capability detection to automatically discover supported features
 
@@ -155,6 +160,7 @@ Contributions are welcome! Please see our [Contributing Guidelines](CONTRIBUTING
 - Pull request process
 
 Quick start:
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feat/amazing-feature`)
 3. Make your changes following our guidelines

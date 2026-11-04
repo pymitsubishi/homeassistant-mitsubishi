@@ -14,24 +14,28 @@ Thank you for your interest in contributing to the Home Assistant Mitsubishi Int
 ### Setting Up Your Development Environment
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/pymitsubishi/homeassistant-mitsubishi.git
    cd homeassistant-mitsubishi
    ```
 
 2. **Create and activate a virtual environment:**
+
    ```bash
    python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install development dependencies:**
+
    ```bash
    pip install -r requirements-test.txt
    pip install -r requirements.txt
    ```
 
 4. **Install pre-commit hooks:**
+
    ```bash
    pre-commit install
    ```
@@ -59,6 +63,7 @@ Pre-commit hooks run automatically before each commit:
 - **HACS validation**: Ensures compatibility with HACS
 
 To run pre-commit manually:
+
 ```bash
 # Run on all files
 pre-commit run --all-files
@@ -70,6 +75,7 @@ pre-commit run ruff --all-files
 ### Manual Code Quality Checks
 
 #### Formatting (Ruff)
+
 ```bash
 # Check formatting
 ruff format --check custom_components tests
@@ -79,6 +85,7 @@ ruff format custom_components tests
 ```
 
 #### Linting (Ruff)
+
 ```bash
 # Check for linting issues
 ruff check custom_components tests
@@ -88,11 +95,13 @@ ruff check --fix custom_components tests
 ```
 
 #### Type Checking (mypy)
+
 ```bash
 mypy custom_components --config-file mypy.ini
 ```
 
 #### Testing
+
 ```bash
 # Run tests with coverage report
 pytest tests/ -v --cov=custom_components.mitsubishi --cov-report=term-missing
@@ -147,6 +156,7 @@ Tests should cover:
 5. **Coordinator**: Test data fetching and distribution
 
 Example test:
+
 ```python
 import pytest
 from unittest.mock import AsyncMock, patch
@@ -198,12 +208,14 @@ The Marketplace reads the same repository files that HACS did, and the HACS vali
 ### Local Testing
 
 1. **Copy integration to Home Assistant:**
+
    ```bash
    # Assuming HA config is at ~/.homeassistant
    cp -r custom_components/mitsubishi ~/.homeassistant/custom_components/
    ```
 
 2. **Restart Home Assistant:**
+
    ```bash
    # If running in Docker
    docker restart homeassistant
@@ -231,6 +243,7 @@ The Marketplace reads the same repository files that HACS did, and the HACS vali
 ## Making a Pull Request
 
 1. **Create a feature branch:**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -238,11 +251,13 @@ The Marketplace reads the same repository files that HACS did, and the HACS vali
 2. **Make your changes** following Home Assistant and code quality standards
 
 3. **Ensure all tests pass:**
+
    ```bash
    pytest tests/ --cov=custom_components.mitsubishi
    ```
 
 4. **Run pre-commit hooks:**
+
    ```bash
    pre-commit run --all-files
    ```
@@ -250,12 +265,14 @@ The Marketplace reads the same repository files that HACS did, and the HACS vali
 5. **Update documentation** if needed (README.md, strings.json)
 
 6. **Commit your changes:**
+
    ```bash
    git add .
    git commit -m "feat: Add your feature description"
    ```
 
 7. **Push to GitHub:**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -277,6 +294,7 @@ We follow conventional commits for consistency:
 - `ci:` CI/CD changes
 
 Examples:
+
 ```bash
 git commit -m "feat: Add horizontal swing support"
 git commit -m "fix: Correct temperature conversion for Fahrenheit"
