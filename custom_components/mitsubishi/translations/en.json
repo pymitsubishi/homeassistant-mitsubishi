@@ -72,5 +72,86 @@
       "cannot_connect": "Failed to connect to the air conditioner. Please check the IP address, encryption key, and ensure the device is accessible on your network.",
       "unknown": "Unexpected error occurred. Please try again."
     }
+  },
+  "entity": {
+    "sensor": {
+      "telemetry_overview": {
+        "name": "Protocol telemetry"
+      },
+      "telemetry_compressor_frequency": {
+        "name": "Compressor frequency (reported)"
+      },
+      "telemetry_status_flags": {
+        "name": "Run status flags"
+      },
+      "telemetry_actual_fan_code": {
+        "name": "Actual fan speed code"
+      },
+      "telemetry_remote_lock_flags": {
+        "name": "Remote lock flags"
+      },
+      "telemetry_error_display_code_raw": {
+        "name": "Error display code raw"
+      },
+      "telemetry_error_display_code": {
+        "name": "Display error code (candidate; A0 = all clear)"
+      },
+      "telemetry_timer_mode_code": {
+        "name": "Timer mode code"
+      },
+      "telemetry_timer_on_set_raw": {
+        "name": "Timer on set raw"
+      },
+      "telemetry_timer_off_set_raw": {
+        "name": "Timer off set raw"
+      },
+      "telemetry_timer_on_remaining_raw": {
+        "name": "Timer on remaining raw"
+      },
+      "telemetry_timer_off_remaining_raw": {
+        "name": "Timer off remaining raw"
+      },
+      "telemetry_airflow_control_code": {
+        "name": "Airflow control code"
+      },
+      "telemetry_left_vertical_vane_raw": {
+        "name": "Left vertical vane raw"
+      },
+      "telemetry_auto_mode_raw": {
+        "name": "Auto mode raw"
+      },
+      "telemetry_auto_mode_code": {
+        "name": "Auto mode code"
+      },
+      "telemetry_horizontal_vane_extra_flags": {
+        "name": "Horizontal vane extra flags"
+      }
+    },
+    "binary_sensor": {
+      "telemetry_defrost_reported": {
+        "name": "Defrost reported"
+      },
+      "telemetry_preheat_reported": {
+        "name": "Preheat reported"
+      },
+      "telemetry_standby_reported": {
+        "name": "Standby reported"
+      },
+      "telemetry_filter_reported": {
+        "name": "Filter reported"
+      },
+      "telemetry_power_locked": {
+        "name": "Power locked"
+      },
+      "telemetry_mode_locked": {
+        "name": "Mode locked"
+      },
+      "telemetry_temperature_locked": {
+        "name": "Temperature locked"
+      },
+      "telemetry_auto_leader_candidate": {
+        "name": "Auto mode leader (candidate)"
+      }
+    }
   }
 }
