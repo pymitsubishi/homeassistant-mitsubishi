@@ -1,7 +1,7 @@
 # Home Assistant Mitsubishi Air Conditioner Integration
 
 [![CI](https://github.com/pymitsubishi/homeassistant-mitsubishi/workflows/CI/badge.svg?branch=main)](https://github.com/pymitsubishi/homeassistant-mitsubishi/actions)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![Marketplace Custom](https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/#custom-repositories)
 [![GitHub Release](https://img.shields.io/github/release/pymitsubishi/homeassistant-mitsubishi.svg)](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/pymitsubishi/homeassistant-mitsubishi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -42,29 +42,28 @@ pytest tests --cov=custom_components/mitsubishi --cov-report=term-missing -v
 
 ## Installation
 
-### Install using HACS (recommended)
-If you do not have HACS installed yet visit https://hacs.xyz for installation instructions.
+### Install using the Marketplace (recommended)
 
-To add the this repository to HACS in your Home Assistant instance, use this My button:
+The [Marketplace](https://www.home-assistant.io/integrations/marketplace/) comes with Home Assistant. This repository is not in its catalog, so you add it as a custom repository. The Marketplace asks you to connect your GitHub account the first time you add one.
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=homeassistant-mitsubishi&owner=pymitsubishi&category=Integration)
+To open this repository in the Marketplace of your Home Assistant instance, use this My button and select **Install**:
 
-After installation, please restart Home Assistant. To add Mitsubishi Air Conditioner to your Home Assistant instance, use this My button:
+[![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=pymitsubishi&repository=homeassistant-mitsubishi&category=integration)
 
-[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=homeassistant-mitsubishi)
+If the Marketplace asks you to restart Home Assistant, restart it. To add Mitsubishi Air Conditioner to your Home Assistant instance, use this My button:
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=mitsubishi)
 
 <details>
 <summary><b> Manual configuration steps</b></summary>
 
-### Semi-Manual Installation with HACS
+### Adding the repository to the Marketplace by hand
 
-1. In Home Assistant go to HACS integrations section.
-2. Click on the 3 dots in the top right corner.
-3. Select "Custom repositories".
-4. Add the URL (https://github.com/pymitsubishi/homeassistant-mitsubishi) to the repository.
-5. Select the integration category.
-6. Click the "ADD" button.
-7. Now you are able to download the integration.
+1. In Home Assistant, go to **Settings** > **Marketplace**.
+2. In the upper-right corner, select **Add from link**.
+3. Under **GitHub link**, enter `https://github.com/pymitsubishi/homeassistant-mitsubishi`.
+4. Select **Add**. If the Marketplace asks for the type, select **Integration** and select **Add** again.
+5. Open the repository in the list and select **Install**.
 
 ### Manual Installation
 

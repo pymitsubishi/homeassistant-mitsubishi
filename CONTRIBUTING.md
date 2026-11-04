@@ -172,7 +172,7 @@ async def test_setup_entry(hass: HomeAssistant, mock_config_entry):
 **CRITICAL**: Version updates must be synchronized in multiple places:
 
 1. **custom_components/mitsubishi/manifest.json** - `"version": "X.Y.Z"`
-2. **For HACS releases**: Create a GitHub release with tag `vX.Y.Z`
+2. **For Marketplace releases**: Create a GitHub release with tag `vX.Y.Z`
 3. **PyPI dependency**: When pymitsubishi is updated, update the requirement in manifest.json
 
 ### Release Process
@@ -181,15 +181,15 @@ async def test_setup_entry(hass: HomeAssistant, mock_config_entry):
 2. Update CHANGELOG.md
 3. Commit with message: `chore: Release version X.Y.Z`
 4. Create GitHub release with tag `vX.Y.Z`
-5. HACS will automatically pick up the new release
+5. The Marketplace offers the new release as an update
 
-## HACS Compatibility
+## Marketplace Compatibility
 
-Ensure HACS compatibility:
+The Marketplace reads the same repository files that HACS did, and the HACS validation in CI checks them:
 
 1. **hacs.json**: Must be valid and include correct configuration
 2. **manifest.json**: Must include all required fields
-3. **Icons**: PNG format, 256x256 and 512x512 (icon.png, icon@2x.png)
+3. **Brand images**: PNG files in `custom_components/mitsubishi/brand/`, with `icon.png` at 256x256 and `icon@2x.png` at 512x512, plus `logo.png` and `logo@2x.png`
 4. **GitHub Topics**: Repository should have appropriate topics (hacs, home-assistant, integration)
 5. **Documentation**: README.md must be comprehensive
 
@@ -314,6 +314,6 @@ If you have questions:
 
 - [pymitsubishi](https://github.com/pymitsubishi/pymitsubishi) - The Python library this integration uses
 - [Home Assistant](https://github.com/home-assistant/core) - The home automation platform
-- [HACS](https://github.com/hacs/integration) - Home Assistant Community Store
+- [Marketplace](https://www.home-assistant.io/integrations/marketplace/) - Installs and updates community integrations in Home Assistant
 
 Thank you for contributing to the Home Assistant Mitsubishi Integration!
