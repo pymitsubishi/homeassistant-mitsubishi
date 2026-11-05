@@ -2,7 +2,7 @@
 [project]
 name = "homeassistant-mitsubishi"
 description = "Home Assistant integration for Mitsubishi air conditioners"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 
 [tool.ruff]
 target-version = "py312"
@@ -67,7 +67,8 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-addopts = "-v --strict-markers --cov=custom_components.mitsubishi --cov-report=term-missing --cov-report=xml --cov-report=html"
+# respx's pytest plugin would import httpx before Home Assistant installs its httpx alias
+addopts = "-p no:respx -v --strict-markers --cov=custom_components.mitsubishi --cov-report=term-missing --cov-report=xml --cov-report=html"
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::pytest.PytestUnraisableExceptionWarning"
@@ -114,7 +115,7 @@ precision = 2
 show_missing = true
 
 [tool.mypy]
-python_version = "3.12"  # Match minimum supported version
+python_version = "3.14"  # Match minimum supported version
 show_error_codes = true
 follow_imports = "normal"
 local_partial_types = true

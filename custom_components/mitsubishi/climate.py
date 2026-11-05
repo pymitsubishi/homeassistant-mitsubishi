@@ -104,7 +104,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
     _attr_has_entity_name = True
     _attr_name = None
     _attr_icon = "mdi:air-conditioner"
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 0.5
     _attr_min_temp = 16.0
     _attr_max_temp = 31.0
@@ -136,15 +136,15 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         self._config_entry = config_entry
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         try:
             return self.coordinator.data.sensors.room_temperature
         except AttributeError:
             return None
 
     @property
-    def target_temperature(self) -> float | None:
-        if (v := self._optimistic_value("target_temperature")) is not _NO_OPTIMISTIC:
+    def native_target_temperature(self) -> float | None:
+        if (v := self._optimistic_value("native_target_temperature")) is not _NO_OPTIMISTIC:
             return v
         try:
             return self.coordinator.data.general.temperature
@@ -157,7 +157,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
         if temperature is None:
             return
 
-        self._set_optimistic(target_temperature=temperature)
+        self._set_optimistic(native_target_temperature=temperature)
         await self._execute_command_with_refresh(
             f"set temperature to {temperature}°C",
             self.coordinator.controller.set_temperature,

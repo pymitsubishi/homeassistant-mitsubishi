@@ -51,11 +51,11 @@ async def test_current_temperature(hass, mock_coordinator, mock_config_entry):
     climate = MitsubishiClimate(mock_coordinator, mock_config_entry)
 
     # Test with temperature data
-    assert climate.current_temperature == 24.5
+    assert climate.native_current_temperature == 24.5
 
     # Test without temperature data
     mock_coordinator.data = {}
-    assert climate.current_temperature is None
+    assert climate.native_current_temperature is None
 
 
 @pytest.mark.asyncio
@@ -65,11 +65,11 @@ async def test_target_temperature(hass, mock_coordinator, mock_config_entry):
     mock_coordinator.data.general.fine_temperature = 22.0
 
     # Test with target temperature data
-    assert climate.target_temperature == 22.0
+    assert climate.native_target_temperature == 22.0
 
     # Test without target temperature data
     mock_coordinator.data = None
-    assert climate.target_temperature is None
+    assert climate.native_target_temperature is None
 
 
 @pytest.mark.asyncio
@@ -564,20 +564,20 @@ async def test_optimistic_kept_until_device_confirms(
         MitsubishiClimate, mock_coordinator, mock_config_entry_optimistic, hass=hass
     )
 
-    climate._set_optimistic(target_temperature=22.0)
-    assert climate.target_temperature == 22.0
+    climate._set_optimistic(native_target_temperature=22.0)
+    assert climate.native_target_temperature == 22.0
 
     # Device has not applied the change yet -> optimistic value is retained.
     mock_coordinator.data.general.temperature = 21.5
     climate._handle_coordinator_update()
-    assert climate.target_temperature == 22.0
-    assert "target_temperature" in climate._optimistic
+    assert climate.native_target_temperature == 22.0
+    assert "native_target_temperature" in climate._optimistic
 
     # Device now reports the requested value -> optimistic value is dropped.
     mock_coordinator.data.general.temperature = 22.0
     climate._handle_coordinator_update()
-    assert climate.target_temperature == 22.0
-    assert "target_temperature" not in climate._optimistic
+    assert climate.native_target_temperature == 22.0
+    assert "native_target_temperature" not in climate._optimistic
 
 
 @pytest.mark.asyncio
@@ -591,15 +591,15 @@ async def test_optimistic_gives_up_after_max_refreshes(
         MitsubishiClimate, mock_coordinator, mock_config_entry_optimistic, hass=hass
     )
 
-    climate._set_optimistic(target_temperature=22.0)
+    climate._set_optimistic(native_target_temperature=22.0)
     mock_coordinator.data.general.temperature = 21.5
 
     for _ in range(OPTIMISTIC_MAX_REFRESHES):
-        assert climate.target_temperature == 22.0
+        assert climate.native_target_temperature == 22.0
         climate._handle_coordinator_update()
 
-    assert "target_temperature" not in climate._optimistic
-    assert climate.target_temperature == 21.5
+    assert "native_target_temperature" not in climate._optimistic
+    assert climate.native_target_temperature == 21.5
 
 
 @pytest.mark.asyncio
@@ -612,7 +612,7 @@ async def test_optimistic_disabled_is_noop(
     )
 
     mock_coordinator.data.general.temperature = 21.5
-    climate._set_optimistic(target_temperature=22.0)
+    climate._set_optimistic(native_target_temperature=22.0)
 
     assert climate._optimistic == {}
-    assert climate.target_temperature == 21.5
+    assert climate.native_target_temperature == 21.5
