@@ -104,7 +104,7 @@ class MitsubishiClimate(MitsubishiEntity, ClimateEntity):
     _attr_has_entity_name = True
     _attr_name = None
     _attr_icon = "mdi:air-conditioner"
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 0.5
     _attr_min_temp = 16.0
     _attr_max_temp = 31.0
