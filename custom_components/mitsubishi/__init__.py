@@ -74,8 +74,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Fetch initial data
         await coordinator.async_config_entry_first_refresh()
 
-        # Get device information from coordinator data and unit info
-        device_mac = unit_info.get("Adaptor Information", {}).get("MAC address")
+        # Get device information from coordinator data and unit info.
+        # Prefer coordinator.data.mac: it comes from the unauthenticated status
+        # poll that always succeeds, and it's what entity.py uses for every
+        # entity's own device_info. unit_info's MAC comes from the authenticated
+        # /unitinfo page, which silently returns {} on a 401 (wrong admin creds -
+        # the auth on these adapters isn't a fixed vendor default) - using that
+        # MAC here, with a bare `host` fallback, let this registration disagree
+        # with every entity's, producing two devices for one physical unit.
+        device_mac = getattr(coordinator.data, "mac", None) or unit_info.get(
+            "Adaptor Information", {}
+        ).get("MAC address")
         device_serial = unit_info.get("Adaptor Information", {}).get("ID")
         device_model = unit_info.get("Adaptor Information", {}).get("Adaptor name")
 
