@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from homeassistant.const import CONF_HOST, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.mitsubishi.const import (
     CONF_EXPERIMENTAL_FEATURES,

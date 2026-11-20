@@ -6,7 +6,7 @@ Thank you for your interest in contributing to the Home Assistant Mitsubishi Int
 
 ### Prerequisites
 
-- Python 3.12 or higher
+- Python 3.14 or higher
 - Git
 - Virtual environment (recommended)
 - Home Assistant development environment (optional but recommended)
@@ -14,24 +14,28 @@ Thank you for your interest in contributing to the Home Assistant Mitsubishi Int
 ### Setting Up Your Development Environment
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/pymitsubishi/homeassistant-mitsubishi.git
    cd homeassistant-mitsubishi
    ```
 
 2. **Create and activate a virtual environment:**
+
    ```bash
    python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install development dependencies:**
+
    ```bash
    pip install -r requirements-test.txt
    pip install -r requirements.txt
    ```
 
 4. **Install pre-commit hooks:**
+
    ```bash
    pre-commit install
    ```
@@ -59,6 +63,7 @@ Pre-commit hooks run automatically before each commit:
 - **HACS validation**: Ensures compatibility with HACS
 
 To run pre-commit manually:
+
 ```bash
 # Run on all files
 pre-commit run --all-files
@@ -70,6 +75,7 @@ pre-commit run ruff --all-files
 ### Manual Code Quality Checks
 
 #### Formatting (Ruff)
+
 ```bash
 # Check formatting
 ruff format --check custom_components tests
@@ -79,6 +85,7 @@ ruff format custom_components tests
 ```
 
 #### Linting (Ruff)
+
 ```bash
 # Check for linting issues
 ruff check custom_components tests
@@ -88,11 +95,13 @@ ruff check --fix custom_components tests
 ```
 
 #### Type Checking (mypy)
+
 ```bash
 mypy custom_components --config-file mypy.ini
 ```
 
 #### Testing
+
 ```bash
 # Run tests with coverage report
 pytest tests/ -v --cov=custom_components.mitsubishi --cov-report=term-missing
@@ -147,6 +156,7 @@ Tests should cover:
 5. **Coordinator**: Test data fetching and distribution
 
 Example test:
+
 ```python
 import pytest
 from unittest.mock import AsyncMock, patch
@@ -172,7 +182,7 @@ async def test_setup_entry(hass: HomeAssistant, mock_config_entry):
 **CRITICAL**: Version updates must be synchronized in multiple places:
 
 1. **custom_components/mitsubishi/manifest.json** - `"version": "X.Y.Z"`
-2. **For HACS releases**: Create a GitHub release with tag `vX.Y.Z`
+2. **For Marketplace releases**: Create a GitHub release with tag `vX.Y.Z`
 3. **PyPI dependency**: When pymitsubishi is updated, update the requirement in manifest.json
 
 ### Release Process
@@ -181,15 +191,15 @@ async def test_setup_entry(hass: HomeAssistant, mock_config_entry):
 2. Update CHANGELOG.md
 3. Commit with message: `chore: Release version X.Y.Z`
 4. Create GitHub release with tag `vX.Y.Z`
-5. HACS will automatically pick up the new release
+5. The Marketplace offers the new release as an update
 
-## HACS Compatibility
+## Marketplace Compatibility
 
-Ensure HACS compatibility:
+The Marketplace reads the same repository files that HACS did, and the HACS validation in CI checks them:
 
 1. **hacs.json**: Must be valid and include correct configuration
 2. **manifest.json**: Must include all required fields
-3. **Icons**: PNG format, 256x256 and 512x512 (icon.png, icon@2x.png)
+3. **Brand images**: PNG files in `custom_components/mitsubishi/brand/`, with `icon.png` at 256x256 and `icon@2x.png` at 512x512, plus `logo.png` and `logo@2x.png`
 4. **GitHub Topics**: Repository should have appropriate topics (hacs, home-assistant, integration)
 5. **Documentation**: README.md must be comprehensive
 
@@ -198,12 +208,14 @@ Ensure HACS compatibility:
 ### Local Testing
 
 1. **Copy integration to Home Assistant:**
+
    ```bash
    # Assuming HA config is at ~/.homeassistant
    cp -r custom_components/mitsubishi ~/.homeassistant/custom_components/
    ```
 
 2. **Restart Home Assistant:**
+
    ```bash
    # If running in Docker
    docker restart homeassistant
@@ -231,6 +243,7 @@ Ensure HACS compatibility:
 ## Making a Pull Request
 
 1. **Create a feature branch:**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -238,11 +251,13 @@ Ensure HACS compatibility:
 2. **Make your changes** following Home Assistant and code quality standards
 
 3. **Ensure all tests pass:**
+
    ```bash
    pytest tests/ --cov=custom_components.mitsubishi
    ```
 
 4. **Run pre-commit hooks:**
+
    ```bash
    pre-commit run --all-files
    ```
@@ -250,12 +265,14 @@ Ensure HACS compatibility:
 5. **Update documentation** if needed (README.md, strings.json)
 
 6. **Commit your changes:**
+
    ```bash
    git add .
    git commit -m "feat: Add your feature description"
    ```
 
 7. **Push to GitHub:**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -277,6 +294,7 @@ We follow conventional commits for consistency:
 - `ci:` CI/CD changes
 
 Examples:
+
 ```bash
 git commit -m "feat: Add horizontal swing support"
 git commit -m "fix: Correct temperature conversion for Fahrenheit"
@@ -297,7 +315,7 @@ This integration depends on the [pymitsubishi](https://github.com/pymitsubishi/p
 
 ### Home Assistant Compatibility
 
-- Minimum supported Home Assistant version is specified in `manifest.json`
+- Minimum supported Home Assistant version is specified in `hacs.json`
 - Follow Home Assistant's deprecation policy
 - Test with both minimum and latest HA versions
 
@@ -314,6 +332,6 @@ If you have questions:
 
 - [pymitsubishi](https://github.com/pymitsubishi/pymitsubishi) - The Python library this integration uses
 - [Home Assistant](https://github.com/home-assistant/core) - The home automation platform
-- [HACS](https://github.com/hacs/integration) - Home Assistant Community Store
+- [Marketplace](https://www.home-assistant.io/integrations/marketplace/) - Installs and updates community integrations in Home Assistant
 
 Thank you for contributing to the Home Assistant Mitsubishi Integration!

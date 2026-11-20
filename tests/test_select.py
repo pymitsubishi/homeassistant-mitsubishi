@@ -110,7 +110,7 @@ async def test_power_saving_select_extra_state_attributes(
 def mock_config_entry_experimental():
     """Create a mock config entry with experimental features enabled."""
     from homeassistant.const import CONF_HOST
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
     return MockConfigEntry(
         domain=DOMAIN,

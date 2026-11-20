@@ -18,15 +18,6 @@ from . import (
     patch_get_status_summary,
 )
 
-# Import Home Assistant test utilities
-pytest_plugins = "pytest_homeassistant_custom_component"
-
-
-@pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations):
-    """Enable custom integrations defined in the test dir."""
-    yield
-
 
 @pytest.fixture
 def mock_controller():
@@ -74,7 +65,7 @@ def mock_coordinator():
 def mock_config_entry():
     """Create a mock config entry."""
     from homeassistant.const import CONF_HOST
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
     from custom_components.mitsubishi.const import DOMAIN
 
@@ -98,7 +89,7 @@ def mock_config_entry():
 def mock_config_entry_optimistic():
     """Create a mock config entry with optimistic UI updates enabled."""
     from homeassistant.const import CONF_HOST
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
     from custom_components.mitsubishi.const import CONF_OPTIMISTIC_UPDATES, DOMAIN
 

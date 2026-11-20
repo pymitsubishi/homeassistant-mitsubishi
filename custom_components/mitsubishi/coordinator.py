@@ -25,6 +25,8 @@ _LOGGER = logging.getLogger(__name__)
 class MitsubishiDataUpdateCoordinator(DataUpdateCoordinator[ParsedDeviceState]):
     """Class to manage fetching data from the Mitsubishi Air Conditioner."""
 
+    config_entry: ConfigEntry
+
     def __init__(
         self,
         hass: HomeAssistant,

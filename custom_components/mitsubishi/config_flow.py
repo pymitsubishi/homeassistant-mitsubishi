@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
+import probatio as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant

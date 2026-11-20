@@ -1,7 +1,7 @@
 # Home Assistant Mitsubishi Air Conditioner Integration
 
 [![CI](https://github.com/pymitsubishi/homeassistant-mitsubishi/workflows/CI/badge.svg?branch=main)](https://github.com/pymitsubishi/homeassistant-mitsubishi/actions)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![Marketplace Custom](https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/#custom-repositories)
 [![GitHub Release](https://img.shields.io/github/release/pymitsubishi/homeassistant-mitsubishi.svg)](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/pymitsubishi/homeassistant-mitsubishi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -12,7 +12,7 @@ A Home Assistant custom component for controlling and monitoring Mitsubishi MAC-
 
 This repository uses GitHub Actions for continuous integration:
 
-- **Python Versions**: 3.12, 3.13
+- **Python Version**: 3.14
 - **Tests**: Runs pytest with coverage and enforces a 100% code coverage threshold.
 - **Lint and Format**: Uses ruff for linting and formatting.
 - **Type Checking**: Uses mypy for static type checking.
@@ -42,36 +42,35 @@ pytest tests --cov=custom_components/mitsubishi --cov-report=term-missing -v
 
 ## Installation
 
-### Install using HACS (recommended)
-If you do not have HACS installed yet visit https://hacs.xyz for installation instructions.
+### Install using the Marketplace (recommended)
 
-To add the this repository to HACS in your Home Assistant instance, use this My button:
+The [Marketplace](https://www.home-assistant.io/integrations/marketplace/) comes with Home Assistant. This repository is not in its catalog, so you add it as a custom repository. The Marketplace asks you to connect your GitHub account the first time you add one.
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=homeassistant-mitsubishi&owner=pymitsubishi&category=Integration)
+To open this repository in the Marketplace of your Home Assistant instance, use this My button and select **Install**:
 
-After installation, please restart Home Assistant. To add Mitsubishi Air Conditioner to your Home Assistant instance, use this My button:
+[![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=pymitsubishi&repository=homeassistant-mitsubishi&category=integration)
 
-[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=homeassistant-mitsubishi)
+If the Marketplace asks you to restart Home Assistant, restart it. To add Mitsubishi Air Conditioner to your Home Assistant instance, use this My button:
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=mitsubishi)
 
 <details>
 <summary><b> Manual configuration steps</b></summary>
 
-### Semi-Manual Installation with HACS
+### Adding the repository to the Marketplace by hand
 
-1. In Home Assistant go to HACS integrations section.
-2. Click on the 3 dots in the top right corner.
-3. Select "Custom repositories".
-4. Add the URL (https://github.com/pymitsubishi/homeassistant-mitsubishi) to the repository.
-5. Select the integration category.
-6. Click the "ADD" button.
-7. Now you are able to download the integration.
+1. In Home Assistant, go to **Settings** > **Marketplace**.
+2. In the upper-right corner, select **Add from link**.
+3. Under **GitHub link**, enter `https://github.com/pymitsubishi/homeassistant-mitsubishi`.
+4. Select **Add**. If the Marketplace asks for the type, select **Integration** and select **Add** again.
+5. Open the repository in the list and select **Install**.
 
 ### Manual Installation
 
 1. Download the [latest release of homeassistant-mitsubishi](https://github.com/pymitsubishi/homeassistant-mitsubishi/releases/latest) and extract its contents.
 2. Copy the `mitsubishi` folder into the `custom_components` directory located typically at `/config/custom_components/` in your Home Assistant directory.
-3. Restart Home Assistant to recognize the newly added custom component.  
-  <a href="https://my.home-assistant.io/redirect/developer_call_service/?service=homeassistant%2Erestart" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/developer_call_service.svg" alt="Open your Home Assistant instance and show your service developer tools with a specific action selected." /></a>
+3. Restart Home Assistant to recognize the newly added custom component.
+   <a href="https://my.home-assistant.io/redirect/developer_call_service/?service=homeassistant%2Erestart" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/developer_call_service.svg" alt="Open your Home Assistant instance and show your service developer tools with a specific action selected." /></a>
 
 </details>
 
@@ -89,6 +88,7 @@ The integration will automatically discover your device and create the appropria
 ## Supported Entities
 
 ### Climate
+
 - **Power**: Turn the air conditioner on/off
 - **Temperature**: Set target temperature (16-32°C)
 - **Mode**: Heat, Cool, Auto, Dry, Fan
@@ -96,12 +96,14 @@ The integration will automatically discover your device and create the appropria
 - **Vane Direction**: Vertical and horizontal vane control
 
 ### Sensors
+
 - **Room Temperature**: Current room temperature
 - **Outdoor Temperature**: Outside temperature (if available)
 - **Error Status**: Device error codes and abnormal states
 - **Dehumidifier Level**: Current dehumidifier setting percentage
 
 ### Diagnostic Sensors
+
 - **Unit Information**: Complete device model and configuration details
 - **Firmware Version**: WiFi adapter firmware and version information
 - **Unit Type**: Air conditioner type and manufacturing details
@@ -109,7 +111,7 @@ The integration will automatically discover your device and create the appropria
 
 ## Requirements
 
-- Home Assistant 2025.1 or later (requires Python 3.12+)
+- Home Assistant 2026.11 or later (requires Python 3.14+)
 - [pymitsubishi](https://pypi.org/project/pymitsubishi/) library (automatically installed)
 - Mitsubishi air conditioner with MAC-577IF-2E WiFi adapter.
   MAC-587 has been reported working as well.
@@ -118,11 +120,13 @@ The integration will automatically discover your device and create the appropria
 ## Troubleshooting
 
 ### Connection Issues
+
 - Ensure your air conditioner is connected to your WiFi network
 - Verify the IP address is correct and accessible from Home Assistant
 - Check firewall settings if connection fails
 
 ### Missing Features
+
 - Some features may not be available depending on your specific model
 - Enable capability detection to automatically discover supported features
 
@@ -156,6 +160,7 @@ Contributions are welcome! Please see our [Contributing Guidelines](CONTRIBUTING
 - Pull request process
 
 Quick start:
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feat/amazing-feature`)
 3. Make your changes following our guidelines
